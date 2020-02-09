@@ -1,2 +1,5 @@
+ncm/__pycache__
+utils/__pycache__
+.gitignore
 __pycache__
 .vscode
