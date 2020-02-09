@@ -60,7 +60,7 @@ class NeteaseCloudMusicKeygen():
         N = int(pubkey,16)
         return hex(n ** e % N)[2:].zfill(256)
     
-    def __init__(self,random_keys = True):
+    def __init__(self,random_keys = False):
         self.aes_key = "0CoJUm6Qyw8W8jud"
         self.aes_iv = "0102030405060708"
         self.modulus = "010001"
@@ -70,7 +70,7 @@ class NeteaseCloudMusicKeygen():
         if random_keys:self.encSecKey = None
         # Despite wirtten to be randomized in core.js,it's not needed here.
         # A choice will be better,though.Note if that you don't want to generate it,
-        # You should call by declaring that random_seed is False,and put the encSecKey given
+        # You should call by declaring that random_keys is False,and put the encSecKey given
         # into self.encSecKey varible
         # This key will be generated once the generate function is called,then gets saved
         # E.g. if given 'mos9527ItoooItop':
@@ -115,7 +115,7 @@ class NeteaseCloudMusic():
         Functions inside are well described,read them for more info.
     '''
 
-    def __init__(self, log_callback=lambda *a,**k: None,random_seed = True):
+    def __init__(self, log_callback=lambda *a,**k: None,random_keys = False):
         self.csrf_token, self.phone, self.password = '', '', ''
         # Cross-Site Reference Forgery token.Used for VIP validation & Phone number for login & password
         self.log = log_callback
@@ -154,7 +154,7 @@ class NeteaseCloudMusic():
             # Requires (Album ID,Comment Offset,Comment Limit,CSRF Token)
         }
         # Call Formats
-        self.keygen = NeteaseCloudMusicKeygen(random_seed)
+        self.keygen = NeteaseCloudMusicKeygen(random_keys)
         # Initalize keygen
         self.session = requests.session()
         self.session.headers = self.headers
@@ -269,6 +269,7 @@ class NeteaseCloudMusic():
 
             No APIs were harmed during this process
         '''
+        self.log(strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
         url = self.base_url + self.apis['meta_song']
         r = self.session.get(url, params={'id': song_id}).text
         # Post url.This will give us the page contating infomations about the song
@@ -294,7 +295,7 @@ class NeteaseCloudMusic():
                         key[6:] + ':' + e, format=strings.ERROR_FAILED_FECTCHING_EXTRA_SONG_INFO)
         return result
 
-    def GetSongInfo(self, song_id, quality='lossless', extra=False):
+    def GetSongInfo(self, song_id, quality='lossless'):
         '''
             Fetches a song's info.By default,it only returns the url and non-meta info.
 
@@ -323,12 +324,6 @@ class NeteaseCloudMusic():
             self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
             return None
 
-        extra_info = {}
-        if extra:
-            self.log(strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
-            extra_info = self.GetExtraSongInfo(song_id)
-
-        body = {**extra_info, **body}
         self.log(song_id, format=strings.INFO_FETCHED_SONG_WITH_TOKEN)
         return body
 

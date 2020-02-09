@@ -33,7 +33,7 @@ class NCMFunctions():
             random_keys :       Whether uses random seed or a static seed
         Functions inside are well described,read them for more info.
     '''
-    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=True,logger=lambda *args,**kwargs:None):
+    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=False,logger=lambda *args,**kwargs:None):
         self.NCM = NeteaseCloudMusic(logger,random_keys)
         self.DL = Downloader(session=self.NCM.session,pool_size=pool_size,buffer_size=buffer_size)
         # Initalization of other classes
@@ -71,7 +71,7 @@ class NCMFunctions():
         '''
             This will queue to download only the song's audio file (named 'audio.*') to a certain directory.
         '''
-        info = self.NCM.GetSongInfo(song_id=id, quality=quality, extra=False)
+        info = self.NCM.GetSongInfo(song_id=id, quality=quality)
         if not info:return
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
         target = self.GenerateDownloadPath(filename=filename, folder=folder)
@@ -375,7 +375,7 @@ class NCMFunctions():
 
     def Login(self,username, password):
         '''
-        Login method,result is persistant
+        Login method,equals to ncm_core.UpdateLoginInfo
         '''
         self.NCM.UpdateLoginInfo(username, password)
 
