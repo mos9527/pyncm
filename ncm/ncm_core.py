@@ -1,0 +1,419 @@
+'''
+@Author: greats3an
+@Date: 2019-10-19 07:43:08
+@LastEditors  : greats3an
+@LastEditTime : 2020-02-05 21:13:42
+@Description  : Read the Class Description
+'''
+
+import time
+import requests
+import json
+import re
+import base64
+
+from Crypto.Cipher import AES
+from Crypto.Random import random
+from hashlib import md5
+from ncm.strings import strings, simple_logger
+
+class NeteaseCloudMusicKeygen():
+    '''
+        Implementation of some of the core.js functions in python
+
+        Most importantly,the window.asrsea function,which generates encrypted text from keys
+
+            random_keys     :       Whether uses random seed or a static seed
+    '''
+    def get_random_string(self,len):
+        return ''.join([random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(0,len)])
+
+
+    def AES_encrypt(self, text, key, iv):
+        '''
+            AES Encryption using CBC
+
+            ref:https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256
+        '''
+        bs = AES.block_size
+        def pad2(s): return s + (bs - len(s) % bs) * chr(bs - len(s) % bs)
+        encryptor = AES.new(key.encode(), AES.MODE_CBC, iv.encode())
+        encrypt_aes = encryptor.encrypt(str.encode(pad2(text)))
+        encrypt_text = str(base64.encodebytes(encrypt_aes), encoding='utf-8')
+        return encrypt_text
+
+    def RSA_encrypt(self,data,pubkey,modulus):
+        '''
+        A non-padding RSA encryption implemented in python
+        (why not use PyCryptodome? Because the non-padding RSA support is dropped in its newest version)
+            c ≡ n ^ e % N
+                c               :       result,the encrypted data
+                n(data)          :       input,the data taken (note that it's reversed in the JS)
+                e(modulus)       :       modulus
+                N(pubkey)        :       public key
+        ref:https://zh.wikipedia.org/wiki/RSA
+        '''
+        n = ''.join([data[len(data) - i - 1] for i in range(0,len(data))])
+        # Reverse the string.Big thank to https://blog.csdn.net/weixin_30377461/article/details/97560323 for pointing this out
+        n = int(n.encode('utf-8').hex().encode('utf-8'),16)
+        e = int(modulus,16)
+        N = int(pubkey,16)
+        return hex(n ** e % N)[2:].zfill(256)
+    
+    def __init__(self,random_keys = True):
+        self.aes_key = "0CoJUm6Qyw8W8jud"
+        self.aes_iv = "0102030405060708"
+        self.modulus = "010001"
+        self.pubkey = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7"
+        self.seed = "mos9527ItoooItop" if not random_keys else self.get_random_string(16)
+        self.encSecKey = "01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754"
+        if random_keys:self.encSecKey = None
+        # Despite wirtten to be randomized in core.js,it's not needed here.
+        # A choice will be better,though.Note if that you don't want to generate it,
+        # You should call by declaring that random_seed is False,and put the encSecKey given
+        # into self.encSecKey varible
+        # This key will be generated once the generate function is called,then gets saved
+        # E.g. if given 'mos9527ItoooItop':
+        # 01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754
+        
+    def generate_ncmcrypt(self, text):
+        '''
+            This part mimics the [window.asrsea] function.
+
+            Geneartes NCMcrypted version of the text,outputs the [params] and [encSecKey] needed
+        '''
+        # 1st go,encrypt the text with aes_key and aes_iv
+        params = self.AES_encrypt(text, self.aes_key, self.aes_iv)
+        # 2nd go,encrypt the ENCRYPTED text again,with the SEED and aes_iv
+        params = self.AES_encrypt(params, self.seed, self.aes_iv)
+        # 3rd go,generate RSA encrypted encSecKey
+        if not self.encSecKey:
+            self.encSecKey = self.RSA_encrypt(self.seed,self.pubkey,self.modulus)
+        return {
+            'params': params,
+            'encSecKey': self.encSecKey,
+            'seed':self.seed
+        }
+
+    def generate_hash(self, text):
+        '''
+            This simple function generates MD5 hash,used in Core.js to validate user
+
+            I didn't find the function in Core.js,but you get the idea.
+        '''
+        HASH = md5(text.encode('utf-8'))
+        return HASH.hexdigest()
+
+
+class NeteaseCloudMusic():
+    '''
+        Using the cryptic API Netease implemented in
+
+        thier muisc servers via mimicing what a NeteaseCloudMusic Web Client would Do
+            log_callback        :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging
+            random_keys     :       Whether uses random seed or a static seed
+        Functions inside are well described,read them for more info.
+    '''
+
+    def __init__(self, log_callback=lambda *a,**k: None,random_seed = True):
+        self.csrf_token, self.phone, self.password = '', '', ''
+        # Cross-Site Reference Forgery token.Used for VIP validation & Phone number for login & password
+        self.log = log_callback
+        # Logging callback
+        self.headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "mos9527 Him Self/v15"
+        }
+        # Headers required to fake a web client
+        self.base_url = "https://music.163.com"
+        # The base url to NE's music servers
+        self.apis = {
+            'meta_song': '/song',
+            'meta_alubm': '/album',
+            'wesong': '/weapi/song/enhance/player/url/v1',
+            'playlist': '/weapi/v6/playlist/detail',
+            'lyric': '/weapi/song/lyric',
+            'login': '/weapi/login/cellphone',
+            'comments_song': '/weapi/v1/resource/comments/R_SO_4_%s',
+            'comments_album': '/weapi/v1/resource/comments/R_AL_3_%s'
+        }
+        # API URLs
+        self.call_stack = {
+            # Note that all Song IDs are parsed as String,and the parameters passed must be in order
+            'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
+            # Requires (Song ID,Audio quality[standard,high,higher,lossless],CSRF Token)
+            'playlist': '{"id":"%s","offset":"0","total":"true","limit":"1000","n":"1000","csrf_token":"%s"}',
+            # Requires (Playlist ID,CSRF Token)
+            'lyric': '{"id": "%s", "lv": -1, "tv": -1, "csrf_token": "%s"}',
+            # Requires (Song ID,CSRF Token)
+            'login': '{"phone":"%s","password":"%s","rememberLogin":"true","checkToken":"","csrf_token":""}',
+            # Requires (Phone Number,Hashed(MD5) Password)
+            'comments_song': '{"rid":"%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
+            # Requires (Song ID,Comment Offset,Comment Limit,CSRF Token)
+            'comments_album': '{"rid":"R_AL_3_%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
+            # Requires (Album ID,Comment Offset,Comment Limit,CSRF Token)
+        }
+        # Call Formats
+        self.keygen = NeteaseCloudMusicKeygen(random_seed)
+        # Initalize keygen
+        self.session = requests.session()
+        self.session.headers = self.headers
+        # Uses session() to store cookies
+        self.login_info = {'success': False,
+                           'tick': time.time(), 'content': None}
+        # Login info fetched in UpdateLoginInfo
+        # Tick is saved to update login since the login info would expire
+
+    def PostByMethodAndArgs(self, *args, method=''):
+        '''
+            Posts to the server with the given args and method
+
+            The method,args are described in self.callstack
+
+            Returns a REQUEST Object
+        '''
+        if not method:
+            return None
+        request_params = self.call_stack[method] % args
+        ncmcrypt = self.keygen.generate_ncmcrypt(request_params)
+        payload = {
+            'params': ncmcrypt['params'],
+            'encSecKey': ncmcrypt['encSecKey']
+        }
+        url = self.base_url
+        if method in ['comments_song', 'comments_album']:
+            # Special Exceptions for non-standard arguments
+            url += self.apis[method] % args[0]
+        else:
+            url += self.apis[method]
+        r = self.session.post(url, params={'csrf_token': self.csrf_token}, data=payload)
+        return r
+
+    def GetUserAccountLevel(self):
+        '''
+            Checks Login level,Returns the following values
+
+                NOLOGIN     :   User haven't logged in yet
+                USER        :   User logged in,but isn't VIP
+                VIP         :   User logged in,and is VIP
+        '''
+        level = 'NOLOGIN'
+        if not self.login_info['success']:
+            self.log(strings.WARN_NOT_LOGGED_IN)
+            self.log(strings.WARN_NOT_VIP)
+        else:
+            self.log(self.login_info['content']['profile']
+                     ['nickname'], format=strings.INFO_LOGGED_IN_AS)
+            if not self.login_info['content']['account']['vipType'] == 0:
+                self.log(strings.INFO_VIP)
+                level = 'VIP'
+            else:
+                self.log(strings.WARN_NOT_VIP)
+                level = 'USER'
+        return level
+
+    def UpdateLoginInfo(self, phone='', password=''):
+        '''
+            If given both phone number and password,updates them,and updates the cookies and the CSRF token
+
+            Otherwise,if phone number and password are set,updates the cookies and the CSRF token
+
+            Returns None if the response is invalid or the username & password combo is invalid
+
+            Returns login info with structure tick/success/content that suggests the time/result/content of the attempt
+
+            The value will be also set into the global variable to serve other functions
+        '''
+        if (phone and password):
+            self.log(strings.DEBUG_UPDATE_ACCOUNT)
+            self.phone = phone
+            self.password = password
+            return self.UpdateLoginInfo()
+            # Recursivly call the function to update cookies with the given account
+        else:
+            if (self.phone and self.password):
+                md5_password = self.keygen.generate_hash(self.password)
+                # The password is first hashed then got sent to the server
+                self.log(md5_password, format=strings.DEBUG_POSTING_LOGIN_REQUEST)
+                r = self.PostByMethodAndArgs(
+                    self.phone, md5_password, method='login')
+                try:
+                    self.login_info = {
+                        'tick': time.time(), 'content': json.loads(r.text)}
+                except Exception as e:
+                    self.log(e, format=strings.ERROR_LOGIN_FAILED)
+                    return None
+                # Try to parse the response into a JSON object. If failes,it means the response is invalid
+                if not self.login_info['content']['code'] == 200:
+                    self.log(
+                        self.login_info['content'], format=strings.ERROR_LOGIN_FAILED)
+                    self.login_info['success'] = False
+                    return self.login_info
+                # HTTP Response code will always be 200.The REAL response code lies in the JSON.
+                # 200 means login successful
+                # 415 means the IP was reqeusting too frequently.This can be solved with a delayed request
+                # 502 means the combo provided is wrong
+                self.login_info['success'] = True
+                self.log(','.join((cookie:= self.session.cookies.get_dict()).keys()), format=strings.DEBUG_UPDATED_COOKIE)
+                self.csrf_token = cookie['__csrf']
+                self.log(self.csrf_token, format=strings.DEBUG_NEW_CSRF_TOKEN)
+                self.GetUserAccountLevel()
+                return self.login_info
+            else:
+                self.log(strings.ERROR_FAILED_TO_UPDATE_LOGIN)
+                return None
+
+    def GetExtraSongInfo(self, song_id):
+        '''
+            Fecthes a song's cover image,title,album and other meta infomations
+
+            No APIs were harmed during this process
+        '''
+        url = self.base_url + self.apis['meta_song']
+        r = self.session.get(url, params={'id': song_id}).text
+        # Post url.This will give us the page contating infomations about the song
+        regexes = {
+            'regex_title': r"(?<=<meta property=\"og:title\" content=\").*(?=\")",
+            'regex_cover': r"(?<=<meta property=\"og:image\" content=\").*(?=\")",
+            'regex_author': r"(?<=由 ).*(?= 演唱)",
+            'regex_album': r"(?<=收录于《).*(?=》专辑中)",
+            'regex_album_id': r"(?<=<meta property=\"music:album\" content=\"https://music\.163\.com/album\?id=).*(?=\")",
+            'regex_artist_id': r"(?<=<meta property=\"music:musician\" content=\"https://music\.163\.com/artist\?id=).*(?=\")",
+        }
+        # Regex is faster than lxml here,since it doesn't need to go through the whole document
+        result = {}
+        for key in regexes.keys():
+            try:
+                find = next(re.finditer(regexes[key], r, re.MULTILINE))
+                result[key[6:]] = find.group()
+            except Exception:
+                try:
+                    result[key[6:]] = find.groups()
+                except Exception as e:
+                    self.log(
+                        key[6:] + ':' + e, format=strings.ERROR_FAILED_FECTCHING_EXTRA_SONG_INFO)
+        return result
+
+    def GetSongInfo(self, song_id, quality='lossless', extra=False):
+        '''
+            Fetches a song's info.By default,it only returns the url and non-meta info.
+
+                quality can be set to these values:
+                    standard,high,higher,lossless
+            VIP Level Required for such level operations
+
+            Otherwise,it fallbacks to standard
+
+            Set [extra] True if you want optional infomations (cover,album,etc.)
+        '''
+        if not quality in ['standard', 'high', 'higher', 'lossless']:
+            self.log(quality, format=strings.WARN_INVALID_QUALITY_CONFIG)
+            quality = 'standard'
+        # Quality check
+        self.log(self.csrf_token, format=strings.DEBUG_FETCHING_SONG_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            song_id, quality, self.csrf_token, method='wesong')
+        try:
+            body = json.loads(r.text)
+        except Exception:
+            self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
+            return None
+
+        if not body['data'][-1]['code'] == 200:
+            self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
+            return None
+
+        extra_info = {}
+        if extra:
+            self.log(strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
+            extra_info = self.GetExtraSongInfo(song_id)
+
+        body = {**extra_info, **body}
+        self.log(song_id, format=strings.INFO_FETCHED_SONG_WITH_TOKEN)
+        return body
+
+    def GetSongLyrics(self, song_id):
+        '''
+            Fetches a song's lyrics.No VIP Level needed
+        '''
+        self.log(self.csrf_token, format=strings.DEBUG_FETCHING_LYRICS_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            song_id, self.csrf_token, method='lyric'
+        )
+        return json.loads(r.text)
+
+    def GetPlaylistInfo(self, playlist_id):
+        '''
+            Fetches a playlist's content.No VIP Level needed
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_PLAYLIST_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            playlist_id, self.csrf_token, method='playlist'
+        )
+        return json.loads(r.text)
+
+    def GetSongComments(self, song_id, offset=0, limit=20):
+        '''
+            Fetches a song's comments.No VIP Level needed.
+
+                offset  :   sets where the comment begins
+                limit   :   sets how many of them can be sent
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_COMMENTS_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            song_id, offset, limit, self.csrf_token, method='comments_song'
+        )
+        return json.loads(r.text)
+
+    def GetAlbumInfo(self, album_id):
+        '''
+            Fetches an album's info.Containing the list of the songs,the cover and etc
+
+            No APIs were harmed during this process
+        '''
+        url = self.base_url + self.apis['meta_alubm']
+        r = self.session.get(url, params={'id': album_id}).text
+        # Post url.This will give us the page contating infomations about the album
+        regexes = {
+            'regex_songlist': r"(?<=<textarea id=\"song-list-pre-data\" style=\"display:none;\">).*(?=</textarea>)",
+            'regex_description': r"(?<=<meta property=\"og:description\" content=\")[^\"]*(?=\")",
+            'regex_title': r"(?<=<meta property=\"og:title\" content=\").*(?=\")",
+            'regex_cover': r"(?<=<meta property=\"og:image\" content=\").*(?=\")",
+            'regex_author': r"(?<=data-res-author=\").*(?=\")",
+            'regex_release': r"(?<=<b>发行时间：</b>).*(?=</p)",
+            'regex_publisher': r"(?<=<b>发行公司：</b>\n).*(?=\n)",
+        }
+        # Regex is faster than lxml here,since it doesn't need to go through the whole document
+        result = {}
+        for key in regexes.keys():
+            try:
+                find = next(re.finditer(regexes[key], r, re.MULTILINE))
+                result[key[6:]] = find.group()
+            except Exception:
+                try:
+                    result[key[6:]] = find.groups()
+                except Exception as e:
+                    self.log(
+                        key[6:] + ':' + e, format=strings.ERROR_FAILED_FECTCHING_ALBUM_INFO)
+        try:
+            result['songlist'] = json.loads(result['songlist'])
+        except Exception as e:
+            self.log('JSON' + ':' + e,
+                     format=strings.ERROR_FAILED_FECTCHING_ALBUM_INFO)
+        return result
+
+    def GetAlbumComments(self, song_id, offset=0, limit=20):
+        '''
+            Fetches a album's comments.No VIP Level needed.
+
+                offset  :   sets where the comment begins
+                limit   :   sets how many of them can be sent
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_COMMENTS_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            song_id, offset, limit, self.csrf_token, method='comments_album'
+        )
+        return json.loads(r.text)
