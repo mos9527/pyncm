@@ -1,18 +1,11 @@
-'''
-@Author: greats3an
-@Date: 2020-02-09 18:03:29
-@LastEditors  : greats3an
-@LastEditTime : 2020-02-10 19:20:21
-@Site: mos9527.tooo.top
-@Description: file content
-'''
+from __future__ import print_function
+import sys
 '''
     Simple progress bar for console
     by 'Carlos Alexandre S. da Fonseca'
     modified to fit the purpose better
 '''
-from __future__ import print_function
-import sys
+
 
 
 
