@@ -6,12 +6,7 @@
 @Description  : Read the Class Description
 '''
 
-import time
-import requests
-import json
-import re
-import base64
-
+import time,requests,json,re,base64
 from Crypto.Cipher import AES
 from Crypto.Random import random
 from hashlib import md5

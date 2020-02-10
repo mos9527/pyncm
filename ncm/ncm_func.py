@@ -7,7 +7,7 @@
 @Description: Functions utilizing self.NCM_core.py
 '''
 import argparse,re,shutil,json,time,os,sys
-from colorama import init, Cursor, Fore;init()
+from colorama import Cursor
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3

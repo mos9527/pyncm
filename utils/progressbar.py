@@ -3,9 +3,8 @@
     by 'Carlos Alexandre S. da Fonseca'
     modified to fit the purpose better
 '''
-
-from __future__ import print_function
 import sys
+from __future__ import print_function
 
 
 class ProgressBar(object):

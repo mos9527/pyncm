@@ -6,12 +6,13 @@
 @Site: mos9527.tooo.top
 @Description: Pool-like downloader
 '''
+import os,sys,time
 from threading import Thread
 from queue import Queue
 from requests import Session
 from utils.progressbar import ProgressBar
 from utils.clisheet import CLISheet
-import os,sys,time
+
 
 class PoolWorker(Thread):
     '''

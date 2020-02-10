@@ -7,9 +7,6 @@
 '''
 
 import os
-import unicodedata
-
-
 class CLISheet():
     '''
         Pretty sheet in CLI

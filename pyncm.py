@@ -7,9 +7,7 @@
 @Site: mos9527.tooo.top
 @Description: CLI Interface for most functions
 '''
-import argparse
-import sys
-import shutil
+import argparse,sys,shutil
 from ncm.ncm_core import NeteaseCloudMusicKeygen
 from ncm.ncm_func import NCMFunctions
 from ncm.strings import strings, simple_logger

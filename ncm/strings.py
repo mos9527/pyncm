@@ -4,10 +4,11 @@
 @LastEditors  : greats3an
 @LastEditTime : 2020-02-05 21:10:32
 @Site: mos9527.tooo.top
-@Description: Loggin system & multi-language support
+@Description: Logging system & multi-language support
 '''
-import time
-import locale
+import time,locale
+from colorama import init, Cursor, Fore;init()
+# Basic multi language support
 LANG = 0
 if locale.getdefaultlocale()[0] in ['zh_CN', 'zh_TW', 'zh_HK']:
     LANG = 1
