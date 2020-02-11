@@ -2,7 +2,7 @@
 @Author: greats3an
 @Date: 2020-01-20 19:26:37
 @LastEditors  : greats3an
-@LastEditTime : 2020-02-02 17:57:19
+@LastEditTime : 2020-02-11 16:43:32
 @Site: mos9527.tooo.top
 @Description: Pool-like downloader
 '''
@@ -116,7 +116,12 @@ class Downloader():
         self.sheet = CLISheet(('ID', 3), ('PROGRESS', 60), ('STATUS', 6))
         self.pool_size = pool_size
         self.task_queue = Queue()
-        self.workers = [worker(session,self.task_queue,id=i, timeout=timeout,buffer_size=buffer_size) for i in range(0, pool_size)]
+        def get_worker(i):
+            if type(worker) == DownloadWorker:
+                return worker(session,self.task_queue,id=i, timeout=timeout,buffer_size=buffer_size) 
+            elif type(worker) == PoolWorker:
+                return worker(self.task_queue,id=i) 
+        self.workers = [get_worker(i) for i in range(0, pool_size) ]
         # Generate workers
         for worker in self.workers:
             worker.start()
