@@ -2,7 +2,7 @@
 @Author: greats3an
 @Date: 2020-01-20 19:26:37
 @LastEditors  : greats3an
-@LastEditTime : 2020-02-11 16:43:32
+@LastEditTime : 2020-02-11 16:47:48
 @Site: mos9527.tooo.top
 @Description: Pool-like downloader
 '''
@@ -29,7 +29,7 @@ class PoolWorker(Thread):
     def run(self):
         while True:
             task,args = self.task_queue.get()
-            task(*args) if args else task()
+            task(args) if args else task()
             self.task_queue.task_done()
 
 class DownloadWorker(PoolWorker):
@@ -117,10 +117,12 @@ class Downloader():
         self.pool_size = pool_size
         self.task_queue = Queue()
         def get_worker(i):
-            if type(worker) == DownloadWorker:
+            if worker == DownloadWorker:
                 return worker(session,self.task_queue,id=i, timeout=timeout,buffer_size=buffer_size) 
-            elif type(worker) == PoolWorker:
+            elif worker == PoolWorker:
                 return worker(self.task_queue,id=i) 
+            else:
+                raise NotImplementedError
         self.workers = [get_worker(i) for i in range(0, pool_size) ]
         # Generate workers
         for worker in self.workers:

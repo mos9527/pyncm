@@ -2,7 +2,7 @@
 @Author: greats3an
 @Date: 2020-01-24 11:32:51
 @LastEditors  : greats3an
-@LastEditTime : 2020-01-24 17:13:24
+@LastEditTime : 2020-02-11 17:00:23
 @Site: mos9527.tooo.top
 @Description: Functions utilizing self.NCM_core.py
 '''
@@ -53,13 +53,15 @@ class NCMFunctions():
 
             Specify folder to change the root folder somewhere else
         '''
+        def normalize(s):return s.replace(':','：').replace('\n','_').replace('-','_').replace(',','，').replace('"','“').replace('\'','”').replace('/','、').replace('\\','，')
+        filename = normalize(filename)
         folder = os.path.join(folder, str(id)) if folder else os.path.join(self.temp, str(id))
         result = os.path.join(folder, filename)
+
         if (path := os.path.split(result))[0]:
              if not os.path.exists(path[0]):os.makedirs(path[0])
         # Make the folder tree
         return result
-
     def QueueDownload(self,url, path):
         '''
             Queue a download

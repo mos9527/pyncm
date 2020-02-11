@@ -3,7 +3,7 @@
 @Author: greats3an
 @Date: 2020-01-24 11:32:51
 @LastEditors  : greats3an
-@LastEditTime : 2020-01-24 17:13:24
+@LastEditTime : 2020-02-11 16:51:33
 @Site: mos9527.tooo.top
 @Description: CLI Interface for most functions
 '''
@@ -27,8 +27,8 @@ parser.add_argument('--temp', type=str, default='temp',
                     help=strings.HELP_TEMP_DIR(None))
 parser.add_argument('--output', type=str, default='output',
                     help=strings.HELP_OUTPUT_DIR(None))
-parser.add_argument('--phone', type=str, help=strings.HELP_PHONE(None))
-parser.add_argument('--password', type=str, help=strings.HELP_PASSWORD(None))
+parser.add_argument('--phone', type=str, help=strings.HELP_PHONE(None),default='')
+parser.add_argument('--password', type=str, help=strings.HELP_PASSWORD(None),default='')
 parser.add_argument('--merge-only', action='store_true',
                     help=strings.HELP_MERGE_ONLY(None))
 parser.add_argument('--clear-temp', action='store_true',
