@@ -2,7 +2,7 @@
 @Author: greats3an
 @Date: 2019-10-19 07:43:08
 @LastEditors  : greats3an
-@LastEditTime : 2020-02-05 21:13:42
+@LastEditTime : 2020-02-11 20:14:44
 @Description  : Read the Class Description
 '''
 
@@ -130,7 +130,8 @@ class NeteaseCloudMusic():
             'lyric': '/weapi/song/lyric',
             'login': '/weapi/login/cellphone',
             'comments_song': '/weapi/v1/resource/comments/R_SO_4_%s',
-            'comments_album': '/weapi/v1/resource/comments/R_AL_3_%s'
+            'comments_album': '/weapi/v1/resource/comments/R_AL_3_%s',
+            'user_playlists':'/weapi/user/playlist'
         }
         # API URLs
         self.call_stack = {
@@ -147,6 +148,8 @@ class NeteaseCloudMusic():
             # Requires (Song ID,Comment Offset,Comment Limit,CSRF Token)
             'comments_album': '{"rid":"R_AL_3_%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
             # Requires (Album ID,Comment Offset,Comment Limit,CSRF Token)
+            'user_playlists':'{offset: "%d", limit: "%d", uid: "%d", csrf_token: "%s"}'
+            # Requires (Playlist Offset,Playlist count Limit,User ID,CSRF Token)
         }
         # Call Formats
         self.keygen = NeteaseCloudMusicKeygen(random_keys)
@@ -405,5 +408,25 @@ class NeteaseCloudMusic():
                  format=strings.DEBUG_FETCHING_COMMENTS_WITH_TOKEN)
         r = self.PostByMethodAndArgs(
             song_id, offset, limit, self.csrf_token, method='comments_album'
+        )
+        return json.loads(r.text)
+
+    def GetUserPlaylists(self,user_id=0,offset=0,limit=1001):
+        '''
+            Fetches a user's playlists.No VIP Level needed.
+
+                user_id :   The ID of the user.Set 0 for yourself (if logged in)
+                offset  :   sets where the comment begins
+                limit   :   sets how many of them can be sent
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_USER_PLAYLISTS_WITH_TOKEN)
+        if user_id == 0 and not self.GetUserAccountLevel() == 'NOLOGIN':
+            user_id = self.login_info['content']['account']['id']
+        elif user_id == 0:
+            return {}
+
+        r = self.PostByMethodAndArgs(
+             offset, limit, user_id, self.csrf_token, method='user_playlists'
         )
         return json.loads(r.text)

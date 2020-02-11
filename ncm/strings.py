@@ -2,7 +2,7 @@
 @Author: greats3an
 @Date: 2020-01-19 21:19:54
 @LastEditors  : greats3an
-@LastEditTime : 2020-02-05 21:10:32
+@LastEditTime : 2020-02-11 20:05:56
 @Site: mos9527.tooo.top
 @Description: Logging system & multi-language support
 '''
@@ -173,6 +173,8 @@ Extra options
         self): return ['Album info fetched:{} - {}', '专辑信息已获取:{} - {}'][LANG]
     def DEBUG_FETCHING_COMMENTS_WITH_TOKEN(
         self): return ['Fetching comments with token:{}', '正在以令牌 ({}) 获取评论'][LANG]
+    def DEBUG_FETCHING_USER_PLAYLISTS_WITH_TOKEN(
+        self): return ['Fetching playlists with token:{}', '正在以令牌 ({}) 获取歌单列表'][LANG]
     def DEBUG_DOWNLOAD_STATUS(
         self): return [
         """
