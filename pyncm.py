@@ -10,7 +10,7 @@
 import argparse,sys,shutil
 from ncm.ncm_core import NeteaseCloudMusicKeygen
 from ncm.ncm_func import NCMFunctions
-from ncm.strings import strings, simple_logger
+from ncm.strings import strings, simple_logger,LANG
 log = simple_logger
 
 parser = argparse.ArgumentParser(
@@ -39,18 +39,29 @@ parser.add_argument('--buffer-size', type=int, default=256,
                     help=strings.HELP_BUFFERSIZE(None))
 parser.add_argument('--random-keys', action='store_true',
                     help=strings.HELP_RANDOM_KEYS(None))
+parser.add_argument('--language', default='ENGLISH',
+                    help=strings.HELP_LANGUAGE(None))
 if len(sys.argv) < 2:
     parser.print_help()
     sys.exit(2)
 args = parser.parse_args()
 args = args.__dict__
 
-operation, id, opt,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys = args.values()
+operation, id, opt,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys,language = args.values()
 # Parser end----------------------------------------------------------------------------
 log(id, operation, opt, NeteaseCloudMusicKeygen.generate_hash('',password) , phone, clear_temp, merge_only, temp, output,
-    pool_size, buffer_size, random_keys, format=strings.INIT_INITALIZED_WITH_ARGS)
+    pool_size, buffer_size, random_keys,language, format=strings.INIT_INITALIZED_WITH_ARGS)
 ncm = NCMFunctions(temp, output, merge_only, pool_size,
                    buffer_size, random_keys, log)
+# Set language
+language = language.upper()
+langdict = {
+    'ENGLISH':0,
+    'CHINESE':1
+}
+language = langdict[language] if language in langdict.keys() else langdict.values()[0]
+LANG = lambda:language
+
 # Process login info
 if phone and password:
     ncm.Login(phone, password)
