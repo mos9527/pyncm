@@ -14,7 +14,7 @@ def LANG():
         0       :       ENGLISH
         1       :       SIMPILFILED CHINESE
     '''
-    return 1 if 'zh' in str(locale.getdefaultlocale())[0] else 0 
+    return 1 if 'zh' in str(locale.getdefaultlocale()[0]) else 0 
 
 class strings():
     '''
