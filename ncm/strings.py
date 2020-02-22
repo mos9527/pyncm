@@ -230,13 +230,13 @@ def simple_logger(*args, format=None):
         content = format(None).format(*args)
 
     else:
-        try:
+        if callable(args[0]):
             level = args[0].__name__.split('_')[0]
             level = getattr(strings, level)(None)
             content = args[0](None) if callable(args[0]) else args
-        except Exception:
+        else:
             level = strings.DEBUG(None)
-            content = ' '.join(args)
+            content = ' '.join([str(arg) for arg in args])
     log = '{}::{} {}'.format(level, time.strftime("%H:%M:%S", time.localtime()), content)
     print(log)
     open('log.txt','a+',encoding='utf-8').write(log+'\n')
