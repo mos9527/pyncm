@@ -3,3 +3,4 @@ utils/__pycache__
 .gitignore
 __pycache__
 .vscode
+log.txt
