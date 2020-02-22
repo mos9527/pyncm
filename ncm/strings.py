@@ -237,5 +237,5 @@ def simple_logger(*args, format=None):
         except Exception:
             level = strings.DEBUG(None)
             content = ' '.join(args)
-    print('{}::{} {}'.format(level, time.strftime(
-        "%H:%M:%S", time.localtime()), content))
+    log = '{}::{} {}'.format(level, time.strftime("%H:%M:%S", time.localtime()), content)
+    open('log.txt','w+',encoding='utf-8').write(log)
