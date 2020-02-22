@@ -3,7 +3,7 @@ NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API
 
 ## 直接使用
 
-    __init__.py -h
+    pyncm.py -h
 
 ## Python 使用示例
 
