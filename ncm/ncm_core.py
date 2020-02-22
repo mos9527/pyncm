@@ -125,6 +125,7 @@ class NeteaseCloudMusic():
         self.apis = {
             'meta_song': '/song',
             'meta_alubm': '/album',
+            'detail':'/weapi/v3/song/detail',
             'wesong': '/weapi/song/enhance/player/url/v1',
             'playlist': '/weapi/v6/playlist/detail',
             'lyric': '/weapi/song/lyric',
@@ -136,6 +137,8 @@ class NeteaseCloudMusic():
         # API URLs
         self.call_stack = {
             # Note that all Song IDs are parsed as String,and the parameters passed must be in order
+            'detail':'{id: "%s", c: "[{"id":"%s"}]", csrf_token: "%s"}',
+            # Requires (Song ID,Song ID (repeat),CSRF Token)
             'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
             # Requires (Song ID,Audio quality[standard,high,higher,lossless],CSRF Token)
             'playlist': '{"id":"%s","offset":"0","total":"true","limit":"1000","n":"1000","csrf_token":"%s"}',
@@ -162,7 +165,7 @@ class NeteaseCloudMusic():
         # Login info fetched in UpdateLoginInfo
         # Tick is saved to update login since the login info would expire
 
-    def PostByMethodAndArgs(self, *args, method=''):
+    def PostByMethodAndArgs(self, *args, method='',extra_headers={},extra_params={}):
         '''
             Posts to the server with the given args and method
 
@@ -184,7 +187,12 @@ class NeteaseCloudMusic():
             url += self.apis[method] % args[0]
         else:
             url += self.apis[method]
-        r = self.session.post(url, params={'csrf_token': self.csrf_token}, data=payload)
+        r = self.session.post(
+            url,
+            headers = {**self.session.headers,**extra_headers},
+            params={'csrf_token': self.csrf_token,**extra_params},
+            data=payload
+            )
         return r
 
     def GetUserAccountLevel(self):
@@ -302,8 +310,6 @@ class NeteaseCloudMusic():
             VIP Level Required for such level operations
 
             Otherwise,it fallbacks to standard
-
-            Set [extra] True if you want optional infomations (cover,album,etc.)
         '''
         if not quality in ['standard', 'high', 'higher', 'lossless']:
             self.log(quality, format=strings.WARN_INVALID_QUALITY_CONFIG)
@@ -316,13 +322,13 @@ class NeteaseCloudMusic():
             body = json.loads(r.text)
         except Exception:
             self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
-            return None
-
-        if not body['data'][-1]['code'] == 200:
+            return {}
+        body['code'] = body['data'][-1]['code']
+        if not body['code'] == 200:
             self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
-            return None
-
-        self.log(song_id, format=strings.INFO_FETCHED_SONG_WITH_TOKEN)
+        else:
+            self.log(song_id, format=strings.INFO_FETCHED_SONG_WITH_TOKEN)
+            
         return body
 
     def GetSongLyrics(self, song_id):

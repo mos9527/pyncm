@@ -74,7 +74,7 @@ class NCMFunctions():
             This will queue to download only the song's audio file (named 'audio.*') to a certain directory.
         '''
         info = self.NCM.GetSongInfo(song_id=id, quality=quality)
-        if not info:return
+        if not info['code'] == 200:return
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
         target = self.GenerateDownloadPath(filename=filename, folder=folder)
         url = info['data'][0]['url']
