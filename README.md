@@ -1,7 +1,11 @@
 # PyNCM
 NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API
 
-## 使用示例
+## 直接使用
+
+    __init__.py -h
+
+## Python 使用示例
 
     >>> from ncm.ncm_core import NeteaseCloudMusic
     # 导入核心包
