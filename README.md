@@ -1,22 +1,29 @@
 # PyNCM
 NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API
 
-## 直接使用
+# 直接使用
     pyncm.py -h
 
 ## Python 使用示例
 
-# ncm
-ncm.ncm_core 即核心包，包含keygen和部分eapi，需要 pycryptodome 和 requests 运行
-ncm.ncm_func 为功能包，需要上述包和 mutagen 和 colorama 运行
-ncm.strings  包含所有非常量字符串，需要 colorama 以显示色彩
+### ncm
 
-# utils
-utils.clisheet CLI表格，用于显示下载进度
-utils.downloader 纯标准库多线程下载器
-utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. da Fonseca'
+#### ncm.ncm_core 即核心包，包含keygen和部分eapi，需要 pycryptodome 和 requests 运行
 
-上面大部分包都已详尽地注释过，如有疑问请提 issue
+#### ncm.ncm_func 为功能包，需要上述包和 mutagen 和 colorama 运行
+
+#### ncm.strings  包含所有非常量字符串，需要 colorama 以显示色彩
+
+### utils
+
+#### utils.clisheet CLI表格，用于显示下载进度
+
+#### utils.downloader 纯标准库多线程下载器
+
+#### utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. da Fonseca'
+
+
+*上面大部分包都已详尽地注释过，如有疑问请提 issue*
 
 # 实例
     >>> from ncm.ncm_core import NeteaseCloudMusic
