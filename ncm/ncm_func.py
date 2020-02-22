@@ -15,8 +15,8 @@ from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
 
 from utils.downloader import Downloader,DownloadWorker,PoolWorker
-from ncm.ncm_core import NeteaseCloudMusic
-from ncm.strings import simple_logger, strings
+from .ncm_core import NeteaseCloudMusic
+from .strings import simple_logger, strings
 
 
 class NCMFunctions():

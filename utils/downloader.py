@@ -10,8 +10,8 @@ import os,sys,time
 from threading import Thread
 from queue import Queue
 from requests import Session
-from utils.progressbar import ProgressBar
-from utils.clisheet import CLISheet
+from .progressbar import ProgressBar
+from .clisheet import CLISheet
 
 
 class PoolWorker(Thread):

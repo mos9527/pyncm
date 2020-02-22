@@ -10,7 +10,7 @@ import time,requests,json,re,base64
 from Crypto.Cipher import AES
 from Crypto.Random import random
 from hashlib import md5
-from ncm.strings import strings, simple_logger
+from .strings import strings, simple_logger
 
 class NeteaseCloudMusicKeygen():
     '''
