@@ -288,7 +288,7 @@ class NeteaseCloudMusic():
             'regex_artist_id': r"(?<=<meta property=\"music:musician\" content=\"https://music\.163\.com/artist\?id=).*(?=\")",
         }
         # Regex is faster than lxml here,since it doesn't need to go through the whole document
-        result = {}
+        result = {'song_id':song_id}
         for key in regexes.keys():
             try:
                 find = next(re.finditer(regexes[key], r, re.MULTILINE))
