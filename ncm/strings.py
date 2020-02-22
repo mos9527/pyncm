@@ -228,11 +228,14 @@ def simple_logger(*args, format=None):
         level = format.__name__.split('_')[0]
         level = getattr(strings, level)(None)
         content = format(None).format(*args)
-        print('{}::{} {}'.format(level, time.strftime(
-            "%H:%M:%S", time.localtime()), content))
+
     else:
-        level = args[0].__name__.split('_')[0]
-        level = getattr(strings, level)(None)
-        content = args[0](None) if callable(args[0]) else args
-        print('{}::{} {}'.format(level, time.strftime(
-            "%H:%M:%S", time.localtime()), content))
+        try:
+            level = args[0].__name__.split('_')[0]
+            level = getattr(strings, level)(None)
+            content = args[0](None) if callable(args[0]) else args
+        except Exception:
+            level = strings.DEBUG(None)
+            content = ' '.join(args)
+    print('{}::{} {}'.format(level, time.strftime(
+        "%H:%M:%S", time.localtime()), content))
