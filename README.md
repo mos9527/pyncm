@@ -2,6 +2,7 @@
 NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API
 
 # 直接使用
+API 可以通过命令行直接访问，请参照下列命令输出进行操作
     pyncm.py -h
 
 # Python 使用示例
@@ -40,7 +41,22 @@ utils.downloader 纯标准库多线程下载器
 
 utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. da Fonseca'
 
-
+# 工程进度
+|功能|进度|函数名|
+|-|-|-|
+|明文登录（通过手机号及明文密码）|✔|NeteaseCloudMusic.UpdateLoginInfo|
+|音频解析（无损解析需要以VIP特权登录）|✔|NeteaseCloudMusic.GetSongInfo|
+|歌曲信息爬取|✔|NeteaseCloudMusic.GetExtraSongInfo|
+|歌词解析|✔|NeteaseCloudMusic.GetSongLyrics|
+|歌单解析|✔|NeteaseCloudMusic.GetPlaylistInfo|
+|歌曲评论爬取|✔|NeteaseCloudMusic.GetSongComments|
+|专辑信息爬取|✔|NeteaseCloudMusic.GetAlbumInfo|
+|专辑评论爬取|✔|NeteaseCloudMusic.GetAlbumComments|
+|获取用户歌单|✔|NeteaseCloudMusic.GetUserPlaylists|
+|下载歌曲并填入 META|✔|NCMFunctions.DownloadSongAudio|
+|批量下载专辑歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInAlbumAndMerge|
+|批量下载歌单歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInPlaylistAndMerge|
+|下载歌词并转换为多语言LRC|✔|NCMFunctions.DownloadAndFormatLyrics|
 *大部分包都已详尽地注释过，如有疑问请提 issue*
 
 ## 依赖包
