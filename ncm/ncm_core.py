@@ -6,23 +6,41 @@
 @Description  : Read the Class Description
 '''
 
-import time,requests,json,re,base64
+import time
+import requests
+import json
+import re
+import base64
 from Crypto.Cipher import AES
 from Crypto.Random import random
 from hashlib import md5
 from .strings import strings, simple_logger
 
+
+class RSAPublicKey():
+    '''
+        RSA Publickey object
+
+            N   :   modulus
+            e   :   exponet
+        All values are stored as integers
+    '''
+    def __init__(self, N, e):
+        self.n = int(N, 16)
+        self.e = int(e, 16)
+
+
 class NeteaseCloudMusicKeygen():
     '''
-        Implementation of some of the core.js functions in python
+        Implementation of the core.js's encryption functions in python
 
         Most importantly,the window.asrsea function,which generates encrypted text from keys
 
-            random_keys     :       Whether uses random seed or a static seed
+            random_keys     :       Whether uses random 2nd AES key or the constant 'mos9527ItoooItop' and its encypted RSA string
     '''
-    def get_random_string(self,len):
-        return ''.join([random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(0,len)])
 
+    def get_random_string(self, len):
+        return ''.join([random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(0, len)])
 
     def AES_encrypt(self, text, key, iv):
         '''
@@ -37,40 +55,41 @@ class NeteaseCloudMusicKeygen():
         encrypt_text = str(base64.encodebytes(encrypt_aes), encoding='utf-8')
         return encrypt_text
 
-    def RSA_encrypt(self,data,pubkey,modulus):
+    def RSA_encrypt(self,data,pubkey:RSAPublicKey,reverse=True):
         '''
-        A non-padding RSA encryption implemented in python
-        (why not use PyCryptodome? Because the non-padding RSA support is dropped in its newest version)
-            c ≡ n ^ e % N
-                c               :       result,the encrypted data
-                n(data)          :       input,the data taken (note that it's reversed in the JS)
-                e(modulus)       :       modulus
-                N(pubkey)        :       public key
-        ref:https://zh.wikipedia.org/wiki/RSA
+            A no-padding RSA encryption implemented in python
+               
+               c ≡ n ^ e % N
+               
+                    c                :       result,the encrypted data
+                    n(data)          :       input,the data taken (note that it's reversed in the JS)
+                    e(exponet)       :       modulus
+                    N(modulus)       :       public key
+            ref:https://zh.wikipedia.org/wiki/RSA
         '''
-        n = ''.join([data[len(data) - i - 1] for i in range(0,len(data))])
-        # Reverse the string.Big thank to https://blog.csdn.net/weixin_30377461/article/details/97560323 for pointing this out
-        n = int(n.encode('utf-8').hex().encode('utf-8'),16)
-        e = int(modulus,16)
-        N = int(pubkey,16)
+        def toInt(s):return int(s.encode('utf-8').hex(),16)
+        if reverse:n = ''.join([data[len(data) - i - 1] for i in range(0, len(data))])
+        # Reverse the string.Big thanks to https://blog.csdn.net/weixin_30377461/article/details/97560323 for pointing this out
+        n, e, N = toInt(n), pubkey.e, pubkey.n
         return hex(n ** e % N)[2:].zfill(256)
-    
-    def __init__(self,random_keys = False):
+
+    def __init__(self, random_key=False):
         self.aes_key = "0CoJUm6Qyw8W8jud"
         self.aes_iv = "0102030405060708"
-        self.modulus = "010001"
-        self.pubkey = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7"
-        self.seed = "mos9527ItoooItop" if not random_keys else self.get_random_string(16)
-        self.encSecKey = "01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754"
-        if random_keys:self.encSecKey = None
-        # Despite wirtten to be randomized in core.js,it's not needed here.
-        # A choice will be better,though.Note if that you don't want to generate it,
-        # You should call by declaring that random_keys is False,and put the encSecKey given
-        # into self.encSecKey varible
-        # This key will be generated once the generate function is called,then gets saved
-        # E.g. if given 'mos9527ItoooItop':
-        # 01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754
-        
+        self.pubkey = RSAPublicKey(
+            "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",
+            "10001"
+        )
+        # exponent 10001 and 258 bytes modulus (e,N)
+        self.aes_key2 = "mos9527ItoooItop" if not random_key else self.get_random_string(16)
+        self.encSecKey = "01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754" if not random_key else None
+        '''
+            Despite the second aes key is randomized in core.js,it's not necessary at all.
+            If random_key is set,this key and it's RSA encrypted version will be generated once the generate function is called
+            Then gets saved for later use
+            E.g. if given 'mos9527ItoooItop' as the key,it will output the following:
+                01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754
+        '''
     def generate_ncmcrypt(self, text):
         '''
             This part mimics the [window.asrsea] function.
@@ -79,15 +98,15 @@ class NeteaseCloudMusicKeygen():
         '''
         # 1st go,encrypt the text with aes_key and aes_iv
         params = self.AES_encrypt(text, self.aes_key, self.aes_iv)
-        # 2nd go,encrypt the ENCRYPTED text again,with the SEED and aes_iv
-        params = self.AES_encrypt(params, self.seed, self.aes_iv)
+        # 2nd go,encrypt the ENCRYPTED text again,with the 2nd key and aes_iv
+        params = self.AES_encrypt(params, self.aes_key2, self.aes_iv)
         # 3rd go,generate RSA encrypted encSecKey
         if not self.encSecKey:
-            self.encSecKey = self.RSA_encrypt(self.seed,self.pubkey,self.modulus)
+            self.encSecKey = self.RSA_encrypt(self.aes_key2, self.pubkey)
         return {
             'params': params,
             'encSecKey': self.encSecKey,
-            'seed':self.seed
+            'key2': self.aes_key2
         }
 
     def generate_hash(self, text):
@@ -105,12 +124,13 @@ class NeteaseCloudMusic():
         Using the cryptic API Netease implemented in
 
         thier muisc servers via mimicing what a NeteaseCloudMusic Web Client would Do
-            log_callback        :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging
-            random_keys     :       Whether uses random seed or a static seed
-        Functions inside are well described,read them for more info.
+            
+            log_callback    :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging
+            random_keys     :       Whether uses random 2nd AES key or the constant 'mos9527ItoooItop' and its encypted RSA string
+        Functions inside are well commented,read them for more info.
     '''
 
-    def __init__(self, log_callback=lambda *a,**k: None,random_keys = False):
+    def __init__(self, log_callback=lambda *a, **k: None, random_keys=False):
         self.csrf_token, self.phone, self.password = '', '', ''
         # Cross-Site Reference Forgery token.Used for VIP validation & Phone number for login & password
         self.log = log_callback
@@ -125,19 +145,19 @@ class NeteaseCloudMusic():
         self.apis = {
             'meta_song': '/song',
             'meta_alubm': '/album',
-            'detail':'/weapi/v3/song/detail',
+            'detail': '/weapi/v3/song/detail',
             'wesong': '/weapi/song/enhance/player/url/v1',
             'playlist': '/weapi/v6/playlist/detail',
             'lyric': '/weapi/song/lyric',
             'login': '/weapi/login/cellphone',
             'comments_song': '/weapi/v1/resource/comments/R_SO_4_%s',
             'comments_album': '/weapi/v1/resource/comments/R_AL_3_%s',
-            'user_playlists':'/weapi/user/playlist'
+            'user_playlists': '/weapi/user/playlist'
         }
         # API URLs
         self.call_stack = {
             # Note that all Song IDs are parsed as String,and the parameters passed must be in order
-            'detail':'{id: "%s", c: "[{"id":"%s"}]", csrf_token: "%s"}',
+            'detail': '{id: "%s", c: "[{"id":"%s"}]", csrf_token: "%s"}',
             # Requires (Song ID,Song ID (repeat),CSRF Token)
             'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
             # Requires (Song ID,Audio quality[standard,high,higher,lossless],CSRF Token)
@@ -151,7 +171,7 @@ class NeteaseCloudMusic():
             # Requires (Song ID,Comment Offset,Comment Limit,CSRF Token)
             'comments_album': '{"rid":"R_AL_3_%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
             # Requires (Album ID,Comment Offset,Comment Limit,CSRF Token)
-            'user_playlists':'{offset: "%d", limit: "%d", uid: "%d", csrf_token: "%s"}'
+            'user_playlists': '{offset: "%d", limit: "%d", uid: "%d", csrf_token: "%s"}'
             # Requires (Playlist Offset,Playlist count Limit,User ID,CSRF Token)
         }
         # Call Formats
@@ -165,13 +185,13 @@ class NeteaseCloudMusic():
         # Login info fetched in UpdateLoginInfo
         # Tick is saved to update login since the login info would expire
 
-    def PostByMethodAndArgs(self, *args, method='',extra_headers={},extra_params={}):
+    def PostByMethodAndArgs(self, *args, method='', extra_headers={}, extra_params={}):
         '''
             Posts to the server with the given args and method
 
             The method,args are described in self.callstack
 
-            Returns a REQUEST Object
+            Returns a Response Object
         '''
         if not method:
             return None
@@ -189,10 +209,10 @@ class NeteaseCloudMusic():
             url += self.apis[method]
         r = self.session.post(
             url,
-            headers = {**self.session.headers,**extra_headers},
-            params={'csrf_token': self.csrf_token,**extra_params},
+            headers={**self.session.headers, **extra_headers},
+            params={'csrf_token': self.csrf_token, **extra_params},
             data=payload
-            )
+        )
         return r
 
     def GetUserAccountLevel(self):
@@ -273,7 +293,7 @@ class NeteaseCloudMusic():
         '''
             Fecthes a song's cover image,title,album and other meta infomations
 
-            No APIs were harmed during this process
+            Only using static webpage to decode the info.No APIs were used here
         '''
         self.log(strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
         url = self.base_url + self.apis['meta_song']
@@ -288,7 +308,7 @@ class NeteaseCloudMusic():
             'regex_artist_id': r"(?<=<meta property=\"music:musician\" content=\"https://music\.163\.com/artist\?id=).*(?=\")",
         }
         # Regex is faster than lxml here,since it doesn't need to go through the whole document
-        result = {'song_id':song_id}
+        result = {'song_id': song_id}
         for key in regexes.keys():
             try:
                 find = next(re.finditer(regexes[key], r, re.MULTILINE))
@@ -328,7 +348,7 @@ class NeteaseCloudMusic():
             self.log(song_id, format=strings.ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN)
         else:
             self.log(song_id, format=strings.INFO_FETCHED_SONG_WITH_TOKEN)
-            
+
         return body
 
     def GetSongLyrics(self, song_id):
@@ -417,7 +437,7 @@ class NeteaseCloudMusic():
         )
         return json.loads(r.text)
 
-    def GetUserPlaylists(self,user_id=0,offset=0,limit=1001):
+    def GetUserPlaylists(self, user_id=0, offset=0, limit=1001):
         '''
             Fetches a user's playlists.No VIP Level needed.
 
@@ -433,6 +453,6 @@ class NeteaseCloudMusic():
             return {}
 
         r = self.PostByMethodAndArgs(
-             offset, limit, user_id, self.csrf_token, method='user_playlists'
+            offset, limit, user_id, self.csrf_token, method='user_playlists'
         )
         return json.loads(r.text)
