@@ -21,8 +21,8 @@ print(strings.INIT_INIT(None))
 parser.add_argument('operation', metavar='OPERATION',
                     help=strings.HELP_OPERATIONS(None))
 parser.add_argument('id', metavar='ID', help=strings.HELP_ID(None))
-parser.add_argument('--opt', type=str, default='quality_lossless',
-                    help=strings.HELP_OPTIONS(None))
+parser.add_argument('--quality', type=str, default='lossless',
+                    help=strings.HELP_QUALITY(None))
 parser.add_argument('--temp', type=str, default='temp',
                     help=strings.HELP_TEMP_DIR(None))
 parser.add_argument('--output', type=str, default='output',
@@ -47,9 +47,9 @@ if len(sys.argv) < 2:
 args = parser.parse_args()
 args = args.__dict__
 
-operation, id, opt,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys,language = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys,language = args.values()
 # Parser end----------------------------------------------------------------------------
-log(id, operation, opt, NeteaseCloudMusicKeygen.generate_hash('',password) , phone, clear_temp, merge_only, temp, output,
+log(id, operation, quality, NeteaseCloudMusicKeygen.generate_hash('',password) , phone, clear_temp, merge_only, temp, output,
     pool_size, buffer_size, random_keys,language, format=strings.INIT_INITALIZED_WITH_ARGS)
 ncm = NCMFunctions(temp, output, merge_only, pool_size,
                    buffer_size, random_keys, log)
@@ -81,13 +81,13 @@ def NoExecWrapper(func, *args, **kwargs):
 
 
 reflection = {
-    'song_audio': NoExecWrapper(ncm.DownloadSongAudio, id=id, quality=opt),
+    'song_audio': NoExecWrapper(ncm.DownloadSongAudio, id=id, quality=quality),
     'song_lyric':   NoExecWrapper(ncm.DownloadAndFormatLyrics, id=id),
     'song_meta':  NoExecWrapper(ncm.DownloadSongInfo, id=id),
-    'song_down':  NoExecWrapper(ncm.DownloadAllInfo, id=id, quality=opt),
-    'song':  NoExecWrapper(ncm.DownloadAllAndMerge, id=id, quality=opt),
-    'playlist': NoExecWrapper(ncm.DownloadAllSongsInPlaylistAndMerge, id=id, quality=opt, merge_only=merge_only),
-    'album': NoExecWrapper(ncm.DownloadAllSongsInAlbumAndMerge, id=id, quality=opt, merge_only=merge_only)
+    'song_down':  NoExecWrapper(ncm.DownloadAllInfo, id=id, quality=quality),
+    'song':  NoExecWrapper(ncm.DownloadAllAndMerge, id=id, quality=quality),
+    'playlist': NoExecWrapper(ncm.DownloadAllSongsInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
+    'album': NoExecWrapper(ncm.DownloadAllSongsInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
 }
 
 if not operation in reflection.keys():

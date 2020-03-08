@@ -99,18 +99,20 @@ What to do:
         """][LANG()]
     def HELP_ID(self): return ['ID of the song / playlist / album', '歌曲、歌单或专辑的 ID'][LANG()]
 
-    def HELP_OPTIONS(self): return [
+    def HELP_QUALITY(self): return [
 """
 Extra options
-[quality_(standard, high, higher, lossless)]:Audio quality
-             Specifiy download quality,e.g.[quality_lossless] will download the song in Lossless quality
-             (if exsists and user's account level statisfies requirement)
+    Audio quality
+        Specifiy download quality,e.g.[lossless] will download the song in Lossless quality
+        (if exsists and user's account level statisfies requirement)
+        [standard, higher, lossless] are possible
 """, 
 """
 附加选项
-[quality_(standard, high, higher, lossless)]:音频质量
-    指定下载质量,如 [quality_lossless] 会尝试以无损质量下载
-    （若源有如此格式且用户等级允许）
+    音频质量
+        指定下载质量,如 [quality_lossless] 会尝试以无损质量下载
+        （若源有如此格式且用户等级允许）
+        质量等级：[standard, higher, lossless]
 """][LANG()]
     def HELP_TEMP_DIR(self): return ['Folder to store downloads', '临时存放下载文件的目录'][LANG()]
     def HELP_MERGE_ONLY(self): return ['Only merge audio data,skips download process.', '在临时目录中进行合并'][LANG()]
@@ -157,7 +159,7 @@ Extra options
     def DEBUG_FETCHING_SONG_WITH_TOKEN(
         self): return ['Fetching song info with token:{}', '正在以令牌 ({}) 获取歌曲信息'][LANG()]
     def ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN(
-        self): return ['Failed Fecthing Info of Song[{}]!', '获取歌曲 (id:{}) 信息失败'][LANG()]
+        self): return ['Failed Fecthing audio info[{}]!', '获取歌曲 (id:{}) 信息失败'][LANG()]
     def INFO_FETCHED_SONG_WITH_TOKEN(
         self): return ['Succeed in fecthing song [{}] info', '获取歌曲 (id:{}) 信息成功！'][LANG()]
     def DEBUG_FETCHING_EXTRA_SONG_INFO(

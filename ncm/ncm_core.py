@@ -160,7 +160,7 @@ class NeteaseCloudMusic():
             'detail': '{id: "%s", c: "[{"id":"%s"}]", csrf_token: "%s"}',
             # Requires (Song ID,Song ID (repeat),CSRF Token)
             'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
-            # Requires (Song ID,Audio quality[standard,high,higher,lossless],CSRF Token)
+            # Requires (Song ID,Audio quality[standard,good,higher,lossless],CSRF Token)
             'playlist': '{"id":"%s","offset":"0","total":"true","limit":"1000","n":"1000","csrf_token":"%s"}',
             # Requires (Playlist ID,CSRF Token)
             'lyric': '{"id": "%s", "lv": -1, "tv": -1, "csrf_token": "%s"}',
@@ -326,15 +326,15 @@ class NeteaseCloudMusic():
             Fetches a song's info.By default,it only returns the url and non-meta info.
 
                 quality can be set to these values:
-                    standard,high,higher,lossless
+                    standard,higher,lossless
             VIP Level Required for such level operations
 
             Otherwise,it fallbacks to standard
         '''
-        if not quality in ['standard', 'high', 'higher', 'lossless']:
+        if not quality in ['standard', 'higher', 'lossless']:
             self.log(quality, format=strings.WARN_INVALID_QUALITY_CONFIG)
             quality = 'standard'
-        # Quality check
+        #Quality check
         self.log(self.csrf_token, format=strings.DEBUG_FETCHING_SONG_WITH_TOKEN)
         r = self.PostByMethodAndArgs(
             song_id, quality, self.csrf_token, method='wesong')

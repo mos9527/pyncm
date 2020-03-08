@@ -219,16 +219,14 @@ class NCMFunctions():
             return
         meta = json.loads(open(meta, encoding='utf-8').read())
         # Load JSON for future purposes
-        lrc = """
-    [ti:{}]
-    [al:{}]
-    [au:{}]
-    [re:Pyself.NCM]""".format(meta['title'], meta['album'], meta['author'])
+        lrc = f"""[ti:{meta['title']}]
+[al:{meta['album']}]
+[au:{meta['author']}]
+[re:Pyself.NCM]"""
 
         for timestamp in lyrics.keys():
             newline = '[%s]' % timestamp
-            for lyric in lyrics[timestamp]:
-                newline += '{}    '.format(lyric)
+            newline += '\t'.join(lyrics[timestamp])
             lrc += '\n' + newline
         path = self.GenerateDownloadPath(
             filename='{1} - {0}.{2}'.format(meta['title'], meta['author'], 'lrc'), folder=export)
