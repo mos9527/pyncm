@@ -16,6 +16,11 @@ from Crypto.Random import random
 from hashlib import md5
 from .strings import strings, simple_logger
 
+def Depercated(func):
+    def wrapper(*args,**kwargs):
+        simple_logger(func.__name__,format=strings.WARN_METHOD_DEPERCATED)
+        return func(*args,**kwargs)
+    return wrapper
 
 class RSAPublicKey():
     '''
@@ -74,6 +79,7 @@ class NeteaseCloudMusicKeygen():
         return hex(n ** e % N)[2:].zfill(256)
 
     def __init__(self, random_key=False):
+        self.generate_ncmcrypt = self.__call__
         self.aes_key = "0CoJUm6Qyw8W8jud"
         self.aes_iv = "0102030405060708"
         self.pubkey = RSAPublicKey(
@@ -90,7 +96,7 @@ class NeteaseCloudMusicKeygen():
             E.g. if given 'mos9527ItoooItop' as the key,it will output the following:
                 01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754
         '''
-    def generate_ncmcrypt(self, text):
+    def __call__(self, text):
         '''
             This part mimics the [window.asrsea] function.
 
@@ -157,8 +163,8 @@ class NeteaseCloudMusic():
         # API URLs
         self.call_stack = {
             # Note that all Song IDs are parsed as String,and the parameters passed must be in order
-            'detail': '{id: "%s", c: "[{"id":"%s"}]", csrf_token: "%s"}',
-            # Requires (Song ID,Song ID (repeat),CSRF Token)
+            'detail': r'{"c":"[{\"id\":\"%s\"}]","csrf_token":"%s"}',
+            # Requires (Song ID,CSRF Token)
             'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
             # Requires (Song ID,Audio quality[standard,good,higher,lossless],CSRF Token)
             'playlist': '{"id":"%s","offset":"0","total":"true","limit":"1000","n":"1000","csrf_token":"%s"}',
@@ -196,7 +202,7 @@ class NeteaseCloudMusic():
         if not method:
             return None
         request_params = self.call_stack[method] % args
-        ncmcrypt = self.keygen.generate_ncmcrypt(request_params)
+        ncmcrypt = self.keygen(request_params)
         payload = {
             'params': ncmcrypt['params'],
             'encSecKey': ncmcrypt['encSecKey']
@@ -289,12 +295,31 @@ class NeteaseCloudMusic():
                 self.log(strings.ERROR_FAILED_TO_UPDATE_LOGIN)
                 return None
 
+    def GetSongDetail(self,song_id):
+        '''
+            Fetches a song's 'detailed' infomation
+
+                song_id        :        ID of which song
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
+        r = self.PostByMethodAndArgs(
+            song_id, self.csrf_token, method='detail'
+        )
+        return json.loads(r.text)        
+    
+    @Depercated
     def GetExtraSongInfo(self, song_id):
         '''
-            Fecthes a song's cover image,title,album and other meta infomations
+            Fecthes a song's cover image,title,album and other meta infomation via webpage
+
+            Which contains less infomation than 'GetSongDetail'  AND SLOWER
+
+            This method is DEPERCATED
 
             Only using static webpage to decode the info.No APIs were used here
         '''
+    
         self.log(strings.DEBUG_FETCHING_EXTRA_SONG_INFO)
         url = self.base_url + self.apis['meta_song']
         r = self.session.get(url, params={'id': song_id}).text

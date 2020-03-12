@@ -11,9 +11,9 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
     >>> NCM = NeteaseCloudMusic()
     >>> NCM.GetSongInfo(29732235)
     # 获取歌曲信息
-    {'data': [{'id': 29732235, 'url': 'http://m701.music.126.net/20200209190806/3da313a3a60493280779b3aed9c6c9d7/jdyyaac/040f/565c/0508/3ed3de2e4ea60ff52b6a2bc8a500f397.m4a', 'br': 96000, 'size': 3979843, 'md5': '3ed3de2e4ea60ff52b6a2bc8a500f397', 'code': 200, 'expi': 1200, 'type': 'm4a', 'gain': 0.0, 'fee': 8, 'uf': None, 'payed': 0, 'flag': 256, 'canExtend': False, 'freeTrialInfo': None, 'level': 'standard', 'encodeType': 'aac'}], 'code': 200}
+    {'songs': [{'name': 'Supernova', 'id': 29732235, 'pst': 0, 't': 0, 'ar': [{'id': 38725, 'name': 'Laszlo', 'tns': [], 'alias': []}], 'alia': [], 'pop': 80.0, 'st': 0, 'rt': None, 'fee': 8, 'v': 13, 'crbt': None, 'cf': '', 'al': {'id': 3069044, 'name': 'Supernova', 'picUrl': 'https://p1.music.126.net/lX7Tq41nF4VkYYeW_Tz1Wg==/109951163311252223.jpg', 'tns': [], 'pic_str': '109951163311252223', 'pic': 109951163311252223}, 'dt': 326844, 'h': {'br': 320000, 'fid': 0, 'size': 13075897, 'vd': -32900.0}, 'm': {'br': 192000, 'fid': 0, 'size': 7845555, 'vd': -30500.0}, 'l': {'br': 128000, 'fid': 0, 'size': 5230385, 'vd': -29600.0}, 'a': None, 'cd': '1', 'no': 1, 'rtUrl': None, 'ftype': 0, 'rtUrls': [], 'djId': 0, 'copyright': 2, 's_id': 0, 'mark': 393216, 'originCoverType': 0, 'mv': 447041, 'rtype': 0, 'rurl': None, 'mst': 9, 'cp': 729016, 'publishTime': 1415577600000}], 'privileges': [{'id': 29732235, 'fee': 8, 'payed': 0, 'st': 0, 'pl': 128000, 'dl': 0, 'sp': 7, 'cp': 1, 'subp': 1, 'cs': False, 'maxbr': 999000, 'fl': 128000, 'toast': False, 'flag': 256, 'preSell': False, 'playMaxbr': 999000, 'downloadMaxbr': 999000}], 'code': 200}
 
-    >>> NCM.GetExtraSongInfo(29732235)
+    >>> NCM.GetSongDetail(29732235)
     # 获取附加歌曲信息
     {'title': 'Supernova', 'cover': 'http://p1.music.126.net/lX7Tq41nF4VkYYeW_Tz1Wg==/109951163311252223.jpg', 'author': 'Laszlo', 'album': 'Supernova', 'album_id': '3069044', 'artist_id': '38725'}
 
@@ -46,7 +46,7 @@ utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. 
 |-|-|-|
 |明文登录（通过手机号及明文密码）|✔|NeteaseCloudMusic.UpdateLoginInfo|
 |音频解析（无损解析需要以VIP特权登录）|✔|NeteaseCloudMusic.GetSongInfo|
-|歌曲信息爬取|✔|NeteaseCloudMusic.GetExtraSongInfo|
+|歌曲信息爬取|✔|~~NeteaseCloudMusic.GetExtraSongInfo~~NeteaseCloudMusic.GetSongDetail|
 |歌词解析|✔|NeteaseCloudMusic.GetSongLyrics|
 |歌单解析|✔|NeteaseCloudMusic.GetPlaylistInfo|
 |歌曲评论爬取|✔|NeteaseCloudMusic.GetSongComments|

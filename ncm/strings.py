@@ -156,6 +156,8 @@ Extra options
         'VIP Level Operation Possible.Procceding.', '账号含VIP等级！'][LANG()]
     def WARN_INVALID_QUALITY_CONFIG(self): return [
         'The specified Quality level {} is INVALID.Falling back to "standard"', '歌曲品质({})无效！将使用标准音质'][LANG()]
+    def WARN_METHOD_DEPERCATED(self): return [
+        'This method ({}) is DEPERCATED,please refer to README for more info', '该方法({})已弃用，请参见README以了解更多'][LANG()]    
     def DEBUG_FETCHING_SONG_WITH_TOKEN(
         self): return ['Fetching song info with token:{}', '正在以令牌 ({}) 获取歌曲信息'][LANG()]
     def ERROR_FAILED_FECTCHING_SONG_WITH_TOKEN(
