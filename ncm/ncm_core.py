@@ -47,29 +47,41 @@ class NeteaseCloudMusicKeygen():
     def get_random_string(self, len):
         return ''.join([random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(0, len)])
 
-    def AES_encrypt(self, text, key, iv):
+    def AES_encrypt(self, data, key, iv,output_fmt='base64'):
         '''
-            AES Encryption using CBC
+            AES Encryption using CBC & zeropadding
+
+                data        :       Data string to be encrypted
+                key         :       Key string
+                iv          :       IV Hex string
+                output_fmt :       Output format ( 'base64' / 'hex' )
 
             ref:https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256
         '''
         bs = AES.block_size
         def pad2(s): return s + (bs - len(s) % bs) * chr(bs - len(s) % bs)
         encryptor = AES.new(key.encode(), AES.MODE_CBC, iv.encode())
-        encrypt_aes = encryptor.encrypt(str.encode(pad2(text)))
-        encrypt_text = str(base64.encodebytes(encrypt_aes), encoding='utf-8')
-        return encrypt_text
+        encrypt_aes = encryptor.encrypt(str.encode(pad2(data)))
+        formatter = {
+            'base64':lambda d: str(base64.encodebytes(d), encoding='utf-8'),
+            'hex':lambda d: d.hex().upper()
+        }
+        return formatter[output_fmt](encrypt_aes)
 
     def RSA_encrypt(self,data,pubkey:RSAPublicKey,reverse=True):
         '''
             A no-padding RSA encryption implemented in python
-               
+            Workings:    
                c ≡ n ^ e % N
                
                     c                :       result,the encrypted data
-                    n(data)          :       input,the data taken (note that it's reversed in the JS)
-                    e(exponet)       :       modulus
-                    N(modulus)       :       public key
+                    n(data)          :       Input
+                    e(exponent)      :       RSA Exponent (Usually,10001 (bin) / 17 (decimal))
+                    N(modulus)       :       RSA Modulus (aka pubkey)
+            Usage:
+                    data             :       Data string to be encrypted
+                    pubkey           :       RSAPublicKey
+                    reverse          :       Whether reverse the string when encrpyt or not
             ref:https://zh.wikipedia.org/wiki/RSA
         '''
         def toInt(s):return int(s.encode('utf-8').hex(),16)
