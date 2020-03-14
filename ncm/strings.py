@@ -183,7 +183,9 @@ Extra options
     def DEBUG_FETCHING_COMMENTS_WITH_TOKEN(
         self): return ['Fetching comments with token:{}', '正在以令牌 ({}) 获取评论'][LANG()]
     def DEBUG_FETCHING_USER_PLAYLISTS_WITH_TOKEN(
-        self): return ['Fetching playlists with token:{}', '正在以令牌 ({}) 获取歌单列表'][LANG()]
+        self): return ['Fetching user ({}) playlists with token:{}', '正在以令牌 ({}) 获取用户 ({}) 歌单列表'][LANG()]
+    def DEBUG_FETCHING_MV(
+        self): return ['Fetching MV ({}) info', '正在以获取 MV ({}) 信息'][LANG()]
     def DEBUG_DOWNLOAD_STATUS(
         self): return [
         """

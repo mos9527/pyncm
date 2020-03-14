@@ -53,6 +53,9 @@ utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. 
 |专辑信息爬取|✔|NeteaseCloudMusic.GetAlbumInfo|
 |专辑评论爬取|✔|NeteaseCloudMusic.GetAlbumComments|
 |获取用户歌单|✔|NeteaseCloudMusic.GetUserPlaylists|
+|MV信息爬取|✔|NeteaseCloudMusic.GetMVInfo|
+|MV评论爬取|✔|NeteaseCloudMusic.GetMVComments|
+
 |下载歌曲并填入 META|✔|NCMFunctions.DownloadSongAudio|
 |批量下载专辑歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInAlbumAndMerge|
 |批量下载歌单歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInPlaylistAndMerge|

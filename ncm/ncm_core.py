@@ -170,7 +170,9 @@ class NeteaseCloudMusic():
             'login': '/weapi/login/cellphone',
             'comments_song': '/weapi/v1/resource/comments/R_SO_4_%s',
             'comments_album': '/weapi/v1/resource/comments/R_AL_3_%s',
-            'user_playlists': '/weapi/user/playlist'
+            'comments_mv':'/weapi/v1/resource/comments/R_MV_5_%s',
+            'user_playlists': '/weapi/user/playlist',
+            'mv':'/weapi/song/enhance/play/mv/url'
         }
         # API URLs
         self.call_stack = {
@@ -187,10 +189,14 @@ class NeteaseCloudMusic():
             # Requires (Phone Number,Hashed(MD5) Password)
             'comments_song': '{"rid":"%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
             # Requires (Song ID,Comment Offset,Comment Limit,CSRF Token)
-            'comments_album': '{"rid":"R_AL_3_%s","offset":"%d","total":"true","limit":"%d","csrf_token":"%s"}',
+            'comments_album': '{"rid":"R_AL_3_%s","offset":"%s","total":"true","limit":"%s","csrf_token":"%s"}',
             # Requires (Album ID,Comment Offset,Comment Limit,CSRF Token)
-            'user_playlists': '{offset: "%d", limit: "%d", uid: "%d", csrf_token: "%s"}'
+            'comments_mv':'{"rid":"R_MV_5_%s","offset":"%s","total":"true","limit":"%s","csrf_token":"%s"}',
+            # Requires (MV ID,Comment Offset,Comment Limit,CSRF Token)
+            'user_playlists': '{offset: "%s", limit: "%s", uid: "%s", csrf_token: "%s"}',
             # Requires (Playlist Offset,Playlist count Limit,User ID,CSRF Token)
+            'mv':'{"id":"%s","r":"%s","csrf_token":"%s"}',
+            # Requires (MV ID,Resolution (1080,720,480,etc),CSRF Token)
         }
         # Call Formats
         self.keygen = NeteaseCloudMusicKeygen(random_keys)
@@ -220,8 +226,9 @@ class NeteaseCloudMusic():
             'encSecKey': ncmcrypt['encSecKey']
         }
         url = self.base_url
-        if method in ['comments_song', 'comments_album']:
+        if 'comments' in method:
             # Special Exceptions for non-standard arguments
+            # which are also in URLs
             url += self.apis[method] % args[0]
         else:
             url += self.apis[method]
@@ -482,14 +489,40 @@ class NeteaseCloudMusic():
                 offset  :   sets where the comment begins
                 limit   :   sets how many of them can be sent
         '''
-        self.log(self.csrf_token,
-                 format=strings.DEBUG_FETCHING_USER_PLAYLISTS_WITH_TOKEN)
         if user_id == 0 and not self.GetUserAccountLevel() == 'NOLOGIN':
             user_id = self.login_info['content']['account']['id']
         elif user_id == 0:
             return {}
-
+        self.log(user_id,self.csrf_token,
+                 format=strings.DEBUG_FETCHING_USER_PLAYLISTS_WITH_TOKEN)
         r = self.PostByMethodAndArgs(
             offset, limit, user_id, self.csrf_token, method='user_playlists'
         )
         return json.loads(r.text)
+
+    def GetMVInfo(self, id,res=1080):
+        '''
+            Fetches MV Info
+
+                id      :   The ID of the MV
+                res     :   MV Resolution
+        '''
+        self.log(id,format=strings.DEBUG_FETCHING_MV)
+        r = self.PostByMethodAndArgs(
+            id,res,self.csrf_token,method='mv'
+        )
+        return json.loads(r.text)
+
+    def GetMVComments(self, mv_id, offset=0, limit=20):
+        '''
+            Fetches a album's comments.No VIP Level needed.
+
+                offset  :   sets where the comment begins
+                limit   :   sets how many of them can be sent
+        '''
+        self.log(self.csrf_token,
+                 format=strings.DEBUG_FETCHING_COMMENTS_WITH_TOKEN)
+        r = self.PostByMethodAndArgs(
+            mv_id, offset, limit, self.csrf_token, method='comments_mv'
+        )
+        return json.loads(r.text)    
