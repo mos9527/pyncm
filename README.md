@@ -75,7 +75,7 @@ utils.progressbar 进度条 by 'Carlos Alexandre S. da Fonseca'
     mutagen
     colorama
 
-### 安装
+### 安装依赖
 
     pip install -r requirements.txt
 
