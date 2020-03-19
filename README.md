@@ -70,5 +70,11 @@ utils.progressbar 进度条 by 'Carlos Alexandre S. da Fonseca'
 
 ## 依赖包
 
-    (必须) requests,pycryptodome
-    (可选) mutagen,colorama
+    requests
+    pycryptodome
+    mutagen
+    colorama
+
+### 安装
+
+    pip install -f requirements.txt
