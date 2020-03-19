@@ -77,4 +77,4 @@ utils.progressbar 进度条 by 'Carlos Alexandre S. da Fonseca'
 
 ### 安装
 
-    pip install -f requirements.txt
+    pip install -r requirements.txt
