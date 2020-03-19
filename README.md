@@ -27,11 +27,11 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 
 ### ncm
 
-ncm.ncm_core 即核心包，包含keygen和部分eapi，需要 pycryptodome 和 requests 运行
+ncm.ncm_core 核心包，包含keygen和部分eapi，需要 pycryptodome 和 requests 运行
 
-ncm.ncm_func 为功能包，需要上述包和 mutagen 和 colorama 运行
+ncm.ncm_func 功能包，需要上述包和 mutagen 和 colorama 运行
 
-ncm.strings  包含所有非常量字符串，需要 colorama 以显示色彩
+ncm.strings  包含所有常量字符串，Windows 机器需要 colorama 显示 ASCII 色彩
 
 ### utils
 
@@ -39,9 +39,11 @@ utils.clisheet CLI表格，用于显示下载进度
 
 utils.downloader 纯标准库多线程下载器
 
-utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. da Fonseca'
+utils.progressbar 进度条 by 'Carlos Alexandre S. da Fonseca'
 
 # 工程进度
+    ncm.ncm_core
+
 |功能|进度|函数名|
 |-|-|-|
 |明文登录（通过手机号及明文密码）|✔|NeteaseCloudMusic.UpdateLoginInfo|
@@ -55,7 +57,10 @@ utils.progressbar fork的一个进度条实现，作者为 'Carlos Alexandre S. 
 |获取用户歌单|✔|NeteaseCloudMusic.GetUserPlaylists|
 |MV信息爬取|✔|NeteaseCloudMusic.GetMVInfo|
 |MV评论爬取|✔|NeteaseCloudMusic.GetMVComments|
+    ncm.ncm_func
 
+|功能|进度|函数名|
+|-|-|-|
 |下载歌曲并填入 META|✔|NCMFunctions.DownloadSongAudio|
 |批量下载专辑歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInAlbumAndMerge|
 |批量下载歌单歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInPlaylistAndMerge|
