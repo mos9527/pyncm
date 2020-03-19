@@ -245,4 +245,6 @@ def simple_logger(*args, format=None):
             content = ' '.join([str(arg) for arg in args])
     log = '{}::{} {}'.format(level, time.strftime("%H:%M:%S", time.localtime()), content)
     print(log)
-    open('log.txt','a+',encoding='utf-8').write(log+'\n')
+    open('log.txt','a+',encoding='utf-8').write(
+        '{} {}\n'.format(time.strftime("%H:%M:%S", time.localtime()), content)
+    )

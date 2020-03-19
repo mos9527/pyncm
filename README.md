@@ -78,3 +78,15 @@ utils.progressbar 进度条 by 'Carlos Alexandre S. da Fonseca'
 ### 安装
 
     pip install -r requirements.txt
+
+# 提交 Issue
+请将控制台所输出的日志一并提交，方法见下
+- 使用 pyncm.py : 直接复制
+- 使用 ncm.ncm_core 或 ncm.ncm_func 包
+两者默认不输出日志，若欲启用日志功能，见下例：
+		from ncm.strings import simple_logger
+		from ncm.ncm_core import NeteaseCloudMusic
+		NCM = NeteaseCloudMusic(logger=simple_logger)
+或
+		NCM = NCMFunctions(logger=simple_logger)
+程序将会根据计算机语言输出相应日志，并会在执行目录输出 `log.txt`
