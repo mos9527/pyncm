@@ -57,8 +57,8 @@ class NCMFunctions():
         filename = normalize(filename)
         folder = os.path.join(folder, str(id)) if folder else os.path.join(self.temp, str(id))
         result = os.path.join(folder, filename)
-
-        if (path := os.path.split(result))[0]:
+        path = os.path.split(result)
+        if path[0]:
              if not os.path.exists(path[0]):os.makedirs(path[0])
         # Make the folder tree
         return result
@@ -244,9 +244,7 @@ class NCMFunctions():
         '''
         export = export if export else self.output
         folder = str(folder)
-        format = ''
-
-        audio = [f for f in os.listdir(folder) if (format:= f.split('.')[-1]) in ['mp3', 'm4a', 'flac']]
+        audio = [f for f in os.listdir(folder) if f.split('.')[-1] in ['mp3', 'm4a', 'flac']]
         if not audio:return
         audio = audio[-1]
         audio = self.GenerateDownloadPath(filename=audio, folder=folder)
@@ -310,7 +308,8 @@ class NCMFunctions():
         # Rename & move file
         savename = '{1} - {0}.{2}'.format(meta['title'], meta['author'], format)
         try:
-            shutil.copy(audio, path:= self.GenerateDownloadPath(filename=savename, folder=export))
+            path = self.GenerateDownloadPath(filename=savename, folder=export)
+            shutil.copy(audio, path)
             self.log(path, format=strings.INFO_EXPORT_COMPLETE)
         except Exception as e:
             self.log(e,format=strings.ERROR_INVALID_OPERATION)

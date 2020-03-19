@@ -305,7 +305,8 @@ class NeteaseCloudMusic():
                 # 415 means the IP was reqeusting too frequently.This can be solved with a delayed request
                 # 502 means the combo provided is wrong
                 self.login_info['success'] = True
-                self.log(','.join((cookie:= self.session.cookies.get_dict()).keys()), format=strings.DEBUG_UPDATED_COOKIE)
+                cookie = self.session.cookies.get_dict()
+                self.log(','.join((cookie).keys()), format=strings.DEBUG_UPDATED_COOKIE)
                 self.csrf_token = cookie['__csrf']
                 self.log(self.csrf_token, format=strings.DEBUG_NEW_CSRF_TOKEN)
                 self.GetUserAccountLevel()

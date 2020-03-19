@@ -78,10 +78,12 @@ class DownloadWorker(PoolWorker):
                 self.task_queue.task_done()
                 continue
             # Stops this iteration if server doesn't response 200 (0xC8)
-            if (length:= int(r.headers['content-length'])):
+            length = int(r.headers['content-length'])
+            if (length):
                 self.status['length'] = length
             # Sets content-length if the server ever sends one
-            if (p:= os.path.split(path))[0]:
+            p = os.path.split(path)
+            if p[0]:
                 if not os.path.exists(p[0]):os.makedirs(p[0])
             # Creates directory tree if dosen't exsist
             try:
