@@ -15,13 +15,7 @@ from Crypto.Cipher import AES
 from Crypto.Random import random
 from hashlib import md5
 from .strings import strings, simple_logger
-
-def Depercated(func):
-    def wrapper(*args,**kwargs):
-        simple_logger(func.__name__,format=strings.WARN_METHOD_DEPERCATED)
-        return func(*args,**kwargs)
-    return wrapper
-
+from . import Depercated
 class RSAPublicKey():
     '''
         RSA Publickey object

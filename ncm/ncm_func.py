@@ -17,7 +17,7 @@ from mutagen.mp4 import MP4, MP4Cover
 from utils.downloader import Downloader,DownloadWorker,PoolWorker
 from .ncm_core import NeteaseCloudMusic
 from .strings import simple_logger, strings
-
+from . import Depercated
 
 class NCMFunctions():
     '''
@@ -221,7 +221,7 @@ class NCMFunctions():
         lrc = f"""[ti:{meta['title']}]
 [al:{meta['album']}]
 [au:{meta['author']}]
-[re:Pyself.NCM]"""
+[re:PyNCM]"""
 
         for timestamp in lyrics.keys():
             newline = '[%s]' % timestamp
@@ -320,7 +320,6 @@ class NCMFunctions():
         '''
         if not folder:
             folder = self.GenerateDownloadPath(id=id, folder=folder)
-        quality = quality.replace('quality_', '')
         self.QueueDownloadSongAudio(id, quality, folder)
         self.DL.wait(func=self.ShowDownloadStatus)
         self.log(strings.INFO_BATCH_DOWNLOAD_COMPLETE)
@@ -353,7 +352,6 @@ class NCMFunctions():
         '''
         if not folder:
             folder = self.GenerateDownloadPath(id=id, folder=folder)
-        quality = quality.replace('quality_', '')
         # Download meta and cover.Note that cover is downloaded asynchronously
         self.QueueDownloadSongInfo(id, folder)
         # Download lyrics
@@ -370,7 +368,6 @@ class NCMFunctions():
         '''
         if not folder:
             folder = self.GenerateDownloadPath(id=id, folder=folder)
-        quality = quality.replace('quality_', '')
         self.DownloadAllInfo(id, quality, folder)
         self.DownloadAndFormatLyrics(id, folder)
         self.FormatSong(folder)
@@ -391,7 +388,6 @@ class NCMFunctions():
         def wrapper(id, quality='lossless', folder=None,merge_only=False):
             if not folder:
                 folder = self.GenerateDownloadPath(id=id, folder=folder)
-            quality = quality.replace('quality_', '')
             if not self.merge_only:
                 queue_func(id, quality, folder)
                 self.DL.wait(func=self.ShowDownloadStatus)
@@ -409,7 +405,25 @@ class NCMFunctions():
         return wrapper
 
     def DownloadAllSongsInPlaylistAndMerge(self,id, quality='lossless', folder=None,merge_only=False):
+        '''
+            Downloads all songs in a playlist into selected folder
+
+                id          :       Song ID
+                quality     :       Song Quality
+                folder      :       Output folder
+                merge_only  :       Merge by id from 'folder',Only use this if you 
+                                    Have finished downloading first
+        '''
         return self.MutilWrapper(self.QueueDownloadAllSongsInPlaylist)(id, quality, folder,merge_only)
 
     def DownloadAllSongsInAlbumAndMerge(self,id, quality='lossless', folder=None,merge_only=False):
+        '''
+            Downloads all albums in a playlist into selected folder
+
+                id          :       Song ID
+                quality     :       Song Quality
+                folder      :       Output folder
+                merge_only  :       Merge by id from 'folder',Only use this if you 
+                                    Have finished downloading first
+        '''
         return self.MutilWrapper(self.QueueDownloadAllSongsInAlbum)(id, quality, folder,merge_only)
