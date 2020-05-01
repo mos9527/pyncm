@@ -29,7 +29,7 @@ import json
 
 import ncm
 # All imports are good?Print the splash text
-colorama.init();coloredlogs.install(level=0)
+colorama.init();coloredlogs.install(level=logging.DEBUG)
 print(splash)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # Set logging level for `urllib3`

@@ -9,8 +9,11 @@ from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3
 from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
-
-from utils.downloader import Downloader,DownloadWorker,PoolWorker
+try:
+    from utils.downloader import Downloader,DownloadWorker,PoolWorker
+except Exception:
+    from ..utils.downloader import Downloader,DownloadWorker,PoolWorker
+# If used as module..
 from .ncm_core import NeteaseCloudMusic
 from . import Depercated,logger,session
 
@@ -214,7 +217,7 @@ class NCMFunctions():
             return
         meta = self.GenerateDownloadPath(filename='meta.json', folder=folder)
         # Locate meta file
-        if not os.path.exists(lyrics):
+        if not os.path.exists(meta):
             logger.warn('Missing meta.json,will skip meta info parsing')
             meta = {
                 'title':'undefined',
@@ -394,8 +397,7 @@ class NCMFunctions():
             # Start merging every subfolder via threadpool,where it's a mutation of the Downloader
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
-                target = os.path.join(folder, sub)
-                pool.append(merge,target)
+                merge(os.path.join(folder,sub))
             pool.wait()
         return wrapper
 
