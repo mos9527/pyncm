@@ -1,10 +1,6 @@
 '''
-@Author: greats3an
-@Date: 2020-01-24 11:32:51
-@LastEditors  : greats3an
-@LastEditTime : 2020-02-11 17:00:23
-@Site: mos9527.tooo.top
-@Description: Functions utilizing self.NCM_core.py
+# Netease Cloud Music Func
+For direct disk I/O Access and ease-of-use for downloading,tagging music of NE
 '''
 import argparse,re,shutil,json,time,os,sys
 from colorama import Cursor
@@ -16,8 +12,7 @@ from mutagen.mp4 import MP4, MP4Cover
 
 from utils.downloader import Downloader,DownloadWorker,PoolWorker
 from .ncm_core import NeteaseCloudMusic
-from .strings import simple_logger, strings
-from . import Depercated
+from . import Depercated,logger,session
 
 class NCMFunctions():
     '''
@@ -33,17 +28,18 @@ class NCMFunctions():
             random_keys     :       Whether uses random 2nd AES key or the constant 'mos9527ItoooItop' and its encypted RSA string
         Functions inside are well described,read them for more info.
     '''
-    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=False,logger=lambda *args,**kwargs:None):
-        self.NCM = NeteaseCloudMusic(logger,random_keys)
-        self.DL = Downloader(session=self.NCM.session,pool_size=pool_size,buffer_size=buffer_size)
+    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=False):
+        self.NCM = NeteaseCloudMusic(random_keys)
+        self.DL = Downloader(session=session,pool_size=pool_size,buffer_size=buffer_size)
         # Initalization of other classes
         self.temp,self.output,self.merge_only = temp,output,merge_only
-        self.log = logger;self.pool_size = pool_size
+        self.pool_size = pool_size
+    
     def ShowDownloadStatus(self):
         '''
             Shows downloader info
         '''
-        content = self.DL.report(strings.DEBUG_DOWNLOAD_STATUS(None))
+        content = self.DL.report('''Downloading....{1} in queue,{2} not finished\n{0}''')
         print(content, Cursor.UP(content.count('\n') + 1))
         time.sleep(1)
 
@@ -62,12 +58,13 @@ class NCMFunctions():
              if not os.path.exists(path[0]):os.makedirs(path[0])
         # Make the folder tree
         return result
+    
     def QueueDownload(self,url, path):
         '''
             Queue a download
         '''
         self.DL.append(url, path)
-        self.log(url, path, format=strings.INFO_QUEUED_DOWNLOAD)
+        logger.debug('Queued download ...%s -> ...%s' % (url[-16:],path[-16:]))
 
     def QueueDownloadSongAudio(self,id, quality='lossless', folder=''):
         '''
@@ -92,6 +89,7 @@ class NCMFunctions():
         target = self.GenerateDownloadPath(filename='meta.json', folder=folder)
         open(target, mode='w', encoding='utf-8').write(json.dumps(info))
         # Writes metadata to JSON file
+        return info
 
     def QueueDownloadAllSongsInAlbum(self,id, quality='lossless', folder=''):
         '''
@@ -102,9 +100,9 @@ class NCMFunctions():
         info = self.NCM.GetAlbumInfo(id)
         try:
             name, creator = info['title'], info['author']
-            self.log(name, creator, format=strings.INFO_FETCHED_ALBUM_WITH_TOKEN)
         except Exception as e:
-            self.log(e, format=strings.ERROR_INVALID_OPERATION)
+            logger.error('Failed to fetch Album info:%s' % e)
+            return
         root = folder
         # Go through every track inside the JSON
         for track in info['songlist']:
@@ -127,6 +125,7 @@ class NCMFunctions():
             self.QueueDownloadSongAudio(track_id, quality, track_root)
             self.QueueDownload(meta['cover'], self.GenerateDownloadPath(
                 filename='cover.jpg', folder=track_root))
+        return info
 
     def QueueDownloadAllSongsInPlaylist(self,id, quality='lossless', folder=''):
         '''
@@ -137,9 +136,9 @@ class NCMFunctions():
         info = self.NCM.GetPlaylistInfo(id)
         try:
             name, creator = info['playlist']['name'], info['playlist']['creator']['nickname']
-            self.log(name, creator, format=strings.INFO_FETCHED_PLAYLIST_WITH_TOKEN)
         except Exception as e:
-            self.log(e, format=strings.ERROR_INVALID_OPERATION)
+            logger.error('Failed to fetch Playlist info:%s' % e)
+            return
         root = folder
         # Go through every track inside the JSON
         for track in info['playlist']['tracks']:
@@ -162,6 +161,7 @@ class NCMFunctions():
             self.QueueDownloadSongAudio(track_id, quality, track_root)
             self.QueueDownload(meta['cover'], self.GenerateDownloadPath(
                 filename='cover.jpg', folder=track_root))
+        return info
 
     def DownloadSongLyrics(self,id, folder=''):
         '''
@@ -171,6 +171,7 @@ class NCMFunctions():
         target = self.GenerateDownloadPath(filename='lyrics.json', folder=folder)
         open(target, mode='w', encoding='utf-8').write(json.dumps(lyrics))
         # Writes lyrics to JSON file
+        return lyrics
 
     def LoadLyrics(self,folder):
         '''
@@ -179,8 +180,8 @@ class NCMFunctions():
         lyrics = self.GenerateDownloadPath(filename='lyrics.json', folder=folder)
         # Locate lyric file
         if not os.path.exists(lyrics):
-            self.log('lyrics.json', format=strings.ERROR_FILE_MISSING)
-            return
+            logger.error('Missing lyrics.json,LRC will not be parsed')
+            return {}
         lyrics = json.loads(open(lyrics, encoding='utf-8').read())
         # Load lyrics into json file
         lrc_lists = [lyrics[lrc]['lyric'] for lrc in lyrics.keys() if lrc in ['lrc', 'tlyric'] and 'lyric' in lyrics[lrc].keys()]
@@ -213,15 +214,17 @@ class NCMFunctions():
             return
         meta = self.GenerateDownloadPath(filename='meta.json', folder=folder)
         # Locate meta file
-        if not os.path.exists(meta):
-            self.log('meta.json', format=strings.ERROR_FILE_MISSING)
-            return
-        meta = json.loads(open(meta, encoding='utf-8').read())
+        if not os.path.exists(lyrics):
+            logger.warn('Missing meta.json,will skip meta info parsing')
+            meta = {
+                'title':'undefined',
+                'album':'undefined',
+                'author':'undefined'
+            }
+        else:
+            meta = json.loads(open(meta, encoding='utf-8').read())
         # Load JSON for future purposes
-        lrc = f"""[ti:{meta['title']}]
-[al:{meta['album']}]
-[au:{meta['author']}]
-[re:PyNCM]"""
+        lrc = f"""[ti:{meta['title']}]\n[al:{meta['album']}]\n[au:{meta['author']}]\n[re:PyNCM]\n"""
 
         for timestamp in lyrics.keys():
             newline = '[%s]' % timestamp
@@ -230,8 +233,8 @@ class NCMFunctions():
         path = self.GenerateDownloadPath(
             filename='{1} - {0}.{2}'.format(meta['title'], meta['author'], 'lrc'), folder=export)
         open(path, mode='w', encoding='utf-8').write(lrc)
-        self.log(path, format=strings.INFO_EXPORT_COMPLETE)
-        return path
+        logger.debug('Downloaded lyrics ...%s' % path[-16:])
+        return lrc
 
     def FormatSong(self,folder, export=''):
         '''
@@ -255,15 +258,8 @@ class NCMFunctions():
         # Locate cover image
 
         if not audio:
-            self.log('audio.m4a / audio.mp3 / audio.flac',
-                format=strings.ERROR_FILE_MISSING)
+            logger.error('audio.m4a / audio.mp3 / audio.flac is missing,Cannot continue formatting!')
             return
-        if not os.path.exists(meta):
-            self.log('meta.json', format=strings.ERROR_FILE_MISSING)
-            return
-        if not os.path.exists(cover):
-            self.log('cover.jpg', format=strings.WARN_FILE_MISSING)
-
 
         meta = json.loads(open(meta, encoding='utf-8').read())
 
@@ -309,9 +305,9 @@ class NCMFunctions():
         try:
             path = self.GenerateDownloadPath(filename=savename, folder=export)
             shutil.copy(audio, path)
-            self.log(path, format=strings.INFO_EXPORT_COMPLETE)
+            logger.debug('Exported audio to path %s' % path[-16:])
         except Exception as e:
-            self.log(e,format=strings.ERROR_INVALID_OPERATION)
+            logger.error('While copying audio file:%s' % e)
         return path
 
     def DownloadSongAudio(self,id, quality='lossless', folder=''):
@@ -322,7 +318,7 @@ class NCMFunctions():
             folder = self.GenerateDownloadPath(id=id, folder=folder)
         self.QueueDownloadSongAudio(id, quality, folder)
         self.DL.wait(func=self.ShowDownloadStatus)
-        self.log(strings.INFO_BATCH_DOWNLOAD_COMPLETE)
+        logger.debug('Downloaded audio file for id %s' % id)
         return True
 
     def DownloadSongInfo(self,id, folder=''):
@@ -333,7 +329,7 @@ class NCMFunctions():
             folder = self.GenerateDownloadPath(id=id, folder=folder)
         self.QueueDownloadSongInfo(id, folder)
         self.DL.wait(func=self.ShowDownloadStatus)
-        self.log(strings.INFO_BATCH_DOWNLOAD_COMPLETE)
+        logger.debug('Downloaded audio meta for id %s' % id)
         return True
 
     def DownloadAndFormatLyrics(self,id, folder=''):
@@ -346,7 +342,7 @@ class NCMFunctions():
         self.FormatLyrics(folder)
         return True
 
-    def DownloadAllInfo(self,id, quality='lossless', folder=''):
+    def DownloadAll(self,id, quality='lossless', folder=''):
         '''
             Download everything we need,then wait for download to finish.
         '''
@@ -359,7 +355,7 @@ class NCMFunctions():
         # Download song.Not that audio file is downloaded asynchronously
         self.QueueDownloadSongAudio(id, quality, folder)
         self.DL.wait(func=self.ShowDownloadStatus)
-        self.log(strings.INFO_BATCH_DOWNLOAD_COMPLETE)
+        logger.debug('Downloaded everything for id %s' % id)
         return True
 
     def DownloadAllAndMerge(self,id, quality='lossless', folder=''):
@@ -368,7 +364,7 @@ class NCMFunctions():
         '''
         if not folder:
             folder = self.GenerateDownloadPath(id=id, folder=folder)
-        self.DownloadAllInfo(id, quality, folder)
+        self.DownloadAll(id, quality, folder)
         self.DownloadAndFormatLyrics(id, folder)
         self.FormatSong(folder)
         return True
@@ -392,12 +388,11 @@ class NCMFunctions():
                 queue_func(id, quality, folder)
                 self.DL.wait(func=self.ShowDownloadStatus)
                 # Queue then wait
-            self.log(strings.INFO_BATCH_DOWNLOAD_COMPLETE)
             def merge(subfolder):
                 self.FormatLyrics(subfolder)
                 self.FormatSong(subfolder)
             # Start merging every subfolder via threadpool,where it's a mutation of the Downloader
-            pool = Downloader(worker=PoolWorker,pool_size=16)
+            pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
                 target = os.path.join(folder, sub)
                 pool.append(merge,target)

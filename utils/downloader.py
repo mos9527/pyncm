@@ -13,6 +13,8 @@ from requests import Session
 from .progressbar import ProgressBar
 from .clisheet import CLISheet
 
+def GetProgressBar(*a,**k):
+    return ProgressBar(*a,**k,prefix='\033[33m',suffix='\033[0m',fill='█')
 
 class PoolWorker(Thread):
     '''
@@ -139,7 +141,7 @@ class Downloader():
         for worker in self.workers:
             if not type(worker) in [DownloadWorker]:
                 raise NotImplementedError(type(worker))
-            progress = ProgressBar(worker()['length'])
+            progress = GetProgressBar(total=worker()['length'])
             self.sheet.modify_line(
                 ('ID', worker()['id']),
                 ('PROGRESS', progress(worker()['finished'])),
