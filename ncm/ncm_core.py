@@ -257,16 +257,16 @@ class NeteaseCloudMusic():
         '''
         level = 'NOLOGIN'
         if not self.login_info['success']:
-            logger.warn('User not logged in!')
-            logger.warn('VIP Level operations will NOT be available')
+            logger.debug('User not logged in!')
+            logger.debug('VIP Level operations will NOT be available')
         else:
 
-            logger.info('Logged in as %s' % self.login_info['content']['profile']['nickname'])
+            logger.debug('Logged in as %s' % self.login_info['content']['profile']['nickname'])
             if not self.login_info['content']['account']['vipType'] == 0:
-                logger.info('User has VIP privileges,continue...')
+                logger.debug('User has VIP privileges,continue...')
                 level = 'VIP'
             else:
-                logger.info('User has no VIP privileges,continue...')
+                logger.debug('User has no VIP privileges,continue...')
                 level = 'USER'
         return level
     @DictPayload
@@ -291,7 +291,7 @@ class NeteaseCloudMusic():
             if (self.phone and self.password): 
                 md5_password = self.keygen.generate_hash(self.password)
                 # The password is first hashed then got sent to the server
-                logger.info('Attempting to login with hashed password %s...' % md5_password[:8])
+                logger.debug('Attempting to login with hashed password %s...' % md5_password[:8])
                 r = self.PerformRequest(self.phone, md5_password, method='login')
                 try:
                     self.login_info = {'tick': time.time(), 'content': json.loads(r.text)}
