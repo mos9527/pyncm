@@ -80,6 +80,7 @@ class NCMFunctions():
         '''
             Queue a download
         '''
+        if not (url and path):return
         self.DL.append(url, path)
         logger.debug('Queued download ...%s -> ...%s' % (url[-16:],path[-16:]))
 
