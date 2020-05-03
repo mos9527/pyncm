@@ -52,7 +52,21 @@ class NCMFunctions():
 
             Specify folder to change the root folder somewhere else
         '''
-        def normalize(s):return s.replace(':','：').replace('\n','_').replace('-','_').replace(',','，').replace('"','“').replace('\'','”').replace('/','、').replace('\\','，')
+        def normalize(s):
+            mapping = {
+                '\\':' ',
+                '/' :'',
+                ':' :'：',
+                '*' :'·',
+                '?' :'？',
+                '"' :'”',
+                '<' :'《',
+                '>' :'》',
+                '|' :'、'
+            }
+            for k,v in mapping.items():
+                s = s.replace(k,v)
+            return s
         filename = normalize(filename)
         folder = os.path.join(folder, str(id)) if folder else os.path.join(self.temp, str(id))
         result = os.path.join(folder, filename)
