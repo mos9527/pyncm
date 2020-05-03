@@ -75,7 +75,7 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 40 ERROR
 30 WARN
 20 INFO
-10 DEBUG
+10 DEBUG (default)
 ''')                    
 if len(sys.argv) < 2:
     parser.print_help()

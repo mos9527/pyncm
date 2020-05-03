@@ -413,6 +413,7 @@ class NCMFunctions():
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
                 pool.append(merge, os.path.join(folder,sub))
+            print('\n' * 10)
             def wait():
                 print(f'Tagging... {len(os.listdir(folder)) - pool.task_queue.unfinished_tasks} / {len(os.listdir(folder))}',end='\r')
                 time.sleep(1)
