@@ -414,12 +414,12 @@ class NCMFunctions():
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
                 pool.append(tag, os.path.join(folder,sub))
-            print('\n' * 10)
+            print('\n' * 12)
             def wait():
                 logger.info(f'Tagging... {len(os.listdir(folder)) - pool.task_queue.unfinished_tasks} / {len(os.listdir(folder))}{Cursor.UP(1)}')
                 time.sleep(1)
             pool.wait(func=wait)
-            print('\n' * 2)
+            print()
         return wrapper
 
     def DownloadAllSongsInPlaylistAndMerge(self,id, quality='lossless', folder=None,merge_only=False):

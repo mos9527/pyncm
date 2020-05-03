@@ -14,7 +14,7 @@ from .progressbar import ProgressBar
 from .clisheet import CLISheet
 
 def GetProgressBar(*a,**k):
-    return ProgressBar(*a,**k,prefix='\033[33m',suffix='\033[0m',fill='█')
+    return ProgressBar(*a,**k,prefix='\033[33m',suffix='\033[0m',fill='#')
 
 class PoolWorker(Thread):
     '''
