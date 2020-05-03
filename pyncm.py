@@ -29,7 +29,7 @@ import json
 
 import ncm
 # All imports are good?Print the splash text
-colorama.init();coloredlogs.install(level=logging.DEBUG)
+colorama.init()
 print(splash)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # Set logging level for `urllib3`
@@ -69,13 +69,21 @@ parser.add_argument('--buffer-size', type=int, default=256,
                     help='''Download buffer size (KB)''')
 parser.add_argument('--random-keys', action='store_true',
                     help='''Use random AES key for encryption''')
+parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
+                    help='''Logging Level,see the following list for help
+50 FATAL
+40 ERROR
+30 WARN
+20 INFO
+10 DEBUG
+''')                    
 if len(sys.argv) < 2:
     parser.print_help()
     sys.exit(2)
 args = parser.parse_args()
 args = args.__dict__
 
-operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys,logging_level = args.values()
 # Parser end----------------------------------------------------------------------------
 print('''Initalized with the following settings:
     ID                  :       {}
@@ -89,10 +97,12 @@ print('''Initalized with the following settings:
     Output folder       :       {}
     Poolsize            :       {} Workers
     Buffer Size         :       {} KB
-    Use random encSecKey:       {}'''.format(
+    Use random encSecKey:       {}
+    Logging Level       :       {}'''.format(
 id,operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash('', password),
 phone, clear_temp, merge_only, temp, output,pool_size, buffer_size, 
-random_keys))
+random_keys,logging_level))
+coloredlogs.install(level=logging_level)
 ncmfunc = ncm.ncm_func.NCMFunctions(temp, output, merge_only, pool_size,buffer_size, random_keys)
 if os.path.exists('.cookies'):
     # If cookies are stored,load them in
