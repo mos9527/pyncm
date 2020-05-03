@@ -405,14 +405,18 @@ class NCMFunctions():
                 queue_func(id, quality, folder)
                 self.DL.wait(func=self.ShowDownloadStatus)
                 # Queue then wait
+            processed = 0
             def merge(subfolder):
                 self.FormatLyrics(subfolder)
                 self.FormatSong(subfolder)
             # Start merging every subfolder via threadpool,where it's a mutation of the Downloader
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
-                merge(os.path.join(folder,sub))
-            pool.wait()
+                pool.append(merge, os.path.join(folder,sub))
+            def wait():
+                print(f'Tagging... {len(os.listdir(folder)) - pool.task_queue.unfinished_tasks} / {len(os.listdir(folder))}',end='\r')
+                time.sleep(1)
+            pool.wait(func=wait)
         return wrapper
 
     def DownloadAllSongsInPlaylistAndMerge(self,id, quality='lossless', folder=None,merge_only=False):
