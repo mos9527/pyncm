@@ -99,7 +99,7 @@ print('''Initalized with the following settings:
     Buffer Size         :       {} KB
     Use random encSecKey:       {}
     Logging Level       :       {}'''.format(
-id,operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash('', password),
+id,operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash('', password) if password else '',
 phone, clear_temp, merge_only, temp, output,pool_size, buffer_size, 
 random_keys,logging_level))
 coloredlogs.install(level=logging_level)

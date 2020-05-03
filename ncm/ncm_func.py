@@ -40,12 +40,12 @@ class NCMFunctions():
     
     def ShowDownloadStatus(self):
         '''
-            Shows downloader info
+            Shows downloader info,also returns the content
         '''
         content = self.DL.report('''\nDownloading....{1} in queue,{2} not finished\n{0}''')
         logger.info(content + Cursor.UP(content.count('\n') + 1))
         time.sleep(1)
-
+        return content
     def GenerateDownloadPath(self,id='', filename='', folder=''):
         '''
             Generates output path with its leaf folders and such.Similar to mktree
@@ -414,12 +414,12 @@ class NCMFunctions():
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
                 pool.append(tag, os.path.join(folder,sub))
-            print('\n' * 15)
+            print('\n' * 10)
             def wait():
                 logger.info(f'Tagging... {len(os.listdir(folder)) - pool.task_queue.unfinished_tasks} / {len(os.listdir(folder))}{Cursor.UP(1)}')
                 time.sleep(1)
-            print()
             pool.wait(func=wait)
+            print('\n' * 2)
         return wrapper
 
     def DownloadAllSongsInPlaylistAndMerge(self,id, quality='lossless', folder=None,merge_only=False):
