@@ -150,7 +150,7 @@ logging.debug('''Initalized with the following settings:
 ncmfunc = ncm.ncm_func.NCMFunctions(
     temp, output, merge_only, pool_size, buffer_size, random_keys)
 
-if config.cookies and not override_config and not operation=='config':
+if config.cookies and not override_config:
     # Load cookies if applicable
     try:
         ncm.session.cookies.update(config.cookies)
@@ -158,7 +158,7 @@ if config.cookies and not override_config and not operation=='config':
     except Exception as e:
         logging.error('Failed to load stored cookies:%s' % e)
 
-if config.logininfo and not override_config and not operation=='config':
+if config.logininfo and not override_config:
     # Load login info if applicable
     ncmfunc.NCM.login_info = config.logininfo
     if ncmfunc.NCM.login_info['success']:
