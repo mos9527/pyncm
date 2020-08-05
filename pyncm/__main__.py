@@ -12,9 +12,9 @@ import json
 import os
 import shutil
 import sys
-import argparse
+import argparse 
 arg_whitelist = [
-    'quality', 'clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level'
+    'quality', 'output','temp','clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level'
 ]
 
 class ConfigProvider():
