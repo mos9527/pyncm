@@ -27,7 +27,8 @@ import colorama,coloredlogs,logging
 import os
 import json
 
-import ncm
+from . import ncm
+
 # All imports are good?Print the splash text
 colorama.init()
 print(splash)

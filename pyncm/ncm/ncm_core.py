@@ -5,6 +5,7 @@ Core class for handling NCM API Calls
 '''
 
 import time
+from typing import Type
 import requests
 import json
 import re
@@ -20,6 +21,7 @@ def DictPayload(func) -> dict:
         Wrapper for JSON responses
     '''
     def wrapper(*a,**k):
+        response = None
         try:
             response = func(*a,**k)
             if type(response) == requests.Response:
@@ -98,10 +100,11 @@ class NeteaseCloudMusicKeygen():
                     reverse          :       Whether reverse the string when encrpyt or not
             ref:https://zh.wikipedia.org/wiki/RSA
         '''
-        def toInt(s):return int(s.encode('utf-8').hex(),16)
-        if reverse:n = ''.join([data[len(data) - i - 1] for i in range(0, len(data))])
+        def toInt(s):return int(s.encode('utf-8').hex(),16)    
+        n = data 
+        if reverse:n = reversed(n)
         # Reverse the string.Big thanks to https://blog.csdn.net/weixin_30377461/article/details/97560323 for pointing this out
-        n, e, N = toInt(n), pubkey.e, pubkey.n
+        n, e, N = toInt(''.join(n)), pubkey.e, pubkey.n
         return hex(n ** e % N)[2:].zfill(256)
 
     def __init__(self, random_key=False):
@@ -215,7 +218,7 @@ class NeteaseCloudMusic():
                            'tick': time.time(), 'content': None}
         # Login info fetched in UpdateLoginInfo
         # Tick is saved to update login since the login info would expire
-    def PerformRequest(self, *args, method='', extra_headers={}, extra_params={}) -> type(requests.Response):
+    def PerformRequest(self, *args, method='', extra_headers={}, extra_params={}) -> Type[requests.Response]:
         '''
             Posts to the server with the given args and method
 
@@ -328,7 +331,7 @@ class NeteaseCloudMusic():
             song_id, self.csrf_token, method='detail'
         )     
     @DictPayload
-    @Depercated
+    @Depercated(replacement='NeteaseCloudMusic.GetSongDetail')
     def GetExtraSongInfo(self, song_id) -> dict:
         '''
             Fecthes a song's cover image,title,album and other meta infomation via webpage
@@ -353,8 +356,8 @@ class NeteaseCloudMusic():
         # Regex is faster than lxml here,since it doesn't need to go through the whole document
         result = {'song_id': song_id}
         for key in regexes.keys():
-            try:
-                find = next(re.finditer(regexes[key], r, re.MULTILINE))
+            find = next(re.finditer(regexes[key], r, re.MULTILINE))
+            try:                
                 result[key[6:]] = find.group()
             except Exception:
                 try:
@@ -427,8 +430,8 @@ class NeteaseCloudMusic():
         # Regex is faster than lxml here,since it doesn't need to go through the whole document
         result = {}
         for key in regexes.keys():
-            try:
-                find = next(re.finditer(regexes[key], r, re.MULTILINE))
+            find = next(re.finditer(regexes[key], r, re.MULTILINE))
+            try:                
                 result[key[6:]] = find.group()
             except Exception:
                 try:
@@ -438,7 +441,7 @@ class NeteaseCloudMusic():
         try:
             result['songlist'] = json.loads(result['songlist'])
         except Exception as e:
-            logger.error('Exception' % key[6:] + ':' + e)
+            logger.error('Exception occured while procssing Album songlist' + ':' + e)
         return result
     @DictPayload
     def GetAlbumComments(self, song_id, offset=0, limit=20) -> requests.Response:

@@ -9,11 +9,7 @@ from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3
 from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
-try:
-    from utils.downloader import Downloader,DownloadWorker,PoolWorker
-except Exception:
-    from ..utils.downloader import Downloader,DownloadWorker,PoolWorker
-# If used as module..
+from ..utils.downloader import Downloader,DownloadWorker,PoolWorker
 from .ncm_core import NeteaseCloudMusic
 from . import Depercated,logger,session
 

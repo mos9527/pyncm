@@ -14,3 +14,6 @@ notes
 .vs/slnx.sqlite
 .vs/VSWorkspaceState.json
 .vs/PyNCM/v16/.suo
+dist
+pyncm.egg-info
+build
