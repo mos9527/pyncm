@@ -13,24 +13,6 @@ import os
 import shutil
 import sys
 import argparse
-splash = '''\033[31m       
-             p0000,      
-       _p00 ]0#^~M!      
-      p00M~  00          ______         _______ ______ _______  
-     j0@^  pg0000g_     |   __ \___ ___|    |  |      |   |   |
-    ]00   #00M0#M00g    |    __/|  |  ||       |   ----       |
-    00'  j0F  00 ^Q0g   |___|   |___  ||__|____|______|__|_|__|
-    00   00   #0f  00           |_____|                        
-    00   #0&__#0f  #0c  ———————————————————————————————————————
-    #0t   M0000F   00                 by greats3an @ mos9527.tooo.top 
-     00,          j0#   SYANTAX HELP:
-     ~00g        p00        --help,-h show manual
-      `000pg,ppg00@         --help,-h 显示帮助文本
-        ~M000000M^
-
-    e.g. pyncm  --clear-temp song 1334780738\033[0m
-'''
-
 arg_whitelist = [
     'quality', 'clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level'
 ]
@@ -73,10 +55,7 @@ class ConfigProvider():
         logging.debug('Destroying config file')
         os.remove(ConfigProvider.path)
 
-
-# All imports are good?Print the splash text
 colorama.init()
-print(splash)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 # Set logging level for `urllib3`
 parser = argparse.ArgumentParser(
@@ -126,6 +105,8 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 20 INFO
 10 DEBUG (default)
 ''')
+parser.add_argument('--override-config', action='store_true',
+                    help='''Ignore the config settings''')
 args = parser.parse_args()
 args = args.__dict__
 if len(sys.argv) < 2:
@@ -135,15 +116,19 @@ if len(sys.argv) < 2:
 # region Loading Config & Arguments
 config = ConfigProvider()  # for saved configs
 
-if config.misc:
-    # other configs.write to locals
+operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level,override_config = args.values()
+# Parser end----------------------------------------------------------------------------
+if config.misc and not override_config and not operation=='config':
+    # reload local arguments if we're not overriding / rewriting config
     for k, v in config.misc.items():
         locals()[k] = v
-
-operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level = args.values()
-# Parser end----------------------------------------------------------------------------
-
-print('''Initalized with the following settings:
+    coloredlogs.install(level=logging_level)
+    logging.warning('Settings set by config:' + ' '.join(config.misc.keys()))
+    logging.warning('Note that the values you typed in will not be passed as `--override-config` is not set')
+else:
+    coloredlogs.install(level=logging_level)
+# once the arguments are parsed, do our things
+logging.debug('''Initalized with the following settings:
     ID                  :       {}
     Operation           :       {}
     Option              :       {}
@@ -161,11 +146,11 @@ print('''Initalized with the following settings:
         '', password) if password else '',
     phone, clear_temp, merge_only, temp, output, pool_size, buffer_size,
     random_keys, logging_level))
-coloredlogs.install(level=logging_level)
+
 ncmfunc = ncm.ncm_func.NCMFunctions(
     temp, output, merge_only, pool_size, buffer_size, random_keys)
 
-if config.cookies:
+if config.cookies and not override_config and not operation=='config':
     # Load cookies if applicable
     try:
         ncm.session.cookies.update(config.cookies)
@@ -173,7 +158,7 @@ if config.cookies:
     except Exception as e:
         logging.error('Failed to load stored cookies:%s' % e)
 
-if config.logininfo:
+if config.logininfo and not override_config and not operation=='config':
     # Load login info if applicable
     ncmfunc.NCM.login_info = config.logininfo
     if ncmfunc.NCM.login_info['success']:
@@ -207,7 +192,7 @@ def SaveSettings():
     # Saving filtered arguments
     config.misc = {k: v for k, v in args.items() if k in arg_whitelist}
     config.save()
-    pass
+    sys.exit(0)
 
 
 reflection = {
