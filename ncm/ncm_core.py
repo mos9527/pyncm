@@ -164,7 +164,8 @@ class NeteaseCloudMusic():
         # Cross-Site Reference Forgery token.Used for VIP validation & Phone number for login & password
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "mos9527 Him Self/v15"
+            "User-Agent": "mos9527 Him Self/v15",
+            "Referer":"https://music.163.com/"
         }
         # Headers required to fake a web client
         self.base_url = "https://music.163.com"

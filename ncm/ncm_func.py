@@ -100,7 +100,15 @@ class NCMFunctions():
         '''
             This will write the song's metadata into JSON (named meta.json) and queue to download cover (named cover.jpg) to a certain directory.
         '''
-        info = self.NCM.GetExtraSongInfo(id)
+        info = self.NCM.GetSongDetail(id)['songs'][0]
+        info = {
+            "title": info['name'],
+            "cover": info['al']['picUrl'],
+            "author": [str(a['name']) for a in info['ar']],
+            "album": info['al']['name'],
+            "album_id": info['al']['id'],
+            "artist_id": ' - '.join([str(a['id']) for a in info['ar']])
+        }
         self.QueueDownload(info['cover'], self.GenerateDownloadPath(
             filename='cover.jpg', folder=folder))
         # Queue to download cover image
@@ -127,7 +135,7 @@ class NCMFunctions():
             meta = {
                 "title": track['name'],
                 "cover": track['album']['picUrl'],
-                "author": ' - '.join([a['name'] for a in track['artists']]),
+                "author": [a['name'] for a in track['artists']],
                 "album": track['album']['name'],
                 "album_id": track['album']['id'],
                 "artist_id": ' - '.join([str(a['id']) for a in track['artists']])
@@ -163,7 +171,7 @@ class NCMFunctions():
             meta = {
                 "title": track['name'],
                 "cover": track['al']['picUrl'],
-                "author": ' - '.join([a['name'] for a in track['ar']]),
+                "author": [str(a['name']) for a in track['ar']],
                 "album": track['al']['name'],
                 "album_id": track['al']['id'],
                 "artist_id": ' - '.join([str(a['id']) for a in track['ar']])
@@ -242,14 +250,14 @@ class NCMFunctions():
         else:
             meta = json.loads(open(meta, encoding='utf-8').read())
         # Load JSON for future purposes
-        lrc = f"""[ti:{meta['title']}]\n[al:{meta['album']}]\n[au:{meta['author']}]\n[re:PyNCM]\n"""
+        lrc = f"""[ti:{meta['title']}]\n[al:{meta['album']}]\n[au:{' - '.join(meta['author'])}]\n[re:PyNCM]\n"""
 
         for timestamp in lyrics.keys():
             newline = '[%s]' % timestamp
             newline += '\t'.join(lyrics[timestamp])
             lrc += '\n' + newline
         path = self.GenerateDownloadPath(
-            filename='{1} - {0}.{2}'.format(meta['title'], meta['author'], 'lrc'), folder=export)
+            filename='{0} - {1}.{2}'.format(meta['title'], ' - '.join(meta['author']), 'lrc'), folder=export)
         open(path, mode='w', encoding='utf-8').write(lrc)
         logger.debug('Downloaded lyrics ...%s' % path[-16:])
         return lrc
@@ -319,14 +327,15 @@ class NCMFunctions():
                 song.save()
 
         # Rename & move file
-        savename = '{1} - {0}.{2}'.format(meta['title'], meta['author'], format)
+        savename = '{0} - {1}.{2}'.format(meta['title'], ' - '.join(meta['author']), format)
         try:
             path = self.GenerateDownloadPath(filename=savename, folder=export)
             shutil.copy(audio, path)
             logger.debug('Exported audio to path %s' % path[-16:])
+            return path
         except Exception as e:
             logger.error('While copying audio file:%s' % e)
-        return path
+            return
 
     def DownloadSongAudio(self,id, quality='lossless', folder=''):
         '''
