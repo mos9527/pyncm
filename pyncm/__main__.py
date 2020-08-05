@@ -118,6 +118,10 @@ config = ConfigProvider()  # for saved configs
 
 operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level,override_config = args.values()
 # Parser end----------------------------------------------------------------------------
+if override_config:
+    config.misc = {k: v for k, v in args.items() if k in arg_whitelist}
+    config.save()
+
 if config.misc and not override_config and not operation=='config':
     # reload local arguments if we're not overriding / rewriting config
     for k, v in config.misc.items():
