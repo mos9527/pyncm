@@ -162,7 +162,7 @@ class NeteaseCloudMusic():
     def __init__(self, random_keys=False):
         self.csrf_token, self.phone, self.password = '', '', ''
         # Cross-Site Reference Forgery token.Used for VIP validation & Phone number for login & password
-        self.headers = {
+        session.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "mos9527 Him Self/v15",
             "Referer":"https://music.163.com/"
@@ -210,9 +210,7 @@ class NeteaseCloudMusic():
         }
         # Call Formats
         self.keygen = NeteaseCloudMusicKeygen(random_keys)
-        # Initalize keygen
-        session.headers = self.headers
-        # Uses session() to store cookies
+        # Initalize keygen                 
         self.login_info = {'success': False,
                            'tick': time.time(), 'content': None}
         # Login info fetched in UpdateLoginInfo
