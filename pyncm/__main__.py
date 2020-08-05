@@ -211,7 +211,7 @@ if not operation in reflection.keys():
 else:
     func = reflection[operation]()
 
-if clear_temp:
+if clear_temp and os.path.isdir(temp):
     # Clears temporay folder
     logging.debug('Clearing temp folder:%s' % temp)
     shutil.rmtree(temp)

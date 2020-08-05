@@ -9,6 +9,20 @@ NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API
 API 可以通过命令行直接访问，请参照下列命令输出进行操作
     python -m pyncm -h
 
+# 命令行使用说明
+## 配置
+- `pyncm config` 可以将输入的参数存储在 ~/.pyncm 中，一劳永逸
+		python -m pyncm config --phone [your phone number] --password [your password] --output Downloads --clear-temp --quality lossless --logging-level 30
+	- 解释
+--phone --password 登录令牌；将会以 cookie 的形式被保存
+--output 输出文件夹
+--clear-temp 自动清除下载临时文件
+--quality 下载质量
+--logging-level 日志过滤等级
+
+其他功能详见 pyncm --help
+
+
 # Python 使用示例
     >>> from pyncm import NeteaseCloudMusic
     # 导入核心包
