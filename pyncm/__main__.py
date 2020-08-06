@@ -13,9 +13,16 @@ import os
 import shutil
 import sys
 import argparse 
+
 arg_whitelist = [
-    'quality', 'output','temp','clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level'
+    'quality', 'output','temp','clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level','report_output'
 ]
+
+reporters = {
+    'stdout':lambda s:sys.stdout.write(s),
+    'stderr':lambda s:sys.stderr.write(s),
+    'logs':lambda s:logging.debug(s),
+}
 
 class ConfigProvider():
     path = os.path.join(str(Path.home()), '.pyncm')
@@ -108,6 +115,11 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 10 DEBUG (default)
 The logs are always ouptuted to stderr
 ''')
+parser.add_argument('--report-output', type=str,default='stderr',
+                    help='''Where to output the report
+stdout Output to stdout
+stderr Output to stderr
+logs   Output via logging.debug''')
 args = parser.parse_args()
 args = args.__dict__
 
@@ -121,7 +133,7 @@ if len(sys.argv) < 2:
 # region Loading Config & Arguments
 config = ConfigProvider()  # for saved configs
 
-operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level,report_output = args.values()
 # Parser end----------------------------------------------------------------------------
 
 if config.misc:
@@ -147,14 +159,16 @@ logging.debug('''Initalized with the following settings:
     Poolsize            :       {} Workers
     Buffer Size         :       {} KB
     Use random encSecKey:       {}
-    Logging Level       :       {}'''.format(
+    Logging Level       :       {}
+    Report Output       :       {}'''.format(
     id, operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash(
         '', password) if password else '',
     phone, clear_temp, merge_only, temp, output, pool_size, buffer_size,
-    random_keys, logging_level))
+    random_keys, logging_level,report_output))
 
 ncmfunc = ncm.ncm_func.NCMFunctions(
-    temp, output, merge_only, pool_size, buffer_size, random_keys)
+    temp, output, merge_only, pool_size, buffer_size, random_keys,reporters[report_output])
+
 
 if config.cookies:
     # Load cookies if applicable

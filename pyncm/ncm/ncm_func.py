@@ -3,7 +3,6 @@
 For direct disk I/O Access and ease-of-use for downloading,tagging music of NE
 '''
 import argparse,re,shutil,json,time,os,sys
-from colorama import Cursor
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3
@@ -27,21 +26,26 @@ class NCMFunctions():
             random_keys     :       Whether uses random 2nd AES key or the constant 'mos9527ItoooItop' and its encypted RSA string
         Functions inside are well described,read them for more info.
     '''
-    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=False):
+    def __init__(self,temp='temp',output='output',merge_only=False,pool_size=4,buffer_size=256,random_keys=False,reporter=sys.stdout):
         self.NCM = NeteaseCloudMusic(random_keys)
         self.DL = Downloader(session=session,pool_size=pool_size,buffer_size=buffer_size)
         # Initalization of other classes
         self.temp,self.output,self.merge_only = temp,output,merge_only
         self.pool_size = pool_size
-    
+        self.reporter = reporter
+
+    def ReportStatus(self,title,done,total):
+        precentage = str(int(done * 100 / total)).center(3,' ') if total else '--'
+        self.reporter(f'{title} | {precentage}% | {done} | {total}{" " * 30}\r')
+        # Trims white space
     def ShowDownloadStatus(self):
         '''
             Shows downloader info,also returns the content
         '''
-        content = self.DL.report('''\nDownloading....{1} in queue,{2} not finished\n{0}''')
-        logger.info(content + Cursor.UP(content.count('\n') + 1))
+        qsize,downloading = len(self.DL.workers), self.DL.task_queue.unfinished_tasks    
+        self.ReportStatus(f'Downloader stress ( Queue stress : {downloading} / {self.DL.task_queue.qsize()})',downloading,downloading + qsize)
         time.sleep(1)
-        return content
+
     def GenerateDownloadPath(self,id='', filename='', folder=''):
         '''
             Generates output path with its leaf folders and such.Similar to mktree
@@ -421,12 +425,10 @@ class NCMFunctions():
             pool = Downloader(worker=PoolWorker,pool_size=8)
             for sub in os.listdir(folder):
                 pool.append(tag, os.path.join(folder,sub))
-            print('\n' * 12)
             def wait():
-                logger.info(f'Tagging... {len(os.listdir(folder)) - pool.task_queue.unfinished_tasks} / {len(os.listdir(folder))}{Cursor.UP(1)}')
+                self.ReportStatus('Tagging audio',len(os.listdir(folder)) - pool.task_queue.unfinished_tasks,len(os.listdir(folder)))
                 time.sleep(1)
             pool.wait(func=wait)
-            print()
         return wrapper
 
     def DownloadAllSongsInPlaylistAndMerge(self,id, quality='lossless', folder=None,merge_only=False):

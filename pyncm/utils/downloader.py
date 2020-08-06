@@ -46,7 +46,7 @@ class DownloadWorker(PoolWorker):
 
     def init_status(self):
         self.status = {'id': self.id, 'status': None, 'url': None,
-                       'path': None, 'length': None, 'finished': 0}
+                       'path': None, 'length': None, 'xfered': 0}
 
     def __init__(self, session: Session,task_queue: Queue, id=0,  timeout=5,buffer_size=256):
         super().__init__(task_queue,id)
@@ -96,13 +96,13 @@ class DownloadWorker(PoolWorker):
                     for chunk in r.iter_content(chunk_size):
                         # Iterate content with buffer size of which
                         f.write(chunk)
-                        self.status['finished'] += len(chunk)
+                        self.status['xfered'] += len(chunk)
                         # Writes to file and updates infomation
                 self.status['status'] = 0xFF
                 # sets flag to 0xFF since 255 isnt in the HTTP Standard
             except Exception as e:
                 # Uncaught excpetion
-                print(e)
+                sys.stderr.write(e)
             self.task_queue.task_done()
             # Marks that one task is completed.Note that it doesn't specifiy which task,work end
 class Downloader():
@@ -135,21 +135,16 @@ class Downloader():
             self.sheet.add_line()
         # and start them
 
-    def report(self, format='{}\n IN QUEUE:{},DOWNLOADING:{}'):
+    def reports(self):
         '''
-            Generates report.
+            Generates reports.
         '''
         for worker in self.workers:
-            if not type(worker) in [DownloadWorker]:
+            if not type(worker) == DownloadWorker:
                 raise NotImplementedError(type(worker))
-            progress = GetProgressBar(total=worker()['length'])
-            self.sheet.modify_line(
-                ('ID', worker()['id']),
-                ('PROGRESS', progress(worker()['finished'])),
-                ('STATUS', worker()['status']),
-                pos=worker()['id']
-            )
-        return format.format(self.sheet.get_output(), self.task_queue.qsize(), self.task_queue.unfinished_tasks)
+            id,xfered,length = worker()['id'],worker()['xfered'],worker()['length']
+            
+            yield id,xfered,length
 
         
     def wait(self, *args, func=None, do_when_done=True):
