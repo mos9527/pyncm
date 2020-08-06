@@ -48,7 +48,7 @@ class NCMFunctions():
             precentage = str(int(xfered * 100 / length)).center(3,' ') if length else '--'
             if not status == 0xFF:downloading+=1
             stresses.append(f'{precentage}%')
-        self.ReportStatus(f'Downloading - Progress : {" | ".join(stresses)} |  Queue stress',{unfinished} ,{self.DL.task_queue.qsize()})
+        self.ReportStatus(f'Downloading - Progress : {" | ".join(stresses)} |  Queue stress',unfinished,self.DL.task_queue.qsize())
         time.sleep(1)
 
     def GenerateDownloadPath(self,id='', filename='', folder=''):
