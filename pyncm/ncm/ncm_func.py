@@ -43,9 +43,12 @@ class NCMFunctions():
             Shows downloader info,also returns the content
         '''
         qsize,unfinished,downloading = len(self.DL.workers), self.DL.task_queue.unfinished_tasks, 0
+        stresses = []
         for status,id,xfered,length in self.DL.reports():
+            precentage = str(int(xfered * 100 / length)).center(3,' ') if length else '--'
             if not status == 0xFF:downloading+=1
-        self.ReportStatus(f'Downloading - Downloader stress ( Queue stress : {unfinished} / {self.DL.task_queue.qsize()})',downloading,qsize)
+            stresses.append(f'{precentage}%')
+        self.ReportStatus(f'Downloading - Downloader stress : {" | ".join(stresses)} |  Queue stress : {unfinished} : {self.DL.task_queue.qsize()}',0,0)
         time.sleep(1)
 
     def GenerateDownloadPath(self,id='', filename='', folder=''):
