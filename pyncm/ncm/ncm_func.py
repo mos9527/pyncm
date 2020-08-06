@@ -45,7 +45,7 @@ class NCMFunctions():
         qsize,unfinished,downloading = len(self.DL.workers), self.DL.task_queue.unfinished_tasks, 0
         for status,id,xfered,length in self.DL.reports():
             if not status == 0xFF:downloading+=1
-        self.ReportStatus(f'Downloader stress ( Queue stress : {unfinished} / {self.DL.task_queue.qsize()})',downloading,qsize)
+        self.ReportStatus(f'Downloading - Downloader stress ( Queue stress : {unfinished} / {self.DL.task_queue.qsize()})',downloading,qsize)
         time.sleep(1)
 
     def GenerateDownloadPath(self,id='', filename='', folder=''):
@@ -133,6 +133,7 @@ class NCMFunctions():
             raise Exception('Failed to fetch Album info:%s' % e)
         root = folder
         # Go through every track inside the JSON
+        done,total = 0,len(info['songlist'])
         for track in info['songlist']:
             meta = {
                 "title": track['name'],
@@ -154,6 +155,8 @@ class NCMFunctions():
             self.QueueDownloadSongAudio(track_id, quality, track_root)
             self.QueueDownload(meta['cover'], self.GenerateDownloadPath(
                 filename='cover.jpg', folder=track_root))
+            done += 1
+            self.ReportStatus('Queueing download',done,total)
         return info
 
     def QueueDownloadAllSongsInPlaylist(self,id, quality='lossless', folder=''):
@@ -169,6 +172,7 @@ class NCMFunctions():
             raise Exception('Failed to fetch Playlist info:%s' % e)
         root = folder
         # Go through every track inside the JSON
+        done,total = 0,len(info['playlist']['tracks'])
         for track in info['playlist']['tracks']:
             meta = {
                 "title": track['name'],
@@ -190,6 +194,8 @@ class NCMFunctions():
             self.QueueDownloadSongAudio(track_id, quality, track_root)
             self.QueueDownload(meta['cover'], self.GenerateDownloadPath(
                 filename='cover.jpg', folder=track_root))
+            done += 1
+            self.ReportStatus('Queueing download',done,total)
         return info
 
     def DownloadSongLyrics(self,id, folder=''):

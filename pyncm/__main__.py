@@ -233,6 +233,7 @@ if not operation in reflection.keys():
 else:
     try:
         result = reflection[operation]()
+        logging.info(f'Sucessfully executed {operation}')
     except Exception as e:
         logging.error(f'Error while executing "{operation}" : {e}')
         # Print out traceback
