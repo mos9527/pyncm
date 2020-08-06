@@ -52,8 +52,8 @@ class ConfigProvider():
 
     def destroy(self):
         # Deletes the config
-        logging.debug('Destroying config file')
-        os.remove(ConfigProvider.path)
+        if os.path.isfile(ConfigProvider.path):os.remove(ConfigProvider.path)
+        logging.warning('Destroyed config file')
 
 colorama.init()
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -71,6 +71,7 @@ parser.add_argument('operation', metavar='OPERATION',
 [playlist]     download every song in playlist
 [album]        download every song in album
 [config]       save some of the arguments,cookies,etc and do nothing else
+[reset]        reset the config file and cookies
                argument whitelist: --''' + ' --'.join(arg_whitelist))
 parser.add_argument('--id', metavar='ID',
                     help='''ID of the song / playlist / album''', default=-1)
@@ -105,10 +106,12 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 20 INFO
 10 DEBUG (default)
 ''')
-parser.add_argument('--override-config', action='store_true',
-                    help='''Ignore the config settings''')
 args = parser.parse_args()
 args = args.__dict__
+
+modified = [arg[2:] for arg in sys.argv if arg[:2] == '--']
+# Actual modifed arguments
+
 if len(sys.argv) < 2:
     parser.print_help()
     sys.exit(2)
@@ -116,21 +119,18 @@ if len(sys.argv) < 2:
 # region Loading Config & Arguments
 config = ConfigProvider()  # for saved configs
 
-operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level,override_config = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level = args.values()
 # Parser end----------------------------------------------------------------------------
-if override_config:
-    config.misc = {k: v for k, v in args.items() if k in arg_whitelist}
-    config.save()
 
-if config.misc and not override_config and not operation=='config':
-    # reload local arguments if we're not overriding / rewriting config
+if config.misc:
+    # load saved arguments form config
     for k, v in config.misc.items():
-        locals()[k] = v
+        if not k in modified:locals()[k] = v
+        # ignore user set arguments        
     coloredlogs.install(level=logging_level)
-    logging.warning('Settings set by config:' + ' '.join(config.misc.keys()))
-    logging.warning('Note that the values you typed in will not be passed as `--override-config` is not set')
 else:
     coloredlogs.install(level=logging_level)
+
 # once the arguments are parsed, do our things
 logging.debug('''Initalized with the following settings:
     ID                  :       {}
@@ -154,7 +154,7 @@ logging.debug('''Initalized with the following settings:
 ncmfunc = ncm.ncm_func.NCMFunctions(
     temp, output, merge_only, pool_size, buffer_size, random_keys)
 
-if config.cookies and not override_config:
+if config.cookies:
     # Load cookies if applicable
     try:
         ncm.session.cookies.update(config.cookies)
@@ -162,7 +162,7 @@ if config.cookies and not override_config:
     except Exception as e:
         logging.error('Failed to load stored cookies:%s' % e)
 
-if config.logininfo and not override_config:
+if config.logininfo:
     # Load login info if applicable
     ncmfunc.NCM.login_info = config.logininfo
     if ncmfunc.NCM.login_info['success']:
@@ -188,7 +188,7 @@ def NoExecWrapper(func, *args, **kwargs):
     return wrapper
 
 
-def SaveSettings():
+def SaveConfig():
     # Saving cookies
     config.cookies = ncm.session.cookies.get_dict()
     # Saving logininfo
@@ -200,7 +200,8 @@ def SaveSettings():
 
 
 reflection = {
-    'config': SaveSettings,
+    'reset':config.destroy,
+    'config': SaveConfig,
     'song_audio': NoExecWrapper(ncmfunc.DownloadSongAudio, id=id, quality=quality),
     'song_lyric':   NoExecWrapper(ncmfunc.DownloadAndFormatLyrics, id=id),
     'song_meta': NoExecWrapper(ncmfunc.DownloadSongInfo, id=id),
