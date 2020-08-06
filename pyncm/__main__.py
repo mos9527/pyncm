@@ -29,7 +29,7 @@ class ConfigProvider():
         else:
             # Ignored.
             pass
-
+        
     def load(self):
         # Load saved settings
         with open(ConfigProvider.path, 'r+', encoding='utf-8') as cfg:
@@ -72,6 +72,7 @@ parser.add_argument('operation', metavar='OPERATION',
 [album]        download every song in album
 [config]       save some of the arguments,cookies,etc and do nothing else
 [reset]        reset the config file and cookies
+[viewcfg]      output the current config file as JSON trough stdout (logging-level > 10 is recommended)               
                argument whitelist: --''' + ' --'.join(arg_whitelist))
 parser.add_argument('--id', metavar='ID',
                     help='''ID of the song / playlist / album''', default=-1)
@@ -79,7 +80,7 @@ parser.add_argument('--quality', type=str, default='lossless',
                     help='''Audio quality
     Specifiy download quality,e.g.[lossless] will download the song in Lossless quality
     (if exsists and user's account level statisfies requirement)
-    [standard, higher, lossless] are possible''')
+    only [standard, higher, lossless] are accepted''')
 parser.add_argument('--temp', type=str, default='temp',
                     help='''Folder to store downloads''')
 parser.add_argument('--output', type=str, default='output',
@@ -200,6 +201,7 @@ def SaveConfig():
 
 
 reflection = {
+    'viewcfg':lambda:print(open(ConfigProvider.path, 'r+', encoding='utf-8').read()),
     'reset':config.destroy,
     'config': SaveConfig,
     'song_audio': NoExecWrapper(ncmfunc.DownloadSongAudio, id=id, quality=quality),
