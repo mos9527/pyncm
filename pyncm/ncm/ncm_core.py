@@ -24,6 +24,7 @@ def DictPayload(func) -> dict:
         response = None
         try:
             response = func(*a,**k)
+            print('pass')
             if type(response) == requests.Response:
                 try:
                     return json.loads(response.text)
@@ -431,10 +432,10 @@ class NeteaseCloudMusic():
             'regex_publisher': r"(?<=<b>发行公司：</b>\n).*(?=\n)",
         }
         # Regex is faster than lxml here,since it doesn't need to go through the whole document
-        result = {}
+        find,result = (),{}
         for key in regexes.keys():
-            find = next(re.finditer(regexes[key], r, re.MULTILINE))
-            try:                
+            try: 
+                find = next(re.finditer(regexes[key], r, re.MULTILINE))               
                 result[key[6:]] = find.group()
             except Exception:
                 try:
