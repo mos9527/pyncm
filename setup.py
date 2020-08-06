@@ -24,7 +24,7 @@ with open("pyncm/__init__.py","w",encoding='utf-8') as target:
 
 setuptools.setup(
     name="pyncm", # Replace with your own username
-    version="0.6.5",
+    version="0.7",
     author="greats3an",
     author_email="greats3an@gmail.com",
     description="NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API",

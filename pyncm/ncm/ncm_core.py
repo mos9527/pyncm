@@ -24,7 +24,6 @@ def DictPayload(func) -> dict:
         response = None
         try:
             response = func(*a,**k)
-            print('pass')
             if type(response) == requests.Response:
                 try:
                     return json.loads(response.text)
