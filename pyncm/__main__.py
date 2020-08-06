@@ -109,7 +109,7 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 args = parser.parse_args()
 args = args.__dict__
 
-modified = [arg[2:] for arg in sys.argv if arg[:2] == '--']
+modified = [arg[2:].replace('-','_') for arg in sys.argv if arg[:2] == '--']
 # Actual modifed arguments
 
 if len(sys.argv) < 2:
