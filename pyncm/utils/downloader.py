@@ -70,13 +70,14 @@ class DownloadWorker(PoolWorker):
             self.init_status()
             # Reinitalize status
             self.status = {**self.status, 'url':url,'path':path}
+            r = None
             try:
                 r = self.session.get(url, stream=True, timeout=self.timeout)
                 self.status['status'] = r.status_code
                 # Send GET request and send stream flag to download data in a streamed fashion
             except Exception:
                 self.status['status'] = 0x198
-                # Time-out：failed to get the requested resource (code 408)
+                # Time-out - failed to get the requested resource (code 408)
             if not self.status['status'] == 0xC8:
                 self.task_queue.task_done()
                 continue
@@ -99,7 +100,7 @@ class DownloadWorker(PoolWorker):
                         self.status['xfered'] += len(chunk)
                         # Writes to file and updates infomation
                 self.status['status'] = 0xFF
-                # sets flag to 0xFF since 255 isnt in the HTTP Standard
+                # sets flag to 0xFF to flag completion since 256 isnt in the HTTP Standard 
             except Exception as e:
                 # Uncaught excpetion
                 sys.stderr.write(e)
@@ -142,9 +143,8 @@ class Downloader():
         for worker in self.workers:
             if not type(worker) == DownloadWorker:
                 raise NotImplementedError(type(worker))
-            id,xfered,length = worker()['id'],worker()['xfered'],worker()['length']
-            
-            yield id,xfered,length
+            status,id,xfered,length = worker()['status'],worker()['id'],worker()['xfered'],worker()['length']            
+            yield status,id,xfered,length
 
         
     def wait(self, *args, func=None, do_when_done=True):
