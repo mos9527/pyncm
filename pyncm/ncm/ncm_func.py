@@ -124,8 +124,7 @@ class NCMFunctions():
         try:
             name, creator = info['title'], info['author']
         except Exception as e:
-            logger.error('Failed to fetch Album info:%s' % e)
-            return
+            raise Exception('Failed to fetch Album info:%s' % e)
         root = folder
         # Go through every track inside the JSON
         for track in info['songlist']:
@@ -161,8 +160,7 @@ class NCMFunctions():
         try:
             name, creator = info['playlist']['name'], info['playlist']['creator']['nickname']
         except Exception as e:
-            logger.error('Failed to fetch Playlist info:%s' % e)
-            return
+            raise Exception('Failed to fetch Playlist info:%s' % e)
         root = folder
         # Go through every track inside the JSON
         for track in info['playlist']['tracks']:
@@ -334,8 +332,7 @@ class NCMFunctions():
             logger.debug('Exported audio to path %s' % path[-16:])
             return path
         except Exception as e:
-            logger.error('While copying audio file:%s' % e)
-            return
+            raise Exception('While copying audio file:%s' % e)
 
     def DownloadSongAudio(self,id, quality='lossless', folder=''):
         '''

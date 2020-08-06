@@ -72,7 +72,7 @@ parser.add_argument('operation', metavar='OPERATION',
 [album]        download every song in album
 [config]       save some of the arguments,cookies,etc and do nothing else
 [reset]        reset the config file and cookies
-[viewcfg]      output the current config file as JSON trough stdout (logging-level > 10 is recommended)               
+[viewcfg]      output the current config file as JSON to stdout        
                argument whitelist: --''' + ' --'.join(arg_whitelist))
 parser.add_argument('--id', metavar='ID',
                     help='''ID of the song / playlist / album''', default=-1)
@@ -106,6 +106,7 @@ parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
 30 WARN
 20 INFO
 10 DEBUG (default)
+The logs are always ouptuted to stderr
 ''')
 args = parser.parse_args()
 args = args.__dict__
@@ -216,9 +217,19 @@ reflection = {
 if not operation in reflection.keys():
     logging.error('Invalid operation:%s' % operation)
 else:
-    func = reflection[operation]()
+    try:
+        result = reflection[operation]()
+    except Exception as e:
+        logging.error(f'Error while executing "{operation}" : {e}')
+        # Print out traceback
+        import traceback
+        traceback.print_stack(file=sys.stdout)
+        # Exit with status code 1
+        sys.exit(1)
 
 if clear_temp and os.path.isdir(temp):
     # Clears temporay folder
     logging.debug('Clearing temp folder:%s' % temp)
     shutil.rmtree(temp)
+# Quits gracefuly
+sys.exit(0)

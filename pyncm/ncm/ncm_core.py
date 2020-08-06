@@ -25,7 +25,10 @@ def DictPayload(func) -> dict:
         try:
             response = func(*a,**k)
             if type(response) == requests.Response:
-                return json.loads(response.text)
+                try:
+                    return json.loads(response.text)
+                except Exception as e:
+                    return e
             elif type(response) == str:
                 try:
                     response = json.loads(response)
