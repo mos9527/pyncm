@@ -15,7 +15,7 @@ import sys
 import argparse 
 
 arg_whitelist = [
-    'quality', 'output','temp','clear_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level','report_output'
+    'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level','report_output'
 ]
 
 reporters = {
@@ -98,8 +98,8 @@ parser.add_argument('--password', type=str,
                     help='''Password of your account''', default='')
 parser.add_argument('--merge-only', action='store_true',
                     help='''Only merge the downloaded stuff''')
-parser.add_argument('--clear-temp', action='store_true',
-                    help='''Clears the temp folder afterwards''')
+parser.add_argument('--perserve-temp', action='store_true',
+                    help='''Perserve (do not delete) the temp folder afterwards''')
 parser.add_argument('--pool-size', type=int, default=4,
                     help='''Download pool size''')
 parser.add_argument('--buffer-size', type=int, default=256,
@@ -133,7 +133,7 @@ if len(sys.argv) < 2:
 # region Loading Config & Arguments
 config = ConfigProvider()  # for saved configs
 
-operation, id, quality,  temp, output, phone, password, merge_only, clear_temp,  pool_size, buffer_size, random_keys, logging_level,report_output = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, perserve_temp,  pool_size, buffer_size, random_keys, logging_level,report_output = args.values()
 # Parser end----------------------------------------------------------------------------
 
 if config.misc:
@@ -152,7 +152,7 @@ logging.debug('''Initalized with the following settings:
     Option              :       {}
     Password Hash       :       {}
     Phone               :       {}
-    Do clear temp       :       {}
+    Do perserve temp    :       {}
     Do merge only       :       {}
     Temporay folder     :       {}
     Output folder       :       {}
@@ -163,7 +163,7 @@ logging.debug('''Initalized with the following settings:
     Report Output       :       {}'''.format(
     id, operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash(
         '', password) if password else '',
-    phone, clear_temp, merge_only, temp, output, pool_size, buffer_size,
+    phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size,
     random_keys, logging_level,report_output))
 
 ncmfunc = ncm.ncm_func.NCMFunctions(
@@ -242,8 +242,8 @@ else:
         # Exit with status code 1
         sys.exit(1)
 
-if clear_temp and os.path.isdir(temp):
-    # Clears temporay folder
+if not perserve_temp and os.path.isdir(temp):
+    # Clears temporay folder if we dont want to save it
     logging.debug('Clearing temp folder:%s' % temp)
     shutil.rmtree(temp)
 # Quits gracefuly
