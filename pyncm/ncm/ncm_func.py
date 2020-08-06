@@ -96,22 +96,23 @@ class NCMFunctions():
         '''
             This will write the song's metadata into JSON (named meta.json) and queue to download cover (named cover.jpg) to a certain directory.
         '''
-        info = self.NCM.GetSongDetail(id)['songs'][0]
-        info = {
-            "title": info['name'],
-            "cover": info['al']['picUrl'],
-            "author": [str(a['name']) for a in info['ar']],
-            "album": info['al']['name'],
-            "album_id": info['al']['id'],
-            "artist_id": ' - '.join([str(a['id']) for a in info['ar']])
+        track = self.NCM.GetSongDetail(id)['songs'][0]
+        track = {
+            "title": track['name'],
+            "cover": track['al']['picUrl'],
+            "author": [str(a['name']) for a in track['ar']],
+            "album": track['al']['name'],
+            "album_id": track['al']['id'],
+            "artist_id": ' - '.join([str(a['id']) for a in track['ar']]),
+            "no":track['no']
         }
-        self.QueueDownload(info['cover'], self.GenerateDownloadPath(
+        self.QueueDownload(track['cover'], self.GenerateDownloadPath(
             filename='cover.jpg', folder=folder))
         # Queue to download cover image
         target = self.GenerateDownloadPath(filename='meta.json', folder=folder)
-        open(target, mode='w', encoding='utf-8').write(json.dumps(info))
+        open(target, mode='w', encoding='utf-8').write(json.dumps(track))
         # Writes metadata to JSON file
-        return info
+        return track
 
     def QueueDownloadAllSongsInAlbum(self,id, quality='lossless', folder=''):
         '''
@@ -134,7 +135,8 @@ class NCMFunctions():
                 "author": [a['name'] for a in track['artists']],
                 "album": track['album']['name'],
                 "album_id": track['album']['id'],
-                "artist_id": ' - '.join([str(a['id']) for a in track['artists']])
+                "artist_id": ' - '.join([str(a['id']) for a in track['artists']]),
+                "no":track['no']
             }
             # Generates meta header,and saves them
             track_id = track['id']
@@ -170,7 +172,8 @@ class NCMFunctions():
                 "author": [str(a['name']) for a in track['ar']],
                 "album": track['al']['name'],
                 "album_id": track['al']['id'],
-                "artist_id": ' - '.join([str(a['id']) for a in track['ar']])
+                "artist_id": ' - '.join([str(a['id']) for a in track['ar']]),
+                "no":track['no']
             }
             # Generates meta header,and saves them
             track_id = track['id']
@@ -288,8 +291,9 @@ class NCMFunctions():
         def write_keys(song):
             # Write metadatas
             song['title'] = meta['title']
-            song['artist'] = meta['author']
+            song['artist'] = meta['author']            
             song['album'] = meta['album']
+            song['tracknumber'] = str(meta['no'])
             song.save()
 
         if format == 'm4a':
