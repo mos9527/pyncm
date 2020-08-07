@@ -46,45 +46,8 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
     # 获取歌曲评论
     NCM.GetSongComments(29732235)    
     `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
-详见 [工程进度](# 工程进度)
 
-# 工程进度
-    ncm.ncm_core
-
-|功能|进度|函数名|
-|-|-|-|
-|明文登录（通过手机号及明文密码）|✔|NeteaseCloudMusic.UpdateLoginInfo|
-|音频解析（无损解析需要以VIP特权登录）|✔|NeteaseCloudMusic.GetSongInfo|
-|歌曲信息爬取|✔|~~NeteaseCloudMusic.GetExtraSongInfo~~NeteaseCloudMusic.GetSongDetail|
-|歌词解析|✔|NeteaseCloudMusic.GetSongLyrics|
-|歌单解析|✔|NeteaseCloudMusic.GetPlaylistInfo|
-|歌曲评论爬取|✔|NeteaseCloudMusic.GetSongComments|
-|专辑信息爬取|✔|NeteaseCloudMusic.GetAlbumInfo|
-|专辑评论爬取|✔|NeteaseCloudMusic.GetAlbumComments|
-|获取用户歌单|✔|NeteaseCloudMusic.GetUserPlaylists|
-|MV信息爬取|✔|NeteaseCloudMusic.GetMVInfo|
-|MV评论爬取|✔|NeteaseCloudMusic.GetMVComments|
-    ncm.ncm_func
-
-|功能|进度|函数名|
-|-|-|-|
-|下载歌曲并填入 META|✔|NCMFunctions.DownloadSongAudio|
-|批量下载专辑歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInAlbumAndMerge|
-|批量下载歌单歌曲并填入 META|✔|NCMFunctions.DownloadAllSongsInPlaylistAndMerge|
-|下载歌词并转换为多语言LRC|✔|NCMFunctions.DownloadAndFormatLyrics|
-
-*大部分包都已详尽地注释过，如有疑问请提 issue*
-
-## 依赖包
-
-    requests
-    pycryptodome
-    mutagen
-    colorama
-
-### 安装依赖
-
-    pip install -r requirements.txt
+    详见 Wiki (WIP)
 
 ### 衍生项目
 

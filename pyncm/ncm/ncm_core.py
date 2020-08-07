@@ -28,7 +28,8 @@ def DictPayload(func) -> dict:
                 try:
                     return json.loads(response.text)
                 except Exception as e:
-                    return e
+                    logger.warn('When parsing json for %s:%s' % (func.__name__,e))
+                    return response.text
             elif type(response) == str:
                 try:
                     response = json.loads(response)
@@ -38,7 +39,7 @@ def DictPayload(func) -> dict:
             else:
                 return response
         except Exception as e:
-            logger.error('Error while executing %s:%s' % (func.__name__,e))
+            logger.warn('Error while executing %s:%s' % (func.__name__,e))
             return response
     return wrapper
 
@@ -193,10 +194,10 @@ class NeteaseCloudMusic():
         # API URLs
         self.payloads = {
             # Note that all Song IDs are parsed as String,and the parameters passed must be in order
-            'detail': r'{"c":"[{\"id\":\"%s\"}]","csrf_token":"%s"}',
-            # Requires (Song ID,CSRF Token)
-            'wesong': '{"ids":"[%s]","level":"%s","encodeType":"aac","csrf_token":"%s"}',
-            # Requires (Song ID,Audio quality[standard,good,higher,lossless],CSRF Token)
+            'detail': r'{"c":%s,"csrf_token":"%s"}',
+            # Requires (Song IDs (stringified,eg [{"id":"1344412"},{"id":"1222455"}]),CSRF Token)
+            'wesong': '{"ids":%s,"level":"%s","encodeType":"aac","csrf_token":"%s"}',
+            # Requires (Song IDs (stringified,eg [1344412,1222455]),Audio quality[standard,good,higher,lossless],CSRF Token)
             'playlist': '{"id":"%s","offset":"0","total":"true","limit":"1000","n":"1000","csrf_token":"%s"}',
             # Requires (Playlist ID,CSRF Token)
             'lyric': '{"id": "%s", "lv": -1, "tv": -1, "csrf_token": "%s"}',
@@ -324,22 +325,24 @@ class NeteaseCloudMusic():
                 logger.error('Not enough login info provided')
                 return {}
     @DictPayload
-    def GetSongDetail(self,song_id) -> requests.Response:
+    def GetTrackDetail(self,song_ids) -> requests.Response:
         '''
             Fetches a song's 'detailed' infomation
 
-                song_id        :        ID of which song
+                song_ids        :        ID of songs (e.g. [1234,5678] or 1234)
         '''
+        if not isinstance(song_ids,list):song_ids = [song_ids]
+        _song_ids = [{'id':str(id)} for id in song_ids]
         return self.PerformRequest(
-            song_id, self.csrf_token, method='detail'
+            json.dumps(json.dumps(_song_ids)), self.csrf_token, method='detail'
         )     
     @DictPayload
-    @Depercated(replacement='NeteaseCloudMusic.GetSongDetail')
-    def GetExtraSongInfo(self, song_id) -> dict:
+    @Depercated(replacement='NeteaseCloudMusic.GetTrackDetail')
+    def GetTrackDetailEx(self, song_id) -> dict:
         '''
             Fecthes a song's cover image,title,album and other meta infomation via webpage
 
-            Which contains less infomation than 'GetSongDetail'  AND SLOWER
+            Which contains less infomation than 'GetTrackDetail'  AND SLOWER
 
             This method is DEPERCATED
 
@@ -369,7 +372,7 @@ class NeteaseCloudMusic():
                     logger.error('Exception' % key[6:] + ':' + e)
         return result
     @DictPayload
-    def GetSongInfo(self, song_id, quality='lossless') -> requests.Response:
+    def GetTrackAudioInfo(self, song_ids, quality='lossless') -> requests.Response:
         '''
             Fetches a song's info.By default,it only returns the url and non-meta info.
 
@@ -378,14 +381,18 @@ class NeteaseCloudMusic():
             VIP Level Required for such level operations
 
             Otherwise,it fallbacks to standard
+
+            song_ids        :        ID of songs (e.g. [1234,5678] or 1234)
         '''
         if not quality in ['standard', 'higher', 'lossless']:
             logger.warn('Invalid quality config `%s`,falling back to `standard`')
             quality = 'standard'
         #Quality check
-        return self.PerformRequest(song_id, quality, self.csrf_token, method='wesong')
+        if not isinstance(song_ids,list):song_ids = [song_ids]
+        song_ids = [str(id) for id in song_ids]
+        return self.PerformRequest(json.dumps(song_ids), quality, self.csrf_token, method='wesong')
     @DictPayload
-    def GetSongLyrics(self, song_id) -> requests.Response:
+    def GetTrackLyrics(self, song_id) -> requests.Response:
         '''
             Fetches a song's lyrics.No VIP Level needed
         '''
@@ -401,7 +408,7 @@ class NeteaseCloudMusic():
             playlist_id, self.csrf_token, method='playlist'
         )
     @DictPayload
-    def GetSongComments(self, song_id, offset=0, limit=20) -> requests.Response:
+    def GetTrackComments(self, song_id, offset=0, limit=20) -> requests.Response:
         '''
             Fetches a song's comments.No VIP Level needed.
 

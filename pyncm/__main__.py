@@ -219,13 +219,13 @@ reflection = {
     'viewcfg':lambda:print(open(ConfigProvider.path, 'r+', encoding='utf-8').read()),
     'reset':config.destroy,
     'config': SaveConfig,
-    'song_audio': NoExecWrapper(ncmfunc.DownloadSongAudio, id=id, quality=quality),
+    'song_audio': NoExecWrapper(ncmfunc.DownloadTrackAudio, id=id, quality=quality),
     'song_lyric':   NoExecWrapper(ncmfunc.DownloadAndFormatLyrics, id=id),
-    'song_meta': NoExecWrapper(ncmfunc.DownloadSongInfo, id=id),
+    'song_meta': NoExecWrapper(ncmfunc.DownloadTrackInfo, id=id),
     'song_down': NoExecWrapper(ncmfunc.DownloadAll, id=id, quality=quality),
     'song':  NoExecWrapper(ncmfunc.DownloadAllAndMerge, id=id, quality=quality),
-    'playlist': NoExecWrapper(ncmfunc.DownloadAllSongsInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
-    'album': NoExecWrapper(ncmfunc.DownloadAllSongsInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
+    'playlist': NoExecWrapper(ncmfunc.DownloadAllTracksInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
+    'album': NoExecWrapper(ncmfunc.DownloadAllTracksInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
 }
 
 if not operation in reflection.keys():
