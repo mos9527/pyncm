@@ -200,10 +200,10 @@ class NCMFunctions():
         tracks = self.NCM.GetTrackDetail(trackIds)
         trackAudios = self.NCM.GetTrackAudioInfo(trackIds, quality=quality)
 
-        for trackNo in range(0, len(tracks['songs'])):
-            track = tracks['songs'][trackNo]
-            trackAudio = trackAudios['data'][trackNo]
-            trackId = track['id']
+        for trackId in trackIds:
+            # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
+            track = [t for t in tracks['songs'] if t['id'] == trackId][0]
+            trackAudio = [t for t in trackAudios['data'] if t['id'] == trackId][0]
             # Generates track header,and saves them
             tHelper = TrackHelper(track)
             track_root = self.GenerateDownloadPath(id=trackId, folder=root)
@@ -238,10 +238,10 @@ class NCMFunctions():
         done, total = 0, len(trackIds)
         tracks = self.NCM.GetTrackDetail(trackIds)
         trackAudios = self.NCM.GetTrackAudioInfo(trackIds, quality=quality)
-        for trackNo in range(0, len(tracks['songs'])):
+        for trackId in trackIds:
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
-            track = tracks['songs'][trackNo]
-            trackAudio = trackAudios['data'][trackNo]
+            track = [t for t in tracks['songs'] if t['id'] == trackId][0]
+            trackAudio = [t for t in trackAudios['data'] if t['id'] == trackId][0]
             trackId = track['id']
             tHelper = TrackHelper(track)
             # Generates track header,and saves them
