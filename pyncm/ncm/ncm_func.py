@@ -32,38 +32,42 @@ class TrackHelper():
     def __init__(self, track_dict) -> None:
         self.track = track_dict
 
-    @property
+    @TrackHelperProperty
     def TrackPublishTime(self):
-        '''The publish time of the track'''
+        '''The publish year of the track'''
         epoch = self.track['publishTime'] / 1000 # js timestamps are in milliseconds.
                                                  # converting to unix timestamps (in seconds),we need to divide by 1000
-        return time.gmtime(epoch)
+        return time.gmtime(epoch).tm_year
 
-    @property
+    @TrackHelperProperty
     def TrackNumber(self):
         '''The # of the track'''
         return self.track['no']
 
-    @property
+    @TrackHelperProperty
     def TrackName(self):
         '''The name of the track'''
         return self.track['name']
 
-    @property
+    @TrackHelperProperty
     def AlbumName(self):
         '''The name of the album'''
         return self.track['al']['name']
 
-    @property
+    @TrackHelperProperty
     def AlbumCover(self):
         '''The cover of the track's album'''
         return self.track['al']['picUrl']
 
-    @property
+    @TrackHelperProperty
     def Artists(self):
         '''All the artists' names as a list'''
         return [ar['name'] for ar in self.track['ar']]
 
+    @TrackHelperProperty
+    def Title(self):
+        '''A formatted title for this song'''
+        return f'{",".join(self.Artists)} - {self.TrackName}'
 
 class NCMFunctions():
     '''
@@ -327,7 +331,7 @@ class NCMFunctions():
             newline += '\t'.join(lyrics[timestamp])
             lrc += '\n' + newline
         path = self.GenerateDownloadPath(
-            filename='{0} - {1}.{2}'.format(tHelper.TrackName, ' - '.join(tHelper.Artists), 'lrc'), folder=export)
+            filename=tHelper.Title + '.lrc', folder=export)
         open(path, mode='w', encoding='utf-8').write(lrc)
         logger.debug('Downloaded lyrics ...%s' % path[-16:])
         return lrc
@@ -369,7 +373,7 @@ class NCMFunctions():
             song['artist'] = tHelper.Artists
             song['album'] = tHelper.AlbumName
             song['tracknumber'] = str(tHelper.TrackNumber)
-            song['date'] = str(tHelper.TrackPublishTime.tm_year)
+            song['date'] = str(tHelper.TrackPublishTime)
             song.save()
 
         if format == 'm4a':
@@ -403,8 +407,7 @@ class NCMFunctions():
                 song.save()
 
         # Rename & move file
-        savename = '{1} - {0}.{2}'.format(tHelper.TrackName,
-                                          ','.join(tHelper.Artists), format)
+        savename = tHelper.Title + '.' + format
         try:
             path = self.GenerateDownloadPath(filename=savename, folder=export)
             shutil.copy(audio, path)
