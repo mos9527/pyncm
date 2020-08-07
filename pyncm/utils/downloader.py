@@ -31,9 +31,11 @@ class PoolWorker(Thread):
     def run(self):
         while True:            
             task,args = self.task_queue.get()
-            task(args) if args else task()
+            try:
+                task(args) if args else task()
+            except Exception as e:
+                sys.stderr.write(f'Worker exception:{e}\n')            
             self.task_queue.task_done()
-        self.task_queue.task_done()
 
 class DownloadWorker(PoolWorker):
     '''
