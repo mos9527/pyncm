@@ -26,7 +26,7 @@ def TrackHelperProperty(func):
             return func(*a,**k)
         except Exception as e:
             logger.warn('Error while getting track attribute %s:%s' % (func.__name__,e))
-            return None        
+            return "Undefined"        
     return wrapper
 class TrackHelper():
     def __init__(self, track_dict) -> None:
@@ -315,11 +315,7 @@ class NCMFunctions():
         # Locate track file
         if not os.path.exists(track):
             logger.warn('Missing track.json,will skip track info parsing')
-            track = {
-                'name': 'undefined',
-                'album': 'undefined',
-                'author': 'undefined'
-            }
+            track = {} # Thus,anything TrackHelper produces will be `Undefined`
         else:
             track = json.loads(open(track, encoding='utf-8').read())
         # Load JSON for future purposes
