@@ -22,11 +22,12 @@ def LrcProperty(tagname):
         return _wrapper  
     return wrapper
 
+
 class LrcRegexes:
     LIDTag_= re.compile(r'(?<=\[)[^\[\]]*(?=\])')
     LIDTag_Type = re.compile(r'[a-z]{2,}(?=:)')
     LIDTag_Content = re.compile(r'(?<=[a-z]{2}:).*')
-    LLyrics_ = re.compile(r'(?<=\]).*')
+    LLyrics_ = re.compile(r'[^\[\]]*$')
     LBrackets = re.compile(r'(?<=\[).*(?=\])')
     LTimestamp = re.compile(r'\d{2,}:\d{2,}.\d{2,}')
 # region Static methods
@@ -91,10 +92,10 @@ class LrcParser:
     def LoadLrc(self,lrc):
         '''Loads a LRC formmated lryics file'''
         for line in lrc.split('\n'):
-            IDTag           = ''.join(LrcRegexes.LIDTag_.findall(line))
-            IDTagType       = ''.join(LrcRegexes.LIDTag_Type.findall(IDTag))
-            IDTagContent    = ''.join(LrcRegexes.LIDTag_Content.findall(IDTag))
-            Lyrics          = ''.join(LrcRegexes.LLyrics_.findall(line))
+            IDTag           =         LrcRegexes.LIDTag_       .findall(line)
+            IDTagType       = ''.join(LrcRegexes.LIDTag_Type   .findall(''.join(IDTag)))
+            IDTagContent    = ''.join(LrcRegexes.LIDTag_Content.findall(''.join(IDTag)))
+            Lyrics          = ''.join(LrcRegexes.LLyrics_      .findall(line))
             if IDTagType:
                 # Tag's type is set,write as class attribute
                 setattr(self,IDTagType,IDTagContent)
@@ -102,10 +103,14 @@ class LrcParser:
                 # Tag's type is not set but we got the values,treat as lyrics
                 # We'll use the timestamp (into seconds) as lyrics' keys,as hashtables can handle that            
                 try:
-                    timestamp = tag2stamp(IDTag)
-                    if timestamp:
-                        if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
-                        if Lyrics:self.lyrics[timestamp].append((IDTag,Lyrics)) # Ignore empty lines
+                    for _IDTag in IDTag:
+                        # Some LRC lyrics would pile a bunch of timestamps in on line,like 
+                        #   [00:01.12][00:08.12]Yeah
+                        # So an extra loop could work it around                        
+                        timestamp = tag2stamp(_IDTag)
+                        if timestamp:
+                            if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
+                            if Lyrics:self.lyrics[timestamp].append((_IDTag,Lyrics)) # Ignore empty lines
                 except:
                     pass                                
 
