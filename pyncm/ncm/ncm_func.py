@@ -27,7 +27,7 @@ def TrackHelperProperty(func):
             return func(*a,**k)
         except Exception as e:
             logger.warn('Error while getting track attribute %s:%s' % (func.__name__,e))
-            return "Undefined"        
+            return None        
     return wrapper
 class TrackHelper():
     def __init__(self, track_dict) -> None:
@@ -282,16 +282,24 @@ class NCMFunctions():
         export = export if export else self.output        
         lyrics = json.loads(open(self.GenerateDownloadPath(filename='lyrics.json',folder=folder), encoding='utf-8').read())  
         track  = json.loads(open(self.GenerateDownloadPath(filename='track.json', folder=folder), encoding='utf-8').read())
-        rawlrcs= [lyrics[k]['lyric'] for k in set(lyrics.keys()).intersection({'lrc','tlyric'})]
+        rawlrcs= [lyrics[k]['lyric'] for k in set(lyrics.keys()).intersection({'lrc','tlyric'}) if 'lyric' in lyrics[k].keys()]
         lrc    = LrcParser()
         for rawlrc in rawlrcs:
             this = LrcParser(rawlrc)
             lrc.UpdateLyrics(this.lyrics.items(),timestamp_function=lambda l:l[0],lyrics_function=lambda l:[v[1] for v in l[1]])            
         # Writing some metadata
         users = '/'.join([lyrics[k]['nickname'] for k in set(lyrics.keys()).intersection({'transUser','lyricUser'})])
-        lrc.LRCAuthor = users        
-        # Saving the lyrics        
         tHelper = TrackHelper(track)        
+        # -- METADATA --
+        lrc.LRCAuthor = users        
+        lrc.Album = tHelper.AlbumName
+        if tHelper.Artists:lrc.Artist = ','.join(tHelper.Artists)
+        lrc.Title = tHelper.Title
+        lrc.Program = 'PyNCM' # leaving a mark hehe
+        # -- METADATA --
+
+        # Saving the lyrics        
+        
         path = self.GenerateDownloadPath(filename=tHelper.Title + '.lrc', folder=export)
         open(path, mode='w', encoding='utf-8').write(lrc.DumpLyrics())
         logger.debug('Downloaded lyrics ...%s' % path[-truncate_length:])
@@ -462,7 +470,7 @@ class NCMFunctions():
                 self.FormatLyrics(subfolder)
                 self.TagTrack(subfolder)
             # Start merging every subfolder via threadpool,where it's a mutation of the Downloader
-            pool = Downloader(worker=PoolWorker, pool_size=8)
+            pool = Downloader(worker=PoolWorker, pool_size=self.pool_size)
             for sub in os.listdir(folder):
                 pool.append(tag, os.path.join(folder, sub))
 

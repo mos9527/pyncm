@@ -2,20 +2,6 @@
 import re
 from collections import defaultdict
 from typing import Iterable
-# region Static methods
-# Timestamp parsers
-def stamp2tag(timestamp):
-    mm = int(timestamp / 60)
-    ss = int((timestamp - mm * 60))
-    xx = int((timestamp - mm * 60 - ss) * 100) # We'd use standard 100th of a second here
-    mm,ss,xx = str(mm).rjust(2,'0'),str(ss).rjust(2,'0'),str(xx).rjust(2,'0')
-    return f'{mm}:{ss}:{xx}'                    
-def tag2stamp(IDTag):
-    mm,ss = IDTag.split(':') 
-    ss,xx = ss.split('.') # xx is hunderth of a second,but NE didn't think so
-    timestamp = int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx)) # <- workaround
-    return timestamp
-# endregion
 
 def LrcProperty(tagname):
     
@@ -42,6 +28,23 @@ class LrcRegexes:
     LIDTag_Content = re.compile(r'(?<=[a-z]{2}:).*')
     LLyrics_ = re.compile(r'(?<=\]).*')
     LBrackets = re.compile(r'(?<=\[).*(?=\])')
+    LTimestamp = re.compile(r'\d{2,}:\d{2,}.\d{2,}')
+# region Static methods
+# Timestamp parsers
+def stamp2tag(timestamp):
+    mm = int(timestamp / 60)
+    ss = int((timestamp - mm * 60))
+    xx = int((timestamp - mm * 60 - ss) * 100) # We'd use standard 100th of a second here
+    mm,ss,xx = str(mm).rjust(2,'0'),str(ss).rjust(2,'0'),str(xx).rjust(2,'0')
+    return f'{mm}:{ss}:{xx}'                    
+def tag2stamp(IDTag):
+    IDTag = ''.join(LrcRegexes.LTimestamp.findall(IDTag))
+    if not IDTag:return None
+    mm,ss = IDTag.split(':') 
+    ss,xx = ss.split('.') # xx is hunderth of a second,but NE didn't think so
+    timestamp = int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx)) # <- workaround
+    return timestamp
+# endregion
 
 class LrcParser:
     '''
@@ -97,14 +100,14 @@ class LrcParser:
                 setattr(self,IDTagType,IDTagContent)
             elif IDTag:
                 # Tag's type is not set but we got the values,treat as lyrics
-                # We'll use the timestamp (into seconds) as lyrics' keys,as hashtables can handle that
-                timestamp = 0
+                # We'll use the timestamp (into seconds) as lyrics' keys,as hashtables can handle that            
                 try:
                     timestamp = tag2stamp(IDTag)
-                    if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
+                    if timestamp:
+                        if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
+                        if Lyrics:self.lyrics[timestamp].append((IDTag,Lyrics)) # Ignore empty lines
                 except:
-                    pass
-                if Lyrics:self.lyrics[timestamp].append((IDTag,Lyrics)) # Ignore empty lines
+                    pass                                
 
     def AddLyrics(self,timestamp,value):
         # Add 1 or multiple line(s) of lyrics with the same timestamp in seconds 
