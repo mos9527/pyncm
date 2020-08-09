@@ -153,17 +153,20 @@ class LrcParser:
                 Lyrics.append(_Lyrics)
             lrc += '\n' + f'[{IDTag}]{delimiter.join(Lyrics)}' 
         return lrc # Done
-
-    def Find(self,timestamp):
+    
+    @staticmethod
+    def Find(lyrics,timestamp):
         '''Finds closest match in our hashable
             
+            lyrics  :   Either `lrcparser.lyrics` or `lrcparser.lyrics_sorted`
+
             Returns `(timestamp_seconds,lyrics,indexof)`
 
             Returns None if the match isn't inside the window
         '''
         # Again,this is very inefficient as its big o notation's linear O(n)
         timestamp,delta_m,bestmatch,index=int(timestamp),None,None,0
-        for ts,lr in self.lyrics.items(): # ts:timestamp,lr:lyrics
+        for ts,lr in lyrics.items(): # ts:timestamp,lr:lyrics
             index += 1
             delta_m_1 = ts - timestamp
             if delta_m_1 <= 0: # only lyrics that are behind the timestamp
