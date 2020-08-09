@@ -36,7 +36,7 @@ def stamp2tag(timestamp):
     ss = int((timestamp - mm * 60))
     xx = int((timestamp - mm * 60 - ss) * 100) # We'd use standard 100th of a second here
     mm,ss,xx = str(mm).rjust(2,'0'),str(ss).rjust(2,'0'),str(xx).rjust(2,'0')
-    return f'{mm}:{ss}:{xx}'                    
+    return f'{mm}:{ss}.{xx}'                    
 def tag2stamp(IDTag):
     IDTag = ''.join(LrcRegexes.LTimestamp.findall(IDTag))
     if not IDTag:return None
