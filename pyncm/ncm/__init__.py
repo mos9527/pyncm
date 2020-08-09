@@ -10,6 +10,7 @@ def Depercated(replacement):
             return func(*args,**kwargs)
         return wrapper
     return prewrapper
-from .ncm_core import *
-from .ncm_func import *
+from .ncm_core import NeteaseCloudMusic,NeteaseCloudMusicKeygen
+from .ncm_func import NCMFunctions
+from .lrcparser import LrcParser
 # Import all subclasses

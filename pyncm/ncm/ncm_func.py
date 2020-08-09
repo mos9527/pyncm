@@ -14,11 +14,12 @@ from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3
 from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
+from .lrcparser import LrcParser
 from ..utils.downloader import Downloader, DownloadWorker, PoolWorker
 from .ncm_core import NeteaseCloudMusic
 from . import Depercated, logger, session
 import time
-
+truncate_length = 24
 def TrackHelperProperty(func):
     @property
     def wrapper(*a,**k):
@@ -157,7 +158,7 @@ class NCMFunctions():
             return
         self.DL.append(url, path)
         logger.debug('Queued download ...%s -> ...%s' %
-                     (url[-16:], path[-16:]))
+                     (url[-truncate_length:], path[-truncate_length:]))
 
     def QueueDownloadTrackAudio(self, id, quality='lossless', folder=''):
         '''
@@ -274,67 +275,27 @@ class NCMFunctions():
         # Writes lyrics to JSON file
         return lyrics
 
-    def LoadLyrics(self, folder):
-        '''
-            Converts the lyrics JSON format into a dictionary
-        '''
-        lyrics = self.GenerateDownloadPath(
-            filename='lyrics.json', folder=folder)
-        # Locate lyric file
-        if not os.path.exists(lyrics):
-            logger.error('Missing lyrics.json,LRC will not be parsed')
-            return {}
-        lyrics = json.loads(open(lyrics, encoding='utf-8').read())
-        # Load lyrics into json file
-        lrc_lists = [lyrics[lrc]['lyric'] for lrc in lyrics.keys(
-        ) if lrc in ['lrc', 'tlyric'] and 'lyric' in lyrics[lrc].keys()]
-        # List all lyrics.Translation is optional
-        timestamp_regex = r"(?:\[)(\d{2,}:\d{2,}.\d{2,})(?:\])(.*)"
-        lyrics_combined = {}
-        for lrc_ in lrc_lists:
-            if not lrc_:
-                continue
-            lrc_lrc = lrc_.split('\n')
-            # Split lyrics into an array
-            for lrc in lrc_lrc:
-                result = re.search(timestamp_regex, lrc)
-                if not result:
-                    continue
-                timestamp, content = result.group(1), result.group(2)
-                if not timestamp in lyrics_combined.keys():
-                    lyrics_combined[timestamp] = []
-                lyrics_combined[timestamp].append(content)
-
-        return lyrics_combined
-
     def FormatLyrics(self, folder, export=''):
         '''
             Coverts a dictionary with timestamps as keys and lyrics as items into LRC lyrics
         '''
-        export = export if export else self.output
-        lyrics = self.LoadLyrics(folder)
-        if not lyrics:
-            return
-        track = self.GenerateDownloadPath(filename='track.json', folder=folder)
-        # Locate track file
-        if not os.path.exists(track):
-            logger.warn('Missing track.json,will skip track info parsing')
-            track = {} # Thus,anything TrackHelper produces will be `Undefined`
-        else:
-            track = json.loads(open(track, encoding='utf-8').read())
-        # Load JSON for future purposes
-        tHelper = TrackHelper(track)
-        lrc = f"""[ti:{tHelper.TrackName}]\n[al:{tHelper.AlbumName}]\n[au:{','.join(tHelper.Artists)}]\n[re:PyNCM]\n"""
-
-        for timestamp in lyrics.keys():
-            newline = '[%s]' % timestamp
-            newline += '\t'.join(lyrics[timestamp])
-            lrc += '\n' + newline
-        path = self.GenerateDownloadPath(
-            filename=tHelper.Title + '.lrc', folder=export)
-        open(path, mode='w', encoding='utf-8').write(lrc)
-        logger.debug('Downloaded lyrics ...%s' % path[-16:])
-        return lrc
+        export = export if export else self.output        
+        lyrics = json.loads(open(self.GenerateDownloadPath(filename='lyrics.json',folder=folder), encoding='utf-8').read())  
+        track  = json.loads(open(self.GenerateDownloadPath(filename='track.json', folder=folder), encoding='utf-8').read())
+        rawlrcs= [lyrics[k]['lyric'] for k in set(lyrics.keys()).intersection({'lrc','tlyric'})]
+        lrc    = LrcParser()
+        for rawlrc in rawlrcs:
+            this = LrcParser(rawlrc)
+            lrc.UpdateLyrics(this.lyrics.items(),timestamp_function=lambda l:l[0],lyrics_function=lambda l:[v[1] for v in l[1]])            
+        # Writing some metadata
+        users = '/'.join([lyrics[k]['nickname'] for k in set(lyrics.keys()).intersection({'transUser','lyricUser'})])
+        lrc.LRCAuthor = users        
+        # Saving the lyrics        
+        tHelper = TrackHelper(track)        
+        path = self.GenerateDownloadPath(filename=tHelper.Title + '.lrc', folder=export)
+        open(path, mode='w', encoding='utf-8').write(lrc.DumpLyrics())
+        logger.debug('Downloaded lyrics ...%s' % path[-truncate_length:])
+        return True
 
     def TagTrack(self, folder, export=''):
         '''
@@ -411,7 +372,7 @@ class NCMFunctions():
         try:
             path = self.GenerateDownloadPath(filename=savename, folder=export)
             shutil.copy(audio, path)
-            logger.debug('Exported audio to path %s' % path[-16:])
+            logger.debug('Exported audio to path %s' % path[-truncate_length:])
             return path
         except Exception as e:
             raise Exception('While copying audio file:%s' % e)
