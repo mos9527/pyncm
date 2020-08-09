@@ -1,7 +1,7 @@
 # * Making the wheels again. I forgot that lrc parsers for python already exist while I was coding this lol
 import re
-from collections import defaultdict
-from typing import Iterable
+from collections import defaultdict,OrderedDict
+
 
 def LrcProperty(tagname):
     
@@ -21,7 +21,6 @@ def LrcProperty(tagname):
             setattr(self,tagname,v)
         return _wrapper  
     return wrapper
-
 
 class LrcRegexes:
     LIDTag_= re.compile(r'(?<=\[)[^\[\]]*(?=\])')
@@ -71,7 +70,7 @@ class LrcParser:
     @LrcProperty('ve')
     def ProgramVersion(self):pass
     # endregion
-
+    
     def __init__(self,lrc=''):
         '''
         Takes lyrics in `LRC` format,then provides lyrics based on timestamps
@@ -79,7 +78,7 @@ class LrcParser:
         # Parsing lrc,line by line
         def EmurateAttributes():
             for m in dir(self):
-                if any(f in m for f in ['__','Add','Load','Clear','Find','Update','Dump']):continue
+                if any(f in m for f in ['__','Add','Load','Clear','Find','Update','Dump','lyrics']):continue
                 yield (m,str(getattr(self,m)))        
         self.lrcAttributes = list(EmurateAttributes())
         # This function will only work when no attributes are defined
@@ -88,7 +87,12 @@ class LrcParser:
             # empty input,we are creating lyrics then
             return
         else:self.LoadLrc(lrc)
-    
+
+    @property
+    def lyrics_sorted(self):
+        '''Returns sorted version of the lyrics'''
+        return defaultdict(list,sorted(self.lyrics.items()))        
+
     def LoadLrc(self,lrc):
         '''Loads a LRC formmated lryics file'''
         for line in lrc.split('\n'):
@@ -142,7 +146,7 @@ class LrcParser:
             if not isinstance(value,Exception): # If such value do exist
                 lrc += f'[{attr}:{value}]' + '\n'        
         # Adding lyrics
-        for timestamps,lyrics in self.lyrics.items():
+        for timestamps,lyrics in self.lyrics_sorted.items(): # write the sorted one
             IDTag,Lyrics = None,[]
             for _IDTag,_Lyrics in lyrics:
                 IDTag = _IDTag
@@ -166,6 +170,5 @@ class LrcParser:
                 if delta_m is None or abs(delta_m_1) <= delta_m:
                     # distance's lower,update
                     delta_m = abs(delta_m_1)
-                    bestmatch = (ts,lr,index)
-            if abs(delta_m_1) > delta_m:break # cutoff at where the distance got bigger
+                    bestmatch = (ts,lr,index)            
         return bestmatch
