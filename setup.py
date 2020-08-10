@@ -24,7 +24,7 @@ with open("pyncm/__init__.py","w",encoding='utf-8') as target:
 
 setuptools.setup(
     name="pyncm", # Replace with your own username
-    version="1.1.4",
+    version="1.1.5",
     author="greats3an",
     author_email="greats3an@gmail.com",
     description="NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API",
@@ -37,5 +37,5 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],install_requires=requirements,
-    python_requires='>=3.2',
+    python_requires='>=3.6',
 )
