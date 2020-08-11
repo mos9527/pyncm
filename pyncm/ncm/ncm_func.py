@@ -63,7 +63,7 @@ class TrackHelper():
     @TrackHelperProperty
     def Artists(self):
         '''All the artists' names as a list'''
-        return [ar['name'] for ar in self.track['ar']]
+        return [str(ar['name']) for ar in self.track['ar']]
 
     @TrackHelperProperty
     def Title(self):

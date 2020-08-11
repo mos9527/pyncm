@@ -238,7 +238,7 @@ else:
         logging.error(f'Error while executing "{operation}" : {e}')
         # Print out traceback
         import traceback
-        traceback.print_stack(file=sys.stdout)
+        traceback.print_stack(file=sys.stderr)
         # Exit with status code 1
         sys.exit(1)
 
