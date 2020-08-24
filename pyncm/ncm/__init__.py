@@ -26,9 +26,7 @@ class Session(requests.Session):
         # Setting up default values
         self.login_info = {'success': False,'tick': time.time(), 'content': None}
         self.csrf_token = ''
-        self.verify = False
-        
-        
+             
 class SessionManager():
     # How to abuse mutable types (((gone wild)))
     def __init__(self) -> None:
