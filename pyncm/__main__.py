@@ -1,12 +1,12 @@
 '''
-# CLI Frontend for NCMFunctions
+# CLI Frontend for helpertions
 
 Which sets an example to use this module.have fun ;)
 '''
 import logging
 import coloredlogs
 import colorama
-from . import ncm
+
 from pathlib import Path
 import json
 import os
@@ -14,8 +14,16 @@ import shutil
 import sys
 import argparse 
 
+import argparse
+import base64
+import re
+
+from . import ncm
+from .utils.helper import NcmHelper
+
+
 arg_whitelist = [
-    'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'random_keys', 'logging_level','report_output'
+    'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'logging_level','report_output','insecure'
 ]
 
 reporters = {
@@ -63,8 +71,6 @@ class ConfigProvider():
         logging.warning('Destroyed config file')
 
 colorama.init()
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-# Set logging level for `urllib3`
 parser = argparse.ArgumentParser(
     description='NCM All-in-One Downloader for python', formatter_class=argparse.RawTextHelpFormatter)
 # Parser begin----------------------------------------------------------------------------
@@ -104,8 +110,6 @@ parser.add_argument('--pool-size', type=int, default=4,
                     help='''Download pool size''')
 parser.add_argument('--buffer-size', type=int, default=256,
                     help='''Download buffer size (KB)''')
-parser.add_argument('--random-keys', action='store_true',
-                    help='''Use random AES key for encryption''')
 parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
                     help='''Logging Level,see the following list for help
 50 FATAL
@@ -120,6 +124,9 @@ parser.add_argument('--report-output', type=str,default='stderr',
 stdout Output to stdout
 stderr Output to stderr
 logs   Output via logging.debug''')
+parser.add_argument('--insecure', action='store_true',
+                    help='''Bypass SSL verifcation of `requests`''')
+
 args = parser.parse_args()
 args = args.__dict__
 
@@ -133,7 +140,7 @@ if len(sys.argv) < 2:
 # region Loading Config & Arguments
 config = ConfigProvider()  # for saved configs
 
-operation, id, quality,  temp, output, phone, password, merge_only, perserve_temp,  pool_size, buffer_size, random_keys, logging_level,report_output = args.values()
+operation, id, quality,  temp, output, phone, password, merge_only, perserve_temp,  pool_size, buffer_size, logging_level,report_output,insecure = args.values()
 # Parser end----------------------------------------------------------------------------
 
 if config.misc:
@@ -158,37 +165,37 @@ logging.debug('''Initalized with the following settings:
     Output folder       :       {}
     Poolsize            :       {} Workers
     Buffer Size         :       {} KB
-    Use random encSecKey:       {}
     Logging Level       :       {}
-    Report Output       :       {}'''.format(
-    id, operation, quality, ncm.ncm_core.NeteaseCloudMusicKeygen.generate_hash(
-        '', password) if password else '',
-    phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size,
-    random_keys, logging_level,report_output))
+    Report Output       :       {}
+    No SSL Verification :       {}'''.format(
+    id, operation, quality, ncm.Crypto.HashDigest(password) if password else '< no password specefied >',
+    phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size, logging_level,report_output,insecure))
 
-ncmfunc = ncm.ncm_func.NCMFunctions(
-    temp, output, merge_only, pool_size, buffer_size, random_keys,reporters[report_output])
+helper = NcmHelper(temp, output, merge_only, pool_size, buffer_size,reporters[report_output])
 
+NCM = ncm.GetCurrentSession()
+# setting up our session 
+NCM.verify = not insecure
 
 if config.cookies:
     # Load cookies if applicable
     try:
-        ncm.session.cookies.update(config.cookies)
+        NCM.cookies.update(config.cookies)
         logging.debug('Loaded stored cookies')
     except Exception as e:
         logging.error('Failed to load stored cookies:%s' % e)
 
 if config.logininfo:
     # Load login info if applicable
-    ncmfunc.NCM.login_info = config.logininfo
-    if ncmfunc.NCM.login_info['success']:
-        logging.debug('Loaded last login info (logged in as %s)' % ncmfunc.NCM.login_info['content']['profile']['nickname'])
+    NCM.login_info = config.logininfo
+    if NCM.login_info['success']:
+        logging.debug('Loaded last login info (logged in as %s)' % NCM.login_info['content']['profile']['nickname'])
 
 # endregion
 
 if phone and password:
     # passport provided,login with them
-    ncmfunc.Login(phone, password)
+    helper.Login(phone, password)
 
 '''
     Reflect the operations to certain functions
@@ -206,9 +213,9 @@ def NoExecWrapper(func, *args, **kwargs):
 
 def SaveConfig():
     # Saving cookies
-    config.cookies = ncm.session.cookies.get_dict()
+    config.cookies = NCM.cookies.get_dict()
     # Saving logininfo
-    config.logininfo = ncmfunc.NCM.login_info
+    config.logininfo = NCM.login_info
     # Saving filtered arguments
     config.misc = {k: v for k, v in args.items() if k in arg_whitelist}
     config.save()
@@ -219,15 +226,14 @@ reflection = {
     'viewcfg':lambda:print(open(ConfigProvider.path, 'r+', encoding='utf-8').read()),
     'reset':config.destroy,
     'config': SaveConfig,
-    'song_audio': NoExecWrapper(ncmfunc.DownloadTrackAudio, id=id, quality=quality),
-    'song_lyric':   NoExecWrapper(ncmfunc.DownloadAndFormatLyrics, id=id),
-    'song_meta': NoExecWrapper(ncmfunc.DownloadTrackInfo, id=id),
-    'song_down': NoExecWrapper(ncmfunc.DownloadAll, id=id, quality=quality),
-    'song':  NoExecWrapper(ncmfunc.DownloadAllAndMerge, id=id, quality=quality),
-    'playlist': NoExecWrapper(ncmfunc.DownloadAllTracksInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
-    'album': NoExecWrapper(ncmfunc.DownloadAllTracksInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
+    'song_audio': NoExecWrapper(helper.DownloadTrackAudio, id=id, quality=quality),
+    'song_lyric':   NoExecWrapper(helper.DownloadAndFormatLyrics, id=id),
+    'song_meta': NoExecWrapper(helper.DownloadTrackInfo, id=id),
+    'song_down': NoExecWrapper(helper.DownloadAll, id=id, quality=quality),
+    'song':  NoExecWrapper(helper.DownloadAllAndMerge, id=id, quality=quality),
+    'playlist': NoExecWrapper(helper.DownloadAllTracksInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
+    'album': NoExecWrapper(helper.DownloadAllTracksInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
 }
-
 if not operation in reflection.keys():
     logging.error('Invalid operation:%s' % operation)
 else:

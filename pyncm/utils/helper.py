@@ -1,78 +1,92 @@
-'''
-# Netease Cloud Music Func
-For direct disk I/O Access and ease-of-use for downloading,tagging music of NE
-'''
-import argparse
-import re
+
 import shutil
 import json
 import time
 import os
 import sys
+import logging
+import base64
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import ID3, APIC
 from mutagen.mp3 import EasyMP3
 from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
+from mutagen.oggvorbis import OggVorbis
 from .lrcparser import LrcParser
-from ..utils.downloader import Downloader, DownloadWorker, PoolWorker
-from .ncm_core import NeteaseCloudMusic
-from . import Depercated, logger, session
-import time
-truncate_length = 24
-def TrackHelperProperty(func):
-    @property
-    def wrapper(*a,**k):
-        try:
-            return func(*a,**k)
-        except Exception as e:
-            logger.warn('Error while getting track attribute %s:%s' % (func.__name__,e))
-            return None        
-    return wrapper
+from .downloader import Downloader, DownloadWorker, PoolWorker
+from ..ncm import apis as NCM,GetCurrentSession
+
+truncate_length = 64
+logger = logging.getLogger('NCMHelper')
+
+def TrackHelperProperty(default=None):
+    def preWrapper(func):
+        @property
+        def wrapper(*a,**k):
+            try:
+                return func(*a,**k)
+            except:
+                logger.warn('Error while getting track attribute %s,using fallback value %s' % (func.__name__,default))
+                return default
+        return wrapper
+    return preWrapper
+
 class TrackHelper():
     def __init__(self, track_dict) -> None:
         self.track = track_dict
 
-    @TrackHelperProperty
+    @TrackHelperProperty()
     def TrackPublishTime(self):
         '''The publish year of the track'''
         epoch = self.track['publishTime'] / 1000 # js timestamps are in milliseconds.
                                                  # converting to unix timestamps (in seconds),we need to divide by 1000
         return time.gmtime(epoch).tm_year
 
-    @TrackHelperProperty
+    @TrackHelperProperty()
     def TrackNumber(self):
         '''The # of the track'''
         return self.track['no']
 
-    @TrackHelperProperty
+    @TrackHelperProperty(default='Unknown')
     def TrackName(self):
         '''The name of the track'''
+        assert self.track['name'] != None
         return self.track['name']
 
-    @TrackHelperProperty
+    @TrackHelperProperty(default='Unknown')
     def AlbumName(self):
         '''The name of the album'''
-        return self.track['al']['name']
+        if self.track['al']['id']:
+            return self.track['al']['name']
+        else:
+            return self.track['pc']['alb']
 
-    @TrackHelperProperty
+    @TrackHelperProperty(default='https://p1.music.126.net/UeTuwE7pvjBpypWLudqukA==/3132508627578625.jpg')
     def AlbumCover(self):
         '''The cover of the track's album'''
-        return self.track['al']['picUrl']
+        if self.track['al']['id']:
+            return self.track['al']['picUrl']
+        else:        
+            return 'https://music.163.com/api/img/blur/' + self.track['pc']['cid'] 
+            # source:PC version's core.js
 
-    @TrackHelperProperty
+    @TrackHelperProperty(default=['Various Artists'])
     def Artists(self):
         '''All the artists' names as a list'''
-        return [str(ar['name']) for ar in self.track['ar']]
+        ret = [ar['name'] for ar in self.track['ar']]
+        if not ret.count(None):
+            return ret
+        else:
+            return [self.track['pc']['ar']] # for NCM cloud-drive stored audio
 
-    @TrackHelperProperty
+    @TrackHelperProperty()
     def Title(self):
         '''A formatted title for this song'''
         return f'{",".join(self.Artists)} - {self.TrackName}'
 
-class NCMFunctions():
+class NcmHelper():
     '''
-        Functions using ncm_core.py,simplfied to download songs easily
+        Helper class to manage & queue downloads
 
             temp        :       Tempoary folder to stroe downloads
             output      :       Output folder to store music
@@ -85,18 +99,15 @@ class NCMFunctions():
         Functions inside are well described,read them for more info.
     '''
 
-    def __init__(self, temp='temp', output='output', merge_only=False, pool_size=4, buffer_size=256, random_keys=False, reporter=sys.stdout):
-        self.NCM = NeteaseCloudMusic(random_keys)
-        self.DL = Downloader(
-            session=session, pool_size=pool_size, buffer_size=buffer_size)
+    def __init__(self, temp='temp', output='output', merge_only=False, pool_size=4, buffer_size=256, reporter=sys.stdout):
+        self.DL = Downloader(session=GetCurrentSession(), pool_size=pool_size, buffer_size=buffer_size)
         # Initalization of other classes
         self.temp, self.output, self.merge_only = temp, output, merge_only
         self.pool_size = pool_size
         self.reporter = reporter
 
     def ReportStatus(self, title, done, total):
-        precentage = str(int(done * 100 / total)).center(3,
-                                                         ' ') if total else '--'
+        precentage = str(int(done * 100 / total)).center(3,' ') if total else '--'
         self.reporter(
             f'{title} | {precentage}% | {done} | {total}{" " * 30}\r')
         # Trims white space
@@ -164,7 +175,7 @@ class NCMFunctions():
         '''
             This will queue to download only the song's audio file (named 'audio.*') to a certain directory.
         '''
-        info = self.NCM.GetTrackAudioInfo(song_ids=id, quality=quality)
+        info = NCM.track.GetTrackAudio(song_ids=id, quality=quality)
         if not info['code'] == 200:
             return
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
@@ -177,7 +188,7 @@ class NCMFunctions():
         '''
             This will write the song's trackdata into JSON (named track.json) and queue to download cover (named cover.jpg) to a certain directory.
         '''
-        track = self.NCM.GetTrackDetail(id)['songs'][0]
+        track = NCM.track.GetTrackDetail(id)['songs'][0]
         self.QueueDownload(track['al']['picUrl'], self.GenerateDownloadPath(
             filename='cover.jpg', folder=folder))
         # Queue to download cover image
@@ -193,17 +204,13 @@ class NCMFunctions():
 
             Note that extra info will be stored inside the JSON that the api sent
         '''
-        info = self.NCM.GetAlbumInfo(id)
-        try:
-            name, creator = info['title'], info['author']
-        except Exception as e:
-            raise Exception('Failed to fetch Album info:%s' % e)
+        info = NCM.album.GetAlbumInfo(id)
         root = folder
         # Go through every track inside the JSON
-        done, total = 0, len(info['songlist'])
-        trackIds = [song['id'] for song in info['songlist']]
-        tracks = self.NCM.GetTrackDetail(trackIds)
-        trackAudios = self.NCM.GetTrackAudioInfo(trackIds, quality=quality)
+        done, total = 0, len(info['songs'])
+        trackIds = [song['id'] for song in info['songs']]
+        tracks = NCM.track.GetTrackDetail(trackIds)
+        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)
 
         for trackId in trackIds:
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
@@ -231,7 +238,7 @@ class NCMFunctions():
 
             The strcuture is very similar to the album one,but with some minor twists
         '''
-        info = self.NCM.GetPlaylistInfo(id)
+        info = NCM.playlist.GetPlaylistInfo(id)
         try:
             name, creator = info['playlist']['name'], info['playlist']['creator']['nickname']
         except Exception as e:
@@ -241,8 +248,8 @@ class NCMFunctions():
         trackIds = [tid['id'] for tid in info['playlist']['trackIds']]
 
         done, total = 0, len(trackIds)
-        tracks = self.NCM.GetTrackDetail(trackIds)
-        trackAudios = self.NCM.GetTrackAudioInfo(trackIds, quality=quality)
+        tracks = NCM.track.GetTrackDetail(trackIds)
+        trackAudios = NCM.track.GetTrackAudioInfo(trackIds, quality=quality)
         for trackId in trackIds:
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
             track = [t for t in tracks['songs'] if t['id'] == trackId][0]
@@ -268,7 +275,7 @@ class NCMFunctions():
         '''
             This will only write the song's lyrics into JSON (named lyrics.json) to a certain directory.
         '''
-        lyrics = self.NCM.GetTrackLyrics(id)
+        lyrics = NCM.track.GetTrackLyrics(id)
         target = self.GenerateDownloadPath(
             filename='lyrics.json', folder=folder)
         open(target, mode='w', encoding='utf-8').write(json.dumps(lyrics))
@@ -313,25 +320,21 @@ class NCMFunctions():
 
             Suppports MP3,M4A(ALAC/MP4),FLAC
         '''
+
         export = export if export else self.output
         folder = str(folder)
-        audio = [f for f in os.listdir(folder) if f.split(
-            '.')[-1] in ['mp3', 'm4a', 'flac']]
+        audio = [f for f in os.listdir(folder) if f.split('.')[-1].lower() in ['mp3', 'm4a', 'flac','ogg']]
         if not audio:
-            return
+            logger.error('Supported audio file is missing,Cannot continue formatting!')
+            return     
         audio = audio[-1]
         audio = self.GenerateDownloadPath(filename=audio, folder=folder)
-        format = audio.split('.')[-1]
+        format = audio.split('.')[-1].lower()
         # Locate audio file,uses last match
         track = self.GenerateDownloadPath(filename='track.json', folder=folder)
         # Locate track file
         cover = self.GenerateDownloadPath(filename='cover.jpg', folder=folder)
         # Locate cover image
-
-        if not audio:
-            logger.error(
-                'audio.m4a / audio.mp3 / audio.flac is missing,Cannot continue formatting!')
-            return
 
         track = json.loads(open(track, encoding='utf-8').read())
         tHelper = TrackHelper(track)
@@ -339,8 +342,8 @@ class NCMFunctions():
         def write_keys(song):
             # Write trackdatas
             song['title'] = tHelper.TrackName
-            song['artist'] = tHelper.Artists
-            song['album'] = tHelper.AlbumName
+            song['artist'] = tHelper.Artists if tHelper.Artists else 'Various Artists'
+            song['album'] = tHelper.AlbumName if tHelper.AlbumName else 'Unknown'
             song['tracknumber'] = str(tHelper.TrackNumber)
             song['date'] = str(tHelper.TrackPublishTime)
             song.save()
@@ -374,7 +377,16 @@ class NCMFunctions():
                 pic.mime = 'image/jpeg'
                 song.add_picture(pic)
                 song.save()
-
+        elif format == 'ogg':
+            # Process OGG files:Ogg Encapsulation Format
+            song = OggVorbis(audio)
+            write_keys(song)
+            if os.path.exists(cover):
+                pic = Picture()
+                pic.data = open(cover, 'rb').read()
+                pic.mime = 'image/jpeg'
+                song["metadata_block_picture"] = [base64.b64encode(pic.write()).decode('ascii')]
+                song.save()
         # Rename & move file
         savename = tHelper.Title + '.' + format
         try:
@@ -445,10 +457,7 @@ class NCMFunctions():
         return True
 
     def Login(self, username, password):
-        '''
-        Login method,equals to ncm_core.UpdateLoginInfo
-        '''
-        return self.NCM.UpdateLoginInfo(username, password)
+        return NCM.login.CellphoneLogin(username, password)
 
     def MutilWrapper(self, queue_func):
         '''
@@ -473,10 +482,8 @@ class NCMFunctions():
             pool = Downloader(worker=PoolWorker, pool_size=self.pool_size)
             for sub in os.listdir(folder):
                 pool.append(tag, os.path.join(folder, sub))
-
             def wait():
-                self.ReportStatus('Tagging audio', len(os.listdir(
-                    folder)) - pool.task_queue.unfinished_tasks, len(os.listdir(folder)))
+                self.ReportStatus('Tagging audio', len(os.listdir(folder)) - pool.task_queue.unfinished_tasks, len(os.listdir(folder)))
                 time.sleep(1)
             pool.wait(func=wait)
         return wrapper

@@ -10,11 +10,6 @@ import os,sys,time
 from threading import Thread
 from queue import Queue
 from requests import Session
-from .progressbar import ProgressBar
-from .clisheet import CLISheet
-
-def GetProgressBar(*a,**k):
-    return ProgressBar(*a,**k,prefix='\033[33m',suffix='\033[0m',fill='#')
 
 class PoolWorker(Thread):
     '''
@@ -121,7 +116,6 @@ class Downloader():
 
     def __init__(self,session: Session = None, worker=DownloadWorker, pool_size=1, timeout=5,buffer_size=256):
         if not session:session = Session()
-        self.sheet = CLISheet(('ID', 3), ('PROGRESS', 60), ('STATUS', 6))
         self.pool_size = pool_size
         self.task_queue = Queue()
         def get_worker(i):
@@ -135,7 +129,6 @@ class Downloader():
         # Generate workers
         for worker in self.workers:
             worker.start()
-            self.sheet.add_line()
         # and start them
 
     def reports(self):
