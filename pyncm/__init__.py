@@ -38,16 +38,23 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
     # 导入核心包
     NCM = NeteaseCloudMusic()
     # 获取歌曲信息    
-    NCM.GetSongInfo(29732235)
+    NCM.track.GetTrackAudio(29732235)
     `{'data': [{'id': 29732235, 'url': 'http://m701.music.126.net/20200313090222/479f50d5748625d59d405c7a219f3f5b/jdyyaac/040f/565c ...`    
     # 获取歌曲详情
-    NCM.GetSongDetail(29732235)    
+    NCM.track.GetTrackDetail(29732235)    
     `{'songs': [{'name': 'Supernova', 'id': 29732235, 'pst': 0, 't': 0, 'ar': [{'id': 38725, 'name': 'Laszlo', 'tns': [], ...`
     # 获取歌曲评论
-    NCM.GetSongComments(29732235)    
+    NCM.track.GetTrackComments(29732235)    
     `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
 
-    详见 Wiki (WIP)
+    详见 Wiki (WIP) 或自翻代码😶
+
+# Credit
+[decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)
+[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js)
+
+# PR
+本项目（截至 2020/08/24）已补全网易云所用加密算法，欢迎各位提交 PR ，补全API
 
 ### 衍生项目
 
