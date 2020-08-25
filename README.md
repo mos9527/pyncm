@@ -30,7 +30,7 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 ### 关于 ID
 可通过网易云音乐的“分享链接”功能取得
 如 `https://music.163.com/playlist?id=3199245372&userid=315542615`，该ID即为`3199245372`
-其他功能详见 pyncm --help
+其他功能详见 [Wiki](https://github.com/greats3an/pyncm/wiki)
 
 
 # Python 使用示例

@@ -1,20 +1,11 @@
-'''
-@Author: greats3an
-@Date: 2020-01-20 19:26:37
-@LastEditors  : greats3an
-@LastEditTime : 2020-02-11 16:47:48
-@Site: mos9527.tooo.top
-@Description: Pool-like downloader
-'''
+'''Pool based multithreaded downloader'''
 import os,sys,time
 from threading import Thread
 from queue import Queue
 from requests import Session
 
 class PoolWorker(Thread):
-    '''
-            Basic worker model.
-    '''
+    '''Base worker model.'''
     def __init__(self,queue,id=0):
         self.id = id
         self.task_queue = queue
@@ -33,13 +24,7 @@ class PoolWorker(Thread):
             self.task_queue.task_done()
 
 class DownloadWorker(PoolWorker):
-    '''
-        Workers for downloading:
-
-            Needed the task_queue,which contains the url needed to fetch a download
-                session     :       which is the request.session used to download files
-                    id      :       to identify the downloader it self
-    '''
+    '''Workers for downloading'''
 
     def init_status(self):
         self.status = {'id': self.id, 'status': None, 'url': None,
@@ -55,9 +40,7 @@ class DownloadWorker(PoolWorker):
 
 
     def __call__(self):
-        '''
-        Reports the status once called
-        '''
+        '''Reports the status once called'''
         return self.status
 
     def run(self):
@@ -104,8 +87,10 @@ class DownloadWorker(PoolWorker):
             self.task_queue.task_done()
             # Marks that one task is completed.Note that it doesn't specifiy which task,work end
 class Downloader():
-    '''
-        Threadpool a-like downloader
+    '''Threadpool a-like downloader
+
+    Args :
+    
             session   :   request.Session()
             pool_size :   downloader count,specifies how many cocurrent tasks can be processed at once
             timeout   :   the time before raising TimeoutException
@@ -132,9 +117,7 @@ class Downloader():
         # and start them
 
     def reports(self):
-        '''
-            Generates reports.
-        '''
+        '''Generates reports.'''
         for worker in self.workers:
             if not type(worker) == DownloadWorker:
                 raise NotImplementedError(type(worker))
@@ -143,8 +126,7 @@ class Downloader():
 
         
     def wait(self, *args, func=None, do_when_done=True):
-        '''
-            Equvilant to .task_queue.join(),but tasks during wait time is possible.
+        '''Equvilant to .task_queue.join(),but tasks during wait time is possible.
                 do_when_done    :   Specifies whether exec the fucntion when loop ends or not
             Waits for all tasks are finished
         '''
@@ -160,8 +142,7 @@ class Downloader():
             do_func()
 
     def append(self, url, path):
-        '''        
-            Appends a new download task into queue
+        '''Appends a new download task into queue
 
                 url     : the file url
                 path    : the path of the destination file

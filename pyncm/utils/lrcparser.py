@@ -1,4 +1,4 @@
-# * Making the wheels again. I forgot that lrc parsers for python already exist while I was coding this lol
+'''Another *.lrc file parser'''
 import re
 from collections import defaultdict,OrderedDict
 
@@ -47,9 +47,7 @@ def tag2stamp(IDTag):
 # endregion
 
 class LrcParser:
-    '''
-    Parses lrc into mutable Python objects
-    '''
+    '''Parses lrc into mutable dict-like objects'''
     # region Properties from Wikipedia [https://en.wikipedia.org/wiki/LRC_(file_format)]
     @LrcProperty('ar')
     def Artist(self):pass
@@ -72,9 +70,7 @@ class LrcParser:
     # endregion
     
     def __init__(self,lrc=''):
-        '''
-        Takes lyrics in `LRC` format,then provides lyrics based on timestamps
-        '''
+        '''Takes lyrics in `LRC` format,then provides lyrics based on timestamps'''
         # Parsing lrc,line by line
         def EmurateAttributes():
             for m in dir(self):

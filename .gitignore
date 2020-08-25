@@ -17,3 +17,5 @@ notes
 dist
 pyncm.egg-info
 build
+docs
+*wiki*

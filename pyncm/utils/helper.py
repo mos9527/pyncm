@@ -1,4 +1,4 @@
-
+'''Helper class to help work with audio / lyrics files'''
 import shutil
 import json
 import time
@@ -12,9 +12,9 @@ from mutagen.mp3 import EasyMP3
 from mutagen import easymp4
 from mutagen.mp4 import MP4, MP4Cover
 from mutagen.oggvorbis import OggVorbis
-from .lrcparser import LrcParser
-from .downloader import Downloader, DownloadWorker, PoolWorker
-from ..ncm import apis as NCM,GetCurrentSession
+from . import LrcParser,Downloader, PoolWorker
+from .. import GetCurrentSession
+from .. import apis as NCM
 
 truncate_length = 64
 logger = logging.getLogger('NCMHelper')
@@ -32,6 +32,7 @@ def TrackHelperProperty(default=None):
     return preWrapper
 
 class TrackHelper():
+    '''Helper class for handling generic track objects'''
     def __init__(self, track_dict) -> None:
         self.track = track_dict
 
@@ -85,8 +86,7 @@ class TrackHelper():
         return f'{",".join(self.Artists)} - {self.TrackName}'
 
 class NcmHelper():
-    '''
-        Helper class to manage & queue downloads
+    '''Helper class to manage & queue downloads
 
             temp        :       Tempoary folder to stroe downloads
             output      :       Output folder to store music
@@ -457,7 +457,7 @@ class NcmHelper():
         return True
 
     def Login(self, username, password):
-        return NCM.login.CellphoneLogin(username, password)
+        return NCM.login.LoginViaCellphone(username, password)
 
     def MutilWrapper(self, queue_func):
         '''

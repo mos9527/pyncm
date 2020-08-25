@@ -1,8 +1,4 @@
-'''
-# CLI Frontend for helpertions
-
-Which sets an example to use this module.have fun ;)
-'''
+'''CLI Frontend. HOWTO:https://github.com/greats3an/pyncm/wiki'''
 import logging
 import coloredlogs
 import colorama
@@ -18,9 +14,8 @@ import argparse
 import base64
 import re
 
-from . import ncm
+from . import GetCurrentSession,Crypto
 from .utils.helper import NcmHelper
-
 
 arg_whitelist = [
     'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'logging_level','report_output','insecure'
@@ -168,12 +163,12 @@ logging.debug('''Initalized with the following settings:
     Logging Level       :       {}
     Report Output       :       {}
     No SSL Verification :       {}'''.format(
-    id, operation, quality, ncm.Crypto.HashDigest(password) if password else '< no password specefied >',
+    id, operation, quality, Crypto.HashDigest(password) if password else '< no password specefied >',
     phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size, logging_level,report_output,insecure))
 
 helper = NcmHelper(temp, output, merge_only, pool_size, buffer_size,reporters[report_output])
 
-NCM = ncm.GetCurrentSession()
+NCM = GetCurrentSession()
 # setting up our session 
 NCM.verify = not insecure
 
