@@ -34,20 +34,18 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 
 
 # Python 使用示例
-    from pyncm import NeteaseCloudMusic
-    # 导入核心包
-    NCM = NeteaseCloudMusic()
+    from pyncm import apis
     # 获取歌曲信息    
-    NCM.track.GetTrackAudio(29732235)
+    apis.track.GetTrackAudio(29732235)
     `{'data': [{'id': 29732235, 'url': 'http://m701.music.126.net/20200313090222/479f50d5748625d59d405c7a219f3f5b/jdyyaac/040f/565c ...`    
     # 获取歌曲详情
-    NCM.track.GetTrackDetail(29732235)    
+    apis.track.GetTrackDetail(29732235)    
     `{'songs': [{'name': 'Supernova', 'id': 29732235, 'pst': 0, 't': 0, 'ar': [{'id': 38725, 'name': 'Laszlo', 'tns': [], ...`
     # 获取歌曲评论
-    NCM.track.GetTrackComments(29732235)    
+    apis.track.GetTrackComments(29732235)    
     `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
 
-    详见 Wiki (WIP) 或自翻代码😶
+详见 Wiki (WIP) 或自翻代码😶
 
 # Credit
 [decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)
