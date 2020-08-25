@@ -2,7 +2,7 @@
 NeteaseCloudMusic APIs for Python 3.6+ 适用于 Python 3.6+ 的网易云音乐 API
 
 # 安装
-    `pip install pyncm`
+    pip install pyncm
 
 # 直接使用
 API 可以通过命令行直接访问，请参照下列命令输出进行操作
@@ -57,5 +57,4 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 本项目（截至 2020/08/24）已补全网易云所用加密算法，欢迎各位提交 PR ，补全API
 
 ### 衍生项目
-
-    [PyNCMd](https://github.com/greats3an/pyncmd) 
+[PyNCMd](https://github.com/greats3an/pyncmd) 
