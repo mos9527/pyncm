@@ -60,7 +60,7 @@ class ConfigManager():
         config = json.loads(config)
         self.pyncm = config['pyncm'] # cmdlet options
         LoadNewSessionFromDump(config['session']) # session settings
-        if GetCurrentSession.login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession.login_info['content']['profile']['nickname'])
+        if GetCurrentSession().login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
         return logging.debug('Loaded config file')
     @DestroyOnError
     def save(self):
