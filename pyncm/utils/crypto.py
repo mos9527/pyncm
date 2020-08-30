@@ -17,7 +17,7 @@ class RSAPublicKey():
         self.n = int(n, 16)
         self.e = int(e, 16)
 
-# region Constant class variables
+# region Constant values
 weapi_aes_key    = "0CoJUm6Qyw8W8jud" # cbc
 weapi_aes_iv     = "0102030405060708" # cbc
 weapi_rsa_pubkey = RSAPublicKey(
@@ -34,6 +34,7 @@ linuxapi_aes_key = "rFgB&h#%2?^eDg:Q" # ecb
 eapi_digest_salt = "nobody%(url)suse%(text)smd5forencrypt"
 eapi_data_salt   = "%(url)s-36cd479b6b5-%(text)s-36cd479b6b5-%(digest)s"
 eapi_aes_key     = "e82ckenh8dichen8" # ecb
+randstr_charset  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 # endregion
 
 def PadWithRemainder(data,blocksize=AES.block_size):
@@ -51,10 +52,18 @@ class Crypto():
     # region Base cryptograhpy methods
     # region Utility
     @staticmethod
-    def RandomString(len, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
+    def RandomString(len, chars=randstr_charset):
         '''Generates random string of `len` chars within a selected number of chars'''
         return ''.join([random.choice(chars) for i in range(0, len)])
-
+    @staticmethod
+    def HexDigest(data : bytearray):
+        '''Digests a `bytearray` to a hex string'''
+        return ''.join([hex(d)[2:].zfill(2) for d in data])
+    @staticmethod
+    def HexCompose(hexstr : str):
+        '''Composes a hex string back to a `bytearray`'''
+        if len(hexstr) % 2:raise Exception('Hex-string length should be a even number')
+        return bytearray([int(hexstr[i:i+2],16) for i in range(0,len(hexstr),2)])
     @staticmethod
     def HashDigest(text):
         '''Hexdecimal MD5 hash generator'''
@@ -64,7 +73,7 @@ class Crypto():
     # region Cryptos
     @staticmethod
     def AESEncrypt(
-        data, key, mode=AES.MODE_ECB , iv='',padder=PadWithRemainder        
+        data:str, key:str, mode=AES.MODE_ECB , iv='',padder=PadWithRemainder        
     ):
         '''Basic AES encipher function'''
         if mode in [AES.MODE_EAX,AES.MODE_ECB]:
@@ -76,7 +85,7 @@ class Crypto():
 
     @staticmethod
     def AESDecrypt(
-        data,key,mode=AES.MODE_ECB,iv='',unpadder=UnpadRemainder
+        data:str,key:str,mode=AES.MODE_ECB,iv='',unpadder=UnpadRemainder
     ):
         '''Basic AES decipher funtion'''
         if mode in [AES.MODE_EAX,AES.MODE_ECB]:
@@ -87,13 +96,13 @@ class Crypto():
         return unpadder(decrypted_aes)
 
     @staticmethod
-    def RSAEncrypt(data, pubkey: RSAPublicKey, reverse=True):
-        '''Signle-block textbook RSA encrpytion (c ≡ n ^ e % N)'''
+    def RSAEncrypt(data:str, pubkey: RSAPublicKey, reverse=True):
+        '''Signle-block textbook RSA encrpytion (c ≡ n ^ e % N),encodes text to hexstring first'''
         def toInt(s): return int(s.encode('utf-8').hex(), 16)
         n = data # do not modify in place
         if reverse:n = reversed(n)
         n, e, N = toInt(''.join(n)), pubkey.e, pubkey.n
-        return n ** e % N
+        return Crypto.HexCompose(hex(n ** e % N)[2:].zfill(256))
     # endregion
     # endregion
     
@@ -113,14 +122,14 @@ class Crypto():
         # 3rd go,generate RSA encrypted encSecKey
         if not encSecKey:
             # try not to generate this on-the-fly as it's quite slow
-            encSecKey = hex(Crypto.RSAEncrypt(aes_key2, weapi_rsa_pubkey))[2:].zfill(256)
+            encSecKey = Crypto.HexDigest(Crypto.RSAEncrypt(aes_key2, weapi_rsa_pubkey))
         return {
             'params': params,
             'encSecKey': encSecKey
         }
 
     '''source:
-        - decompilation of `libposion.so` : https://juejin.im/user/2383396938455821
+        - decompilation of `libpoison.so` : https://juejin.im/user/2383396938455821
         - Binaryify/NeteaseCloudMusicApi  : https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js'''
     @staticmethod
     def LinuxCrypto(params):
@@ -128,7 +137,7 @@ class Crypto():
         params = str(params)
         # Single-pass AES-128 ECB crypto
         return {
-            'eparams':''.join([hex(b)[2:].zfill(2) for b in Crypto.AESEncrypt(params,key=linuxapi_aes_key,mode=AES.MODE_ECB)])
+            'eparams':Crypto.HexDigest(Crypto.AESEncrypt(params,key=linuxapi_aes_key,mode=AES.MODE_ECB))
         }
     
     @staticmethod
@@ -138,7 +147,7 @@ class Crypto():
         digest = Crypto.HashDigest(eapi_digest_salt % {'url':url,'text':params})
         params = eapi_data_salt % ({'url':url,'text':params,'digest':digest})
         return {
-            'params':''.join([hex(b)[2:].zfill(2) for b in Crypto.AESEncrypt(params,key=eapi_aes_key,mode=AES.MODE_ECB)])
+            'params':Crypto.HexDigest(Crypto.AESEncrypt(params,key=eapi_aes_key,mode=AES.MODE_ECB))
         }
 
     @staticmethod

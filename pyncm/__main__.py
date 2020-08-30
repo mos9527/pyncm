@@ -3,19 +3,18 @@ import logging
 import coloredlogs
 import colorama
 
-from pathlib import Path
+import traceback
 import json
 import os
 import shutil
 import sys
 import argparse 
 
-import argparse
-import base64
-import re
-
-from . import GetCurrentSession,Crypto
+from pathlib import Path
+from . import GetCurrentSession,Crypto,LoadNewSessionFromDump,DumpCurrentSession
 from .utils.helper import NcmHelper
+
+coloredlogs.install()
 
 arg_whitelist = [
     'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'logging_level','report_output','insecure'
@@ -27,43 +26,58 @@ reporters = {
     'logs':lambda s:logging.debug(s),
 }
 
-class ConfigProvider():
-    path = os.path.join(str(Path.home()), '.pyncm')
 
+def DestroyOnError(func):
+    def wrapper(self,*a,**k):
+        try:
+            return func(self,*a,**k)
+        except Exception as e:
+            traceback.print_stack(file=sys.stderr)
+            # Exit with status code 1
+            logging.error('Failed operating config file %s (%s)' % (ConfigManager.path,e))
+            self.destroy()
+    return wrapper
+
+class ConfigManager():
+    path = os.path.join(str(Path.home()), '.pyncm')
+    @property
+    def present(self):return os.path.isfile(ConfigManager.path)
     def __init__(self) -> None:
-        self.cookies, self.logininfo, self.misc = {}, {}, {}
         # Check if config file exisits
-        if os.path.isfile(ConfigProvider.path):
+        self.pyncm = {}
+        if self.present:
             # Ready to parse
             self.load()
         else:
             # Ignored.
             pass
-        
+    @DestroyOnError
     def load(self):
         # Load saved settings
-        with open(ConfigProvider.path, 'r+', encoding='utf-8') as cfg:
-            config = json.loads(cfg.read())
-            for key in config.keys():
-                setattr(self, key, config[key])
-        logging.debug('Loaded config file')
-
+        if not self.present:
+            return logging.warn('Cannot load config from %s as it\'s not present' % ConfigManager.path)
+        config = open(ConfigManager.path).read()
+        config = json.loads(config)
+        self.pyncm = config['pyncm'] # cmdlet options
+        LoadNewSessionFromDump(config['session']) # session settings
+        if GetCurrentSession.login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession.login_info['content']['profile']['nickname'])
+        return logging.debug('Loaded config file')
+    @DestroyOnError
     def save(self):
         # Rewrite the config file with local settings
-        with open(ConfigProvider.path, 'w', encoding='utf-8') as cfg:
-            cfg.write(json.dumps(
-                {
-                    'cookies': self.cookies,
-                    'logininfo': self.logininfo,
-                    'misc': self.misc
-                }
-            ))
-        logging.debug('Saved config file')
+        config = {
+            'session':DumpCurrentSession(),# session settings
+            'pyncm':self.pyncm # cmdlet options
+        }
+        config = json.dumps(config)
+        open(ConfigManager.path,'w').write(config)
+        return logging.debug('Saved config file')
 
     def destroy(self):
         # Deletes the config
-        if os.path.isfile(ConfigProvider.path):os.remove(ConfigProvider.path)
-        logging.warning('Destroyed config file')
+        if self.present:
+            os.remove(ConfigManager.path)
+            logging.warning('Destroyed config file')
 
 colorama.init()
 parser = argparse.ArgumentParser(
@@ -133,18 +147,16 @@ if len(sys.argv) < 2:
     sys.exit(2)
 
 # region Loading Config & Arguments
-config = ConfigProvider()  # for saved configs
+config = ConfigManager()  # for saved configs
 
 operation, id, quality,  temp, output, phone, password, merge_only, perserve_temp,  pool_size, buffer_size, logging_level,report_output,insecure = args.values()
 # Parser end----------------------------------------------------------------------------
 
-if config.misc:
+if config.pyncm:
     # load saved arguments form config
-    for k, v in config.misc.items():
+    for k, v in config.pyncm.items():
         if not k in modified:locals()[k] = v
         # ignore user set arguments        
-    coloredlogs.install(level=logging_level)
-else:
     coloredlogs.install(level=logging_level)
 
 # once the arguments are parsed, do our things
@@ -171,22 +183,16 @@ helper = NcmHelper(temp, output, merge_only, pool_size, buffer_size,reporters[re
 NCM = GetCurrentSession()
 # setting up our session 
 NCM.verify = not insecure
-
-if config.cookies:
-    # Load cookies if applicable
-    try:
-        NCM.cookies.update(config.cookies)
-        logging.debug('Loaded stored cookies')
-    except Exception as e:
-        logging.error('Failed to load stored cookies:%s' % e)
-
-if config.logininfo:
-    # Load login info if applicable
-    NCM.login_info = config.logininfo
-    if NCM.login_info['success']:
-        logging.debug('Loaded last login info (logged in as %s)' % NCM.login_info['content']['profile']['nickname'])
-
 # endregion
+
+if config.pyncm:
+    # load saved arguments form config
+    for k, v in config.pyncm.items():
+        if not k in modified:locals()[k] = v
+        # ignore user set arguments        
+    coloredlogs.install(level=logging_level)
+else:
+    coloredlogs.install(level=logging_level)
 
 if phone and password:
     # passport provided,login with them
@@ -207,18 +213,13 @@ def NoExecWrapper(func, *args, **kwargs):
 
 
 def SaveConfig():
-    # Saving cookies
-    config.cookies = NCM.cookies.get_dict()
-    # Saving logininfo
-    config.logininfo = NCM.login_info
-    # Saving filtered arguments
-    config.misc = {k: v for k, v in args.items() if k in arg_whitelist}
+    config.pyncm = {k: v for k, v in args.items() if k in arg_whitelist}
     config.save()
     sys.exit(0)
 
 
 reflection = {
-    'viewcfg':lambda:print(open(ConfigProvider.path, 'r+', encoding='utf-8').read()),
+    'viewcfg':lambda:print(open(ConfigManager.path, 'r+', encoding='utf-8').read()),
     'reset':config.destroy,
     'config': SaveConfig,
     'song_audio': NoExecWrapper(helper.DownloadTrackAudio, id=id, quality=quality),
@@ -238,7 +239,6 @@ else:
     except Exception as e:
         logging.error(f'Error while executing "{operation}" : {e}')
         # Print out traceback
-        import traceback
         traceback.print_stack(file=sys.stderr)
         # Exit with status code 1
         sys.exit(1)
