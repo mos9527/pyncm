@@ -24,11 +24,11 @@ weapi_rsa_pubkey = RSAPublicKey(
     "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",
     "10001" # signle-block,no padding
 )
-weapi_rsa_default_keypair = (
+weapi_rsa_default_crypto = (
     'mos9527ItoooItop', 
-    # plaintext
+    # plaintext (aes_key_2)
     '01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754'
-    # (key->rsa_pubkey) ciphertext
+    # (key->rsa_pubkey) ciphertext (encSecKey)
 )   # signle-block,no padding
 linuxapi_aes_key = "rFgB&h#%2?^eDg:Q" # ecb
 eapi_digest_salt = "nobody%(url)suse%(text)smd5forencrypt"
@@ -109,9 +109,9 @@ class Crypto():
     # region Netease crypto
     '''source:https://s3.music.126.net/web/s/core_53f8fab3b18ff334dd7af53eec462c5e.js'''
     @staticmethod
-    def WeapiCrypto(params, keypair=weapi_rsa_default_keypair):
+    def WeapiCrypto(params, crypto=weapi_rsa_default_crypto):
         '''Used in web & PC client'''
-        aes_key2,encSecKey = keypair
+        aes_key2,encSecKey = crypto
         params = str(params)
         # 1st go,encrypt the text with aes_key and aes_iv
         params = str(base64.encodebytes(Crypto.AESEncrypt(

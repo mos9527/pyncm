@@ -1,16 +1,4 @@
-'''# 网易云音乐 APIs
-## Usage
-
-    from pyncm import apis
-    # 获取歌曲信息    
-    apis.track.GetTrackAudio(29732235)
-    `{'data': [{'id': 29732235, 'url': 'http://m701.music.126.net/20200313090222/479f50d5748625d59d405c7a219f3f5b/jdyyaac/040f/565c ...`
-
-## Credit
-[decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)
-[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js)
-*...自然还有网易*
-'''
+'''# 网易云音乐 APIs'''
 import base64
 from time import time
 from requests.api import head, request
@@ -60,16 +48,7 @@ def _BaseWrapper(requestFunc):
 
 @_BaseWrapper
 def WeapiCryptoRequest(url,plain,method):
-    '''This apis utilize `/weapi/` calls,seen in web & pc clients
-
-    Args:
-        url ([type]): [description]
-        plain ([type]): [description]
-        method ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    '''
+    '''This apis utilize `/weapi/` calls,seen in web & pc clients'''
     payload = json.dumps({**plain,'csrf_token':GetCurrentSession().csrf_token})
     return GetCurrentSession().request(method,
         GetCurrentSession().HOST + url.replace('/api/','/weapi/'),
