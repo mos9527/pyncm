@@ -1,19 +1,19 @@
-'''Login / CSRF forgery related APIs'''
+'''登录、CSRF 有关 APIs'''
 from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
 import time
 def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
-    '''Logging in with your phone & password (used in web version)
+    '''网页端 - 手机号登陆
 
     Args:
-        phone (str, optional): Phone number. Defaults to ''.
-        password (str, optional): Plaintext password. Defaults to ''.
-        remeberLogin (bool, optional): Cookies will remain valid for longer. Defaults to True.
+        phone (str, optional): 手机号. Defaults to ''.
+        password (str, optional): 明文密码. Defaults to ''.
+        remeberLogin (bool, optional): 是否‘自动登录’，开启可延长 CSRF 令牌时效. Defaults to True.
 
     Raises:
-        LoginFailedException: Raises when failed to authenticate
+        LoginFailedException: 当登陆失败时发生
 
     Returns:
-        dict: Your nickname,UID,etc
+        dict
     '''
     sess = GetCurrentSession()
     if (phone and password):
@@ -38,13 +38,13 @@ def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell : str,prefix=86):
-    '''Check if a phone number has already registered
+    '''检查某手机号是否已注册
 
     Args:
-        cell (str): Phone number
-        prefix (int): Loaction prefix . Defaults to 86
+        cell (str): 手机号
+        prefix (int): 区号 . Defaults to 86
 
     Returns:
-        dict : Cell's registeration status
+        dict
     '''
     return '/eapi/cellphone/existence/check',{'cellphone':cell,'countrycode':prefix}

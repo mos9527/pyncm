@@ -1,6 +1,15 @@
-'''Consists a number of APIs NE used in thier apps
+'''# 网易云音乐 APIs
+## Usage
 
-For HOWTO : https://github.com/greats3an/pyncm/wiki
+    from pyncm import apis
+    # 获取歌曲信息    
+    apis.track.GetTrackAudio(29732235)
+    `{'data': [{'id': 29732235, 'url': 'http://m701.music.126.net/20200313090222/479f50d5748625d59d405c7a219f3f5b/jdyyaac/040f/565c ...`
+
+## Credit
+[decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)
+[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js)
+*...自然还有网易*
 '''
 import base64
 from time import time
@@ -13,6 +22,25 @@ import json,zlib,urllib.parse
 class LoginRequiredException(Exception):pass
 class LoginFailedException(Exception):pass
 # region Base models export
+LOGIN_REQUIRED = LoginRequiredException('Function needs you to be logged in')
+
+def LoginRequiredApi(func):
+    '''This API needs the user's token'''
+    def wrapper(*a,**k):
+        if not GetCurrentSession().login_info['success']:raise LOGIN_REQUIRED
+        return func(*a,**k)
+    return wrapper
+
+def UserIDBasedApi(func):
+    '''This API has UID as its first argument'''
+    def wrapper(user_id=0,*a,**k):
+        if user_id == 0 and GetCurrentSession().login_info['success']:
+            user_id = GetCurrentSession().login_info['content']['account']['id']
+        elif user_id == 0:
+            raise LOGIN_REQUIRED
+        return func(user_id,*a,**k)
+    return wrapper
+
 def _BaseWrapper(requestFunc):
     '''Base wrapper for crypto requests
     '''
@@ -44,7 +72,7 @@ def WeapiCryptoRequest(url,plain,method):
     '''
     payload = json.dumps({**plain,'csrf_token':GetCurrentSession().csrf_token})
     return GetCurrentSession().request(method,
-        GetCurrentSession().HOST + url,
+        GetCurrentSession().HOST + url.replace('/api/','/weapi/'),
         params={'csrf_token':GetCurrentSession().csrf_token},
         data={**Crypto.WeapiCrypto(payload)},
     )
@@ -69,7 +97,7 @@ def LapiCryptoRequest(url,plain,method):
 
 @_BaseWrapper
 def EapiCryptoRequest(url,plain,method):
-    '''This API utilize '/api/' or '/eapi',seen in mobile clients'''
+    '''This API utilize '/api/' or '/eapi/',seen in mobile clients'''
     cookies = {
         'appver': '6.1.1',
         'buildver':'undefined',   
@@ -94,12 +122,9 @@ def EapiCryptoRequest(url,plain,method):
             'User-Agent':'Mozilla/5.0 (Linux; Android 10; Pixel 2 XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Mobile Safari/537.36',
         },
         cookies=cookies,
-        data={**Crypto.EapiCrypto(url.replace('eapi','api'),json.dumps(payload))}
+        data={**Crypto.EapiCrypto(url.replace('/eapi/','/api/'),json.dumps(payload))}
     )
     return request
 # endregion
 # endregion
-
-import os
-__all__ = [i[:-3] for i in os.listdir(os.path.dirname(__file__)) if i[-2:] == 'py' and i != '__init__.py']
-from . import * # import all local modules
+from . import miniprograms,album,cloudrive,login,playlist,search,track,user,video

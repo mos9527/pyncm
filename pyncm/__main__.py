@@ -1,4 +1,4 @@
-'''CLI Frontend. HOWTO:https://github.com/greats3an/pyncm/wiki'''
+'''CLI 使用前端'''
 import logging
 import coloredlogs
 import colorama

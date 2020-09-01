@@ -1,43 +1,43 @@
-'''Video resoure related APIs'''
+'''视频 - Video - 有关 APIs'''
 from . import WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetMVDetail(mv_id:str):
-    '''Retrives detailed infomation of one MV
+    '''获取 MV 详情
 
     Args:
-        mv_id (str): The MV's ID
+        mv_id (str): MV ID
 
     Returns:
-        dict : Like count,view count and other stats
+        dict
     '''
     return '/api/v1/mv/detail',{'id':str(mv_id)}
 
 @WeapiCryptoRequest
 def GetMVResource(mv_id:str, res=1080):
-    '''Retrives URL of one MV's video resource
+    '''获取 MV 音视频资源
 
     Args:
-        mv_id (str): The MV's ID
-        res (int, optional): Can be 240 / 480 / 720 / 1080. Defaults to 1080.
+        mv_id (str): MV ID
+        res (int, optional): 240 / 480 / 720 / 1080. Defaults to 1080.
 
     Returns:
-        dict : URL,hash,etc
+        dict
     '''
     return '/weapi/song/enhance/play/mv/url',{"id":str(mv_id),"r":str(res)}
 
 
 @WeapiCryptoRequest
 def GetMVComments(mv_id, offset=0, limit=20,total=False):   
-    '''Retrives an MV's comments
+    '''获取MV评论
 
     Args:
-        mv_id (str): Album ID
-        offset (int, optional): Where the first comment begins (ordered by time.ascending). Defaults to 0.
-        limit (int, optional): How much comment to receive. Defaults to 20.
-        total (bool, optional): Overrides said offset & limit,retrives entire comment list. Defaults to False
-        
+        album_id (str): 歌曲ID
+        offset (int, optional): 时间顺序偏移数. Defaults to 0.
+        limit (int, optional): 单次评论获取量. Defaults to 20.
+        beforeTime (int, optional): 评论将从该时间戳（秒为单位）开始. Defaults to 0.
+
     Returns:
-        dict: The filtered comments
-    '''  
+        dict
+    '''
     return '/weapi/v1/resource/comments/R_MV_5_%s' % mv_id,{"rid":"R_MV_5_%s" % mv_id,"offset":str(offset),"total":str(total).lower(),"limit":str(limit)}
