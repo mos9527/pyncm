@@ -106,4 +106,4 @@ def EapiCryptoRequest(url,plain,method):
     return request
 # endregion
 # endregion
-from . import miniprograms,album,cloudrive,login,playlist,search,track,user,video
+from . import miniprograms,album,cloud,cloudsearch,login,playlist,track,user,video

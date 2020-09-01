@@ -29,7 +29,9 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 `pyncm album --id [专辑 ID]`
 ### 关于 ID
 可通过网易云音乐的“分享链接”功能取得
+
 如 `https://music.163.com/playlist?id=3199245372&userid=315542615`，该ID即为`3199245372`
+
 其他功能详见 [Wiki](https://github.com/greats3an/pyncm/wiki) *API部分用了中文解释，别的懒得动了🙄*
 
 
@@ -49,7 +51,9 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 
 # Credit
 [decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)
+
 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js)
+
 *...自然还有网易*
 
 # PR
