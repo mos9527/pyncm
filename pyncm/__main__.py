@@ -11,7 +11,7 @@ import sys
 import argparse 
 
 from pathlib import Path
-from . import GetCurrentSession,Crypto,LoadNewSessionFromDump,DumpCurrentSession
+from . import GetCurrentSession,Crypto,LoadSessionFromString,DumpCurrentSessionAsString
 from .utils.helper import NcmHelper
 
 coloredlogs.install()
@@ -59,14 +59,14 @@ class ConfigManager():
         config = open(ConfigManager.path).read()
         config = json.loads(config)
         self.pyncm = config['pyncm'] # cmdlet options
-        LoadNewSessionFromDump(config['session']) # session settings
+        LoadSessionFromString(config['session']) # session settings
         if GetCurrentSession().login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
         return logging.debug('Loaded config file')
     @DestroyOnError
     def save(self):
         # Rewrite the config file with local settings
         config = {
-            'session':DumpCurrentSession(),# session settings
+            'session':DumpCurrentSessionAsString(),# session settings
             'pyncm':self.pyncm # cmdlet options
         }
         config = json.dumps(config)

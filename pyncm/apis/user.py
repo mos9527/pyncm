@@ -31,13 +31,13 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
     return '/weapi/user/playlist',{'offset': str(offset), 'limit': str(limit),'uid': str(user_id)}
 
 SIGNIN_TYPE_MOBILE = 0
-'''+4exp'''
+'''移动端签到 +4 EXP'''
 SIGNIN_TYPE_WEB    = 1
-'''+1exp'''
+'''网页端签到 +1 EXP'''
 
 @WeapiCryptoRequest
 @LoginRequiredApi
-def Signin(type=0):
+def SetSignin(type=0):
     '''每日签到
 
     Args:

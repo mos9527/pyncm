@@ -9,7 +9,7 @@ with open("README.md", "r",encoding='utf-8') as fh:
 
 setuptools.setup(
     name="pyncm", # Replace with your own username
-    version="1.3.5",
+    version="1.3.6",
     author="greats3an",
     author_email="greats3an@gmail.com",
     description="NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API",

@@ -2,10 +2,10 @@
 import base64
 from time import time
 from requests.api import head, request
-from .. import GetCurrentSession, Session
+from .. import GetCurrentSession,SetCurrentSession
 from .. import logger
 from .. import Crypto
-import json,zlib,urllib.parse
+import json,urllib.parse
 
 class LoginRequiredException(Exception):pass
 class LoginFailedException(Exception):pass
@@ -29,7 +29,7 @@ def UserIDBasedApi(func):
         return func(user_id,*a,**k)
     return wrapper
 
-def _BaseWrapper(requestFunc):
+def BaseWrapper(requestFunc):
     '''Base wrapper for crypto requests
     '''
     def apiWrapper(apiFunc):
@@ -46,7 +46,7 @@ def _BaseWrapper(requestFunc):
         return wrapper
     return apiWrapper
 
-@_BaseWrapper
+@BaseWrapper
 def WeapiCryptoRequest(url,plain,method):
     '''This apis utilize `/weapi/` calls,seen in web & pc clients'''
     payload = json.dumps({**plain,'csrf_token':GetCurrentSession().csrf_token})
@@ -56,7 +56,7 @@ def WeapiCryptoRequest(url,plain,method):
         data={**Crypto.WeapiCrypto(payload)},
     )
 # region Port of `Binaryify/NeteaseCloudMusicApi`
-@_BaseWrapper
+@BaseWrapper
 def LapiCryptoRequest(url,plain,method):
     '''This api proxies over /api/linux/forward,seen in Desktop Linux based clients'''
     payload = {
@@ -74,20 +74,20 @@ def LapiCryptoRequest(url,plain,method):
         data={**Crypto.LinuxCrypto(payload)}
     )
 
-@_BaseWrapper
+@BaseWrapper
 def EapiCryptoRequest(url,plain,method):
     '''This API utilize '/api/' or '/eapi/',seen in mobile clients'''
     cookies = {
-        'appver': '6.1.1',
-        'buildver':'undefined',   
-        'channel':'undefined',
-        'deviceId': 'undefined',             
-        'mobilename' : 'undefined',        
+        'appver': '7.2.24', # the version used for decompilation
+        'buildver':'whatever_the_latest_is', # ...these don't matter   
+        'channel':'persumably_offical',
+        'deviceId': 'pyncm_but_who_cares',   # ...
+        'mobilename' : 'Pixel 2 XL',
         'os': 'android',
-        'osver':'undefined',            
+        'osver':'10.0',
         'requestId':f'{int(time() * 1000)}_0233',
-        'resolution': '1920x1080',        
-        'versioncode': '140',
+        'resolution': '1920x1080',
+        'versioncode': '240',
         '__csrf':GetCurrentSession().csrf_token
     }
     payload = {
