@@ -249,7 +249,7 @@ class NcmHelper():
 
         done, total = 0, len(trackIds)
         tracks = NCM.track.GetTrackDetail(trackIds)
-        trackAudios = NCM.track.GetTrackAudioInfo(trackIds, quality=quality)
+        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)
         for trackId in trackIds:
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
             track = [t for t in tracks['songs'] if t['id'] == trackId][0]
