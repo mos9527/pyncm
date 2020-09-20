@@ -19,3 +19,4 @@ pyncm.egg-info
 build
 docs
 *wiki*
+*.log

@@ -4,7 +4,21 @@ from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Cry
 import time
 
 @WeapiCryptoRequest
+def LoginLogout():
+    '''网页端 - 登出账号
+
+    Returns:
+        dict
+    '''
+    return '/weapi/logout',{}
+
+@WeapiCryptoRequest
 def LoginRefreshToken():
+    '''网页端 - 刷新登录令牌
+
+    Returns:
+        dict
+    '''
     return '/weapi/w/login/cellphone',{}
 
 def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
