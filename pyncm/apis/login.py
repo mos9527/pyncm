@@ -1,6 +1,12 @@
 '''登录、CSRF 有关 APIs'''
+from os import pathsep
 from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
 import time
+
+@WeapiCryptoRequest
+def LoginRefreshToken():
+    return '/weapi/w/login/cellphone',{}
+
 def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
     '''网页端 - 手机号登陆
 
@@ -15,6 +21,7 @@ def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
     Returns:
         dict
     '''
+    path='/weapi/w/login/cellphone'
     sess = GetCurrentSession()
     if (phone and password):
         sess.phone = phone
@@ -23,7 +30,12 @@ def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
     else:
         if (sess.phone and sess.password):
             md5_password = Crypto.HashDigest(sess.password)
-            r = WeapiCryptoRequest(lambda:('/weapi/login/cellphone',{"phone":str(sess.phone),"password":str(md5_password),"rememberLogin":str(remeberLogin).lower(),"checkToken":""}))()
+            r = WeapiCryptoRequest(lambda:(path,{
+                "phone":str(sess.phone),
+                "password":str(md5_password),
+                "rememberLogin":str(remeberLogin).lower(),
+                "checkToken":"9ca17ae2e6ffcda170e2e6ee97f3648d908ba9fb7c8ab88ab6c54b868e8ebbaa439aeffbd9f149a2b7aedac92af0feaec3b92a96ebfdaab525a8acf7b8e24b839a9aa2d14b8af187bbf95da8ec84d5c25b92b2ee9e"
+            }))() # the check token is recently (by 9.20) required
             sess.login_info = {'tick': time.time(), 'content':r}
             if not sess.login_info['content']['code'] == 200:
                 sess.login_info['success'] = False

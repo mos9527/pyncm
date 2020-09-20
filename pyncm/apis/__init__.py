@@ -1,7 +1,7 @@
 '''# 网易云音乐 APIs'''
 import base64
 from time import time
-from requests.api import head, request
+from requests.models import Response
 from .. import GetCurrentSession,SetCurrentSession
 from .. import logger
 from .. import Crypto
@@ -11,6 +11,8 @@ class LoginRequiredException(Exception):pass
 class LoginFailedException(Exception):pass
 # region Base models export
 LOGIN_REQUIRED = LoginRequiredException('Function needs you to be logged in')
+
+def parse(url):return urllib.parse.urlparse(url)
 
 def LoginRequiredApi(func):
     '''This API needs the user's token'''
@@ -40,7 +42,7 @@ def BaseWrapper(requestFunc):
             method    = ret[-1] if ret[-1] in ['POST','GET'] else 'POST'        
             rsp = requestFunc(url,plain,method)            
             try:
-                return json.loads(rsp.text)
+                return json.loads(rsp.text) if isinstance(rsp,Response) else json.loads(rsp)
             except json.JSONDecodeError:
                 return rsp
         return wrapper
@@ -51,7 +53,7 @@ def WeapiCryptoRequest(url,plain,method):
     '''This apis utilize `/weapi/` calls,seen in web & pc clients'''
     payload = json.dumps({**plain,'csrf_token':GetCurrentSession().csrf_token})
     return GetCurrentSession().request(method,
-        GetCurrentSession().HOST + url.replace('/api/','/weapi/'),
+        url.replace('/api/','/weapi/'),
         params={'csrf_token':GetCurrentSession().csrf_token},
         data={**Crypto.WeapiCrypto(payload)},
     )
@@ -82,28 +84,29 @@ def EapiCryptoRequest(url,plain,method):
         'buildver':'whatever_the_latest_is', # ...these don't matter   
         'channel':'persumably_offical',
         'deviceId': 'pyncm_but_who_cares',   # ...
-        'mobilename' : 'Pixel 2 XL',
+        'mobilename' : 'Pixel2XL',           # ...as long as these matches our UA
         'os': 'android',
-        'osver':'10.0',
+        'osver':'10.0',                      # ...
         'requestId':f'{int(time() * 1000)}_0233',
-        'resolution': '1920x1080',
+        'resolution': '2712x1440',
         'versioncode': '240',
         '__csrf':GetCurrentSession().csrf_token
     }
     payload = {
         **plain,
-        'header':cookies
+        # 'header':cookies
     }
     request = GetCurrentSession().request(method,
-        GetCurrentSession().HOST + url,
+        url,
         headers={
             **GetCurrentSession().headers, 
-            'User-Agent':'Mozilla/5.0 (Linux; Android 10; Pixel 2 XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Mobile Safari/537.36',
+            'User-Agent':'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 10; Pixel 2 XL Build/RP1A.200720.009)',
+            'Referer':None
         },
         cookies=cookies,
-        data={**Crypto.EapiCrypto(url.replace('/eapi/','/api/'),json.dumps(payload))}
+        data={**Crypto.EapiCrypto(parse(url).path.replace('/eapi/','/api/'),json.dumps(payload))}
     )
-    return request
+    return Crypto.EapiDecrypt(request.content).decode()
 # endregion
 # endregion
 from . import miniprograms,album,cloud,cloudsearch,login,playlist,track,user,video
