@@ -32,7 +32,9 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
 
 如 `https://music.163.com/playlist?id=3199245372&userid=315542615`，该ID即为`3199245372`
 
-其他功能详见 [Wiki](https://github.com/greats3an/pyncm/wiki) *API部分用了中文解释，别的懒得动了🙄*
+其他功能详见 
+- [Wiki](https://github.com/greats3an/pyncm/wiki) *API部分用了中文解释，别的懒得动了🙄*
+- [Demo](https://github.com/greats3an/pyncm/tree/master/demos)
 
 
 # Python 使用示例

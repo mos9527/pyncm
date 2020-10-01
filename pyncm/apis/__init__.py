@@ -40,7 +40,7 @@ def BaseWrapper(requestFunc):
             ret       = apiFunc(*a,**k)
             url,plain = ret[:2]
             method    = ret[-1] if ret[-1] in ['POST','GET'] else 'POST'        
-            rsp = requestFunc(url,plain,method)            
+            rsp = requestFunc(url,plain,method)                        
             try:
                 return json.loads(rsp.text) if isinstance(rsp,Response) else json.loads(rsp)
             except json.JSONDecodeError:

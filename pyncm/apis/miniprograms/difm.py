@@ -3,11 +3,11 @@
 from . import WeapiCryptoRequest
 
 @WeapiCryptoRequest
-def GetCurrentPlayingTrackList(limit=5,source=0,channelId=101):
+def GetCurrentPlayingTrackList(limit=10,source=0,channelId=101):
     '''获取当前某频道下正在播放的歌曲
 
     Args:
-        limit (int, optional): 单次获取数量. Defaults to 5.
+        limit (int, optional): 单次获取数量. Defaults to 10.
         source (int, optional): [未知]. Defaults to 0.
         channelId (int, optional): 频道 (channel) ID. Defaults to 101.
 
