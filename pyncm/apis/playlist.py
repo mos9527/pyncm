@@ -3,7 +3,7 @@ from . import LapiCryptoRequest, WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):
-    '''获取歌单内容
+    '''网页端 - 获取歌单内容
 
     Args:
         playlist_id ([type]): 歌单 ID
@@ -18,7 +18,7 @@ def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):
 
 @WeapiCryptoRequest
 def GetPlaylistComments(playlist_id : str, offset=0, limit=20 ,beforeTime=0):
-    '''获取歌单评论
+    '''网页端 - 获取歌单评论
 
     Args:
         album_id (str): 歌单ID
@@ -33,7 +33,7 @@ def GetPlaylistComments(playlist_id : str, offset=0, limit=20 ,beforeTime=0):
 
 @LapiCryptoRequest
 def GetTopPlaylists():
-    '''获取热门歌单
+    '''Linux PC端 - 获取热门歌单
 
     Returns:
         dict

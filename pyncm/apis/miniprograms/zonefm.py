@@ -1,4 +1,8 @@
-'''私享云FM - Cloud FM APIs'''
+'''私享云FM - Cloud FM APIs
+
+`zone`即分区，已知的分区有
+- `CLASSICAL` 古典
+'''
 
 from . import EapiCryptoRequest
 
@@ -30,4 +34,4 @@ def SetSkipFmTrack(id,zone="CLASSICAL",header={},e_r=True):
     Returns:
         dict
     '''
-    return 'http://interface3.music.163.com/api/zone/fm/skip',{"songId":str(id),"zone":zone,"header":str(header),"e_r":str(e_r).lower(),"alg":"CLSalternate","time":"0"}
+    return 'http://interface3.music.163.com/eapi/zone/fm/skip',{"songId":str(id),"zone":zone,"header":str(header),"e_r":str(e_r).lower(),"alg":"CLSalternate","time":"0"}

@@ -3,7 +3,7 @@ from . import WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetMVDetail(mv_id:str):
-    '''获取 MV 详情
+    '''网页端 - 获取 MV 详情
 
     Args:
         mv_id (str): MV ID
@@ -11,11 +11,11 @@ def GetMVDetail(mv_id:str):
     Returns:
         dict
     '''
-    return '/api/v1/mv/detail',{'id':str(mv_id)}
+    return '/weapi/v1/mv/detail',{'id':str(mv_id)}
 
 @WeapiCryptoRequest
 def GetMVResource(mv_id:str, res=1080):
-    '''获取 MV 音视频资源
+    '''网页端 - 获取 MV 音视频资源
 
     Args:
         mv_id (str): MV ID
@@ -29,7 +29,7 @@ def GetMVResource(mv_id:str, res=1080):
 
 @WeapiCryptoRequest
 def GetMVComments(mv_id, offset=0, limit=20,total=False):   
-    '''获取MV评论
+    '''网页端 - 获取MV评论
 
     Args:
         album_id (str): 歌曲ID

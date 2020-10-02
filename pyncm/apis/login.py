@@ -127,7 +127,7 @@ def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell : str,prefix=86):
-    '''检查某手机号是否已注册
+    '''移动端 - 检查某手机号是否已注册
 
     Args:
         cell (str): 手机号

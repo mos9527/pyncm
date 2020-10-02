@@ -1,5 +1,6 @@
 '''# 网易云音乐 APIs'''
 import base64
+from logging import getLogger
 from time import time
 from requests.models import Response
 from .. import GetCurrentSession,SetCurrentSession
@@ -106,7 +107,12 @@ def EapiCryptoRequest(url,plain,method):
         cookies=cookies,
         data={**Crypto.EapiCrypto(parse(url).path.replace('/eapi/','/api/'),json.dumps(payload))}
     )
-    return Crypto.EapiDecrypt(request.content).decode()
+    content = request.content
+    try:
+        content = Crypto.EapiDecrypt(content).decode()
+    except Exception as e:
+        getLogger('ncm').warn('Abnormal responsed while decrypting:%s' % e)
+    return content
 # endregion
 # endregion
 from . import miniprograms,album,cloud,cloudsearch,login,playlist,track,user,video

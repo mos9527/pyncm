@@ -3,7 +3,7 @@ from . import WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetAlbumInfo(album_id : str):
-    '''获取专辑信息
+    '''网页端 - 获取专辑信息
 
     Args:
         album_id (str): 专辑ID
@@ -15,7 +15,7 @@ def GetAlbumInfo(album_id : str):
 
 @WeapiCryptoRequest
 def GetAlbumComments(album_id : str, offset=0, limit=20, beforeTime=0):
-    '''获取专辑评论
+    '''网页端 - 获取专辑评论
 
     Args:
         album_id (str): 专辑ID

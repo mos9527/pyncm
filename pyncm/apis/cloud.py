@@ -4,7 +4,7 @@ from . import WeapiCryptoRequest,LoginRequiredApi
 @WeapiCryptoRequest
 @LoginRequiredApi
 def GetCloudDriveInfo(limit=30,offset=0):
-    '''获取个人云盘内容
+    '''PC端 - 获取个人云盘内容
 
     Args:
         limit (int, optional): 单次获取量. Defaults to 30.
@@ -18,7 +18,7 @@ def GetCloudDriveInfo(limit=30,offset=0):
 @WeapiCryptoRequest
 @LoginRequiredApi
 def GetCloudDriveItemInfo(song_ids:list):
-    '''获取个人云盘项目详情
+    '''PC端 - 获取个人云盘项目详情
 
     Args:
         song_ids (list): 云盘项目 ID

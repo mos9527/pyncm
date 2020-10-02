@@ -5,7 +5,7 @@ from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi
 @WeapiCryptoRequest
 @UserIDBasedApi
 def GetUserDetail(user_id = 0):
-    '''获取某用户资料详情
+    '''网页端 - 获取某用户资料详情
 
     Args:
         user_id (int): 用户 ID。置 0 表示当前已登录的用户 . defaults to 0
@@ -18,7 +18,7 @@ def GetUserDetail(user_id = 0):
 @WeapiCryptoRequest
 @UserIDBasedApi
 def GetUserPlaylists(user_id, offset=0, limit=1001):
-    '''获取该用户创建的歌单
+    '''网页端 - 获取某用户创建的歌单
 
     Args:
         user_id (int): 用户 ID。置 0 表示当前已登录的用户 . defaults to 0
@@ -38,7 +38,7 @@ SIGNIN_TYPE_WEB    = 1
 @WeapiCryptoRequest
 @LoginRequiredApi
 def SetSignin(type=0):
-    '''每日签到
+    '''移动端、PC端 - 每日签到
 
     Args:
         type (int, optional): 签到类型，请使用本模块内 SIGNIN_TYPE_... 之一 .Defaults to SIGNIN_TYPE_MOBILE.

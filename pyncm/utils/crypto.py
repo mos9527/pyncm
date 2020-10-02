@@ -154,5 +154,5 @@ class Crypto():
     def EapiDecrypt(cipher):
         '''Used in mobile clients'''
         cipher = bytearray(cipher) if isinstance(cipher,str) else cipher
-        return Crypto.AESDecrypt(cipher,eapi_aes_key,mode=AES.MODE_ECB) if cipher else ''
+        return Crypto.AESDecrypt(cipher,eapi_aes_key,mode=AES.MODE_ECB) if cipher else cipher
     # endregion

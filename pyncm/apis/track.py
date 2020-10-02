@@ -4,7 +4,7 @@ from . import logger
 import json
 @WeapiCryptoRequest
 def GetTrackDetail(song_ids : list):
-    '''获取歌曲详情
+    '''网页端 - 获取歌曲详情
 
     Args:
         song_ids (list): 歌曲 ID
@@ -17,7 +17,7 @@ def GetTrackDetail(song_ids : list):
 
 @WeapiCryptoRequest
 def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
-    '''获取歌曲音频详情（文件URL、MD5...）
+    '''网页端 - 获取歌曲音频详情（文件URL、MD5...）
 
     Args:
         song_ids (list): 歌曲 ID
@@ -37,7 +37,7 @@ def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
 
 @WeapiCryptoRequest
 def GetTrackLyrics(song_id : str):
-    '''获取歌曲歌词
+    '''网页端 - 获取歌曲歌词
 
     Args:
         song_id (str): 歌曲ID
@@ -50,7 +50,7 @@ def GetTrackLyrics(song_id : str):
 
 @WeapiCryptoRequest
 def GetTrackComments(song_id, offset=0, limit=20,beforeTime=0):
-    '''获取歌曲评论
+    '''网页端 - 获取歌曲评论
 
     Args:
         album_id (str): 歌曲ID

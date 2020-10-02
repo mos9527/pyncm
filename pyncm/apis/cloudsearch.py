@@ -11,7 +11,7 @@ TYPE_DJ       = 1009
 TYPE_VIDEO    = 1014
 @WeapiCryptoRequest
 def GetSearchResult(keyword:str,type=TYPE_SONG,limit=30,offset=0):
-    '''搜索某类型关键字
+    '''网页端 - 搜索某类型关键字
 
     Args:
         keyword (str): 搜索关键字
