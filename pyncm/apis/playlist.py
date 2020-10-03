@@ -1,4 +1,6 @@
 '''歌单 - Playlist APIs'''
+import json
+from build.lib.pyncm.apis import EapiCryptoRequest
 from . import LapiCryptoRequest, WeapiCryptoRequest
 
 @WeapiCryptoRequest
@@ -39,3 +41,23 @@ def GetTopPlaylists():
         dict
     '''
     return '/api/toplist',{}
+
+@EapiCryptoRequest
+def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True):
+    '''PC 端 - 操作歌单 - WIP - need `b`
+
+    - op 有以下几种：
+     - `add` : 添加到歌单
+     - `del` : 从歌单删除
+     
+    Args:
+        trackIds (list[str]): 待操作的歌曲ID列表
+        playlistId ([int]): 要操作的歌单ID
+        op (str, optional): 操作 . Defaults to "add".
+        imme (bool, optional): 暂存. Defaults to True.
+        e_r (bool, optional): 暂存. Defaults to True.
+
+    Returns:
+        [type]: [description]
+    '''
+    return '/api/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower(),"e_r":str(e_r).lower()}

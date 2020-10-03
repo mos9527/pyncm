@@ -1,5 +1,5 @@
 '''歌曲 - Track APIs'''
-from . import WeapiCryptoRequest
+from . import WeapiCryptoRequest,EapiCryptoRequest,LoginRequiredApi
 from . import logger
 import json
 @WeapiCryptoRequest
@@ -62,3 +62,19 @@ def GetTrackComments(song_id, offset=0, limit=20,beforeTime=0):
         dict
     '''
     return '/weapi/v1/resource/comments/R_SO_4_%s' % song_id,{"rid":str(song_id),"offset":str(offset),"total":"true","limit":str(limit),"beforeTime":str(beforeTime * 1000)}
+
+
+@EapiCryptoRequest
+@LoginRequiredApi
+def SetLikeTrack(trackId,like=True,userid=0,e_r=True):
+    '''PC端 - 收藏歌曲到 `我喜欢的音乐` - WIP - need `b`
+
+    Args:
+        trackId (int): 歌曲 ID
+        like (bool, optional): 收藏或取消收藏. Defaults to True.
+        userid (int, optional): 暂存. Defaults to 0.
+
+    Returns:
+        dict
+    '''
+    return '/api/song/like',{"trackId":str(trackId),"userid":str(userid),"like":str(like).lower(),"e_r":str(e_r).lower()}    

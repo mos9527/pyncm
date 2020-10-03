@@ -1,7 +1,7 @@
 '''登录、Anti - AntiCSRF 有关 APIs'''
 from os import pathsep
-from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
-from .mock import MockWeblog
+from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException,ncm_client_key
+
 import time
 
 def WriteLoginInfo(response):
@@ -89,12 +89,13 @@ def GetCurrentLoginStatus():
     '''
     return '/weapi/w/nuser/account/get',{}
 
-def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
+def LoginViaCellphone(phone='', password='',countrycode=86,remeberLogin=True) -> dict:
     '''网页端 - 手机号登陆
 
     Args:
         phone (str, optional): 手机号. Defaults to ''.
         password (str, optional): 明文密码. Defaults to ''.
+        countrycode (int, optional): 国家代码. Defaults to 86.
         remeberLogin (bool, optional): 是否‘自动登录’，开启可延长 CSRF 令牌时效. Defaults to True.
 
     Raises:
@@ -110,15 +111,14 @@ def LoginViaCellphone(phone='', password='',remeberLogin=True) -> dict:
         sess.password = password
         return LoginViaCellphone()
     else:
-        if (sess.phone and sess.password):
+        if (hasattr(sess,'phone') and hasattr(sess,'password')):
             md5_password = Crypto.HashDigest(sess.password)
             login_status = WeapiCryptoRequest(lambda:(path,{
                 "phone":str(sess.phone),
                 "csrf_token":str(sess.csrf_token),
                 "password":str(md5_password),
                 "rememberLogin":str(remeberLogin).lower(),
-                # the old api doesn't need this:
-                # "checkToken":"9ca17ae2e6ffcda170e2e6ee97f3648d908ba9fb7c8ab88ab6c54b868e8ebbaa439aeffbd9f149a2b7aedac92af0feaec3b92a96ebfdaab525a8acf7b8e24b839a9aa2d14b8af187bbf95da8ec84d5c25b92b2ee9e"
+                "countrycode":str(countrycode),
             }))() 
             WriteLoginInfo(login_status)
             return sess.login_info

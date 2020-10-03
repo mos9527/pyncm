@@ -34,6 +34,9 @@ linuxapi_aes_key = "rFgB&h#%2?^eDg:Q" # ecb
 eapi_digest_salt = "nobody%(url)suse%(text)smd5forencrypt"
 eapi_data_salt   = "%(url)s-36cd479b6b5-%(text)s-36cd479b6b5-%(digest)s"
 eapi_aes_key     = "e82ckenh8dichen8" # ecb
+ncm_client_key   = "9ca17ae2e6ffcda170e2e6eed6c16ded96bf85b57498868ab2c45e939b8eaaf842a7ee85b0f47082eabf9bf02af0feaec3b92ab39fa889ed5d868682aab45a879f9ab6d84f9aaf9783f06bbc92a5afe8678391ee9e"
+ac_token_1       = ("0b0cdd23ed1144a0b78de049edc09824","VMhXA/Eedu9FBARERUN/DadrGuFdDoXR")
+ac_C_t           = "0eYIS6J6qRFUBFRAUVdvZazbsg2mWj6E"
 randstr_charset  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 # endregion
 

@@ -5,7 +5,7 @@ from time import time
 from requests.models import Response
 from .. import GetCurrentSession,SetCurrentSession
 from .. import logger
-from .. import Crypto
+from ..utils import Crypto,ncm_client_key
 import json,urllib.parse
 
 class LoginRequiredException(Exception):pass
@@ -91,17 +91,18 @@ def EapiCryptoRequest(url,plain,method):
         'requestId':f'{int(time() * 1000)}_0233',
         'resolution': '2712x1440',
         'versioncode': '240',
-        '__csrf':GetCurrentSession().csrf_token
+        '__csrf':GetCurrentSession().csrf_token,
+        **GetCurrentSession().cookies
     }
     payload = {
-        **plain,
-        # 'header':cookies
+        **plain,    
+        'header':json.dumps(cookies)
     }
     request = GetCurrentSession().request(method,
         url,
         headers={
             **GetCurrentSession().headers, 
-            'User-Agent':'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 10; Pixel 2 XL Build/RP1A.200720.009)',
+            'User-Agent':'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)',
             'Referer':None
         },
         cookies=cookies,
@@ -111,7 +112,7 @@ def EapiCryptoRequest(url,plain,method):
     try:
         content = Crypto.EapiDecrypt(content).decode()
     except Exception as e:
-        getLogger('ncm').warn('Abnormal responsed while decrypting:%s' % e)
+        getLogger('ncm').warn('Falling back to plaintext response:%s' % e)
     return content
 # endregion
 # endregion

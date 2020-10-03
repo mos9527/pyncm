@@ -1,4 +1,5 @@
 '''用户 - User 有关 APIs'''
+from build.lib.pyncm.apis import EapiCryptoRequest
 from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi
 
 
