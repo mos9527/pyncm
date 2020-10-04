@@ -1,7 +1,6 @@
 '''歌单 - Playlist APIs'''
 import json
-from build.lib.pyncm.apis import EapiCryptoRequest
-from . import LapiCryptoRequest, WeapiCryptoRequest
+from . import LapiCryptoRequest, WeapiCryptoRequest , EapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):
@@ -44,7 +43,9 @@ def GetTopPlaylists():
 
 @EapiCryptoRequest
 def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True):
-    '''PC 端 - 操作歌单 - WIP - need `b`
+    '''PC 端 - 操作歌单 - WIP - protected via 网易易盾
+
+    TODO: defeat `watchman.js` obfuscation
 
     - op 有以下几种：
      - `add` : 添加到歌单

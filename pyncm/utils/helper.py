@@ -65,8 +65,9 @@ class TrackHelper():
     @TrackHelperProperty(default='https://p1.music.126.net/UeTuwE7pvjBpypWLudqukA==/3132508627578625.jpg')
     def AlbumCover(self):
         '''The cover of the track's album'''
-        if self.track['al']['id']:
-            return self.track['al']['picUrl']
+        al = self.track['al'] if 'al' in self.track.keys() else self.track['album']
+        if al['id']:
+            return al['picUrl']
         else:        
             return 'https://music.163.com/api/img/blur/' + self.track['pc']['cid'] 
             # source:PC version's core.js
@@ -74,7 +75,8 @@ class TrackHelper():
     @TrackHelperProperty(default=['Various Artists'])
     def Artists(self):
         '''All the artists' names as a list'''
-        ret = [ar['name'] for ar in self.track['ar']]
+        ar = self.track['ar'] if 'ar' in self.track.keys() else self.track['artists']
+        ret = [_ar['name'] for _ar in ar ]
         if not ret.count(None):
             return ret
         else:

@@ -67,8 +67,10 @@ def GetTrackComments(song_id, offset=0, limit=20,beforeTime=0):
 @EapiCryptoRequest
 @LoginRequiredApi
 def SetLikeTrack(trackId,like=True,userid=0,e_r=True):
-    '''PC端 - 收藏歌曲到 `我喜欢的音乐` - WIP - need `b`
+    '''PC端 - 收藏歌曲到 `我喜欢的音乐` - WIP  - WIP - protected via 网易易盾
 
+    TODO: defeat `watchman.js` obfuscation
+    
     Args:
         trackId (int): 歌曲 ID
         like (bool, optional): 收藏或取消收藏. Defaults to True.

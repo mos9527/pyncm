@@ -49,7 +49,7 @@ API 可以通过命令行直接访问，请参照下列命令输出进行操作
     apis.track.GetTrackComments(29732235)    
     `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
 
-详见 [Wiki](https://github.com/greats3an/pyncm/wiki) (WIP) 或自翻代码😶
+详见 [Wiki](https://github.com/greats3an/pyncm/wiki)
 
 # Credit
 [decompilation of `libposion.so`](https://juejin.im/user/2383396938455821)

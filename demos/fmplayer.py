@@ -3,10 +3,11 @@
 - 需要安装 ffplay；或可根据其它播放器修改 `executable` 变量 
  - e.g. play --title "%(title)s" -i "%(url)s"
 '''
-executable = 'ffplay -alwaysontop -noborder -v quiet -x 1920 -y 200 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
+executable = 'ffplay   -noborder -v quiet -x 1920 -y 200 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
 
 from pyncm.utils.helper import TrackHelper
-import pyncm,os,sys,random,logging
+import pyncm,os,sys,random,logging,colorama
+colorama.init()
 logging.disable(logging.ERROR)
 stdout_write = sys.stdout.write
 
@@ -48,6 +49,7 @@ while True:
         print(f" {tr.TrackName} - {' / '.join(tr.Artists)}")        
         audio = pyncm.apis.track.GetTrackAudio(track['id'])['data'][0]['url'] if not 'audio' in track.keys() else track['audio']
         try:
+            print('\33]0;%s\a' % tr.TrackName)
             os.system(executable % {'title':track['name'],'url':audio})
         except KeyboardInterrupt:
             print('⏩ 下一首')
