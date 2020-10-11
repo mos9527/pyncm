@@ -41,12 +41,10 @@ def GetTopPlaylists():
     '''
     return '/api/toplist',{}
 
-@EapiCryptoRequest
+@WeapiCryptoRequest
 def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True):
-    '''PC 端 - 操作歌单 - WIP - protected via 网易易盾
-
-    TODO: defeat `watchman.js` obfuscation
-
+    '''PC 端 - 操作歌单
+    
     - op 有以下几种：
      - `add` : 添加到歌单
      - `del` : 从歌单删除

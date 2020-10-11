@@ -33,8 +33,7 @@ def UserIDBasedApi(func):
     return wrapper
 
 def BaseWrapper(requestFunc):
-    '''Base wrapper for crypto requests
-    '''
+    '''Base wrapper for crypto requests'''
     def apiWrapper(apiFunc):
         '''apiFunc -> rtype : (url,plain,[method])'''
         def wrapper(*a,**k):
@@ -48,6 +47,16 @@ def BaseWrapper(requestFunc):
                 return rsp
         return wrapper
     return apiWrapper
+
+def EapiEncipered(func):
+    def wrapper(*a,**k):
+        payload = func(*a,**k)
+        try:
+            payload = Crypto.EapiDecrypt(payload.content.decode())
+            return json.loads(payload)
+        except:
+            return payload
+    return wrapper        
 
 @BaseWrapper
 def WeapiCryptoRequest(url,plain,method):
@@ -78,6 +87,7 @@ def LapiCryptoRequest(url,plain,method):
     )
 
 @BaseWrapper
+@EapiEncipered
 def EapiCryptoRequest(url,plain,method):
     '''This API utilize '/api/' or '/eapi/',seen in mobile clients'''
     cookies = {
@@ -108,12 +118,7 @@ def EapiCryptoRequest(url,plain,method):
         cookies=cookies,
         data={**Crypto.EapiCrypto(parse(url).path.replace('/eapi/','/api/'),json.dumps(payload))}
     )
-    content = request.content
-    try:
-        content = Crypto.EapiDecrypt(content).decode()
-    except Exception as e:
-        getLogger('ncm').warn('Falling back to plaintext response:%s' % e)
-    return content
+    return request.content
 # endregion
 # endregion
 from . import miniprograms,album,cloud,cloudsearch,login,playlist,track,user,video

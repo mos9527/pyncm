@@ -3,7 +3,7 @@
 - 需要安装 ffplay；或可根据其它播放器修改 `executable` 变量 
  - e.g. play --title "%(title)s" -i "%(url)s"
 '''
-executable = 'ffplay   -noborder -v quiet -x 1920 -y 200 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
+executable = 'ffplay  -noborder -v quiet -x 1920 -y 200 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
 
 from pyncm.utils.helper import TrackHelper
 import pyncm,os,sys,random,logging,colorama

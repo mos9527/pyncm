@@ -38,14 +38,8 @@ while True:
     print(message,next(dot),end='\r')
     time.sleep(1)
 WriteLoginInfo(GetCurrentLoginStatus())
-print('[+] 登录成功。欢迎，%s (上一次登录 IP: %s)...尝试签到' % (
+print('[+] 登录成功。欢迎，%s (上一次登录 IP: %s)' % (
         pyncm.GetCurrentSession().login_info['content']['profile']['nickname'],
         pyncm.GetCurrentSession().login_info['content']['profile']['lastLoginIP']
     )
 )
-
-r = pyncm.user.SetSignin(pyncm.user.SIGNIN_TYPE_MOBILE)
-if r['code'] == 200:
-    print('[+] 签到完成 - EXP +%d' % r['point'])
-else:
-    print('[+] 无法签到 - %s' % r['msg'])

@@ -1,5 +1,5 @@
 '''歌曲 - Track APIs'''
-from . import WeapiCryptoRequest,EapiCryptoRequest,LoginRequiredApi
+from . import EapiEncipered, WeapiCryptoRequest,EapiCryptoRequest,LoginRequiredApi
 from . import logger
 import json
 @WeapiCryptoRequest
@@ -64,10 +64,11 @@ def GetTrackComments(song_id, offset=0, limit=20,beforeTime=0):
     return '/weapi/v1/resource/comments/R_SO_4_%s' % song_id,{"rid":str(song_id),"offset":str(offset),"total":"true","limit":str(limit),"beforeTime":str(beforeTime * 1000)}
 
 
-@EapiCryptoRequest
+@EapiEncipered
+@WeapiCryptoRequest
 @LoginRequiredApi
 def SetLikeTrack(trackId,like=True,userid=0,e_r=True):
-    '''PC端 - 收藏歌曲到 `我喜欢的音乐` - WIP  - WIP - protected via 网易易盾
+    '''PC端 - 收藏歌曲到 `我喜欢的音乐`
 
     TODO: defeat `watchman.js` obfuscation
     
