@@ -51,9 +51,8 @@ def BaseWrapper(requestFunc):
 def EapiEncipered(func):
     def wrapper(*a,**k):
         payload = func(*a,**k)
-        try:
-            payload = Crypto.EapiDecrypt(payload.content.decode())
-            return json.loads(payload)
+        try:            
+            return Crypto.EapiDecrypt(payload).decode()
         except:
             return payload
     return wrapper        
