@@ -5,7 +5,7 @@ from time import time
 from requests.models import Response
 from .. import GetCurrentSession,SetCurrentSession
 from .. import logger
-from ..utils import Crypto,ncm_client_key
+from ..utils import Crypto
 import json,urllib.parse
 
 class LoginRequiredException(Exception):pass

@@ -1,7 +1,5 @@
 '''登录、Anti - AntiCSRF 有关 APIs'''
-from os import pathsep
-from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException,ncm_client_key
-
+from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
 import time
 
 def WriteLoginInfo(response):
@@ -104,7 +102,7 @@ def LoginViaCellphone(phone='', password='',countrycode=86,remeberLogin=True) ->
     Returns:
         dict
     '''
-    path='/weapi/login/cellphone/' # was /w/login/cellphone
+    path='/weapi/w/login/cellphone'
     sess = GetCurrentSession()
     if (phone and password):
         sess.phone = phone
@@ -112,10 +110,10 @@ def LoginViaCellphone(phone='', password='',countrycode=86,remeberLogin=True) ->
         return LoginViaCellphone()
     else:
         if (hasattr(sess,'phone') and hasattr(sess,'password')):
-            md5_password = Crypto.HashDigest(sess.password)
+            md5_password = Crypto.HashHexDigest(sess.password)
             login_status = WeapiCryptoRequest(lambda:(path,{
                 "phone":str(sess.phone),
-                "csrf_token":str(sess.csrf_token),
+                "checkToken":Crypto.checkToken(), # XXX
                 "password":str(md5_password),
                 "rememberLogin":str(remeberLogin).lower(),
                 "countrycode":str(countrycode),

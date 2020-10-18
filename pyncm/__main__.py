@@ -175,7 +175,7 @@ logging.debug('''Initalized with the following settings:
     Logging Level       :       {}
     Report Output       :       {}
     No SSL Verification :       {}'''.format(
-    id, operation, quality, Crypto.HashDigest(password) if password else '< no password specefied >',
+    id, operation, quality, Crypto.HashHexDigest(password) if password else '< no password specefied >',
     phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size, logging_level,report_output,insecure))
 
 helper = NcmHelper(temp, output, merge_only, pool_size, buffer_size,reporters[report_output])
