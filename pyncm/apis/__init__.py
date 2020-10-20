@@ -80,7 +80,7 @@ def LapiCryptoRequest(url,plain,method):
         '/api/linux/forward',
         headers={
             **GetCurrentSession().headers, 
-            'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+            'User-Agent':GetCurrentSession().UA_LINUX_API
         },
         data={**Crypto.LinuxCrypto(payload)}
     )
@@ -90,18 +90,10 @@ def LapiCryptoRequest(url,plain,method):
 def EapiCryptoRequest(url,plain,method):
     '''This API utilize '/api/' or '/eapi/',seen in mobile clients'''
     cookies = {
-        'appver': '7.2.24', # the version used for decompilation
-        'buildver':'whatever_the_latest_is', # ...these don't matter   
-        'channel':'persumably_offical',
-        'deviceId': 'pyncm_but_who_cares',   # ...
-        'mobilename' : 'Pixel2XL',           # ...as long as these matches our UA
-        'os': 'android',
-        'osver':'10.0',                      # ...
-        'requestId':f'{int(time() * 1000)}_0233',
-        'resolution': '2712x1440',
-        'versioncode': '240',
+        **GetCurrentSession().CONFIG_EAPI,  
+        'requestId':f'{int(time() * 1000)}_0233',      
         '__csrf':GetCurrentSession().csrf_token,
-        **GetCurrentSession().cookies
+        **GetCurrentSession().cookies,
     }
     payload = {
         **plain,    
@@ -111,7 +103,7 @@ def EapiCryptoRequest(url,plain,method):
         url,
         headers={
             **GetCurrentSession().headers, 
-            'User-Agent':'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)',
+            'User-Agent':GetCurrentSession().UA_EAPI,
             'Referer':None
         },
         cookies=cookies,

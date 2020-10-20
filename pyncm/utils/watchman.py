@@ -11,13 +11,7 @@ Rb = 'LPc4uQNptC2A6y.R90DOBIroS+qnx/eb3FM8fW1UZG7VmwvksgjhaTKzlXdiYEHJ'
 db = 5
 '''Default obfuscation chars'''
 WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT'
-'''DeviceID - XXX - device Id fecthing
-
-    - So as it seems , this value is fetched via /v3/d
-    - This would ID the user's browser , which would 100% cause `云音乐小秘书`'s automated PM
-    - This ID is a fallback one - it would not report as a real browser - `unknown` is reported instead
-    - There's still a lot going on over `/d/` side of things...WIP,but surely is going to be painfully slow
-'''
+'''DeviceID - XXX - device Id - Probably won't be bothering with this anymore...'''
 # endregion
 
 # region Bitwise operations
@@ -50,11 +44,11 @@ def ha(b, c):
     rl16 = _lshift(r,16)    
     return rl16 | d & 65535
 def Yb(e):
-    '''MD5 hasher - essentially what thier JS implementation was'''
+    '''MD5 hasher'''
     from . import Crypto
     return Crypto.HashDigest(e)
 def Zb(e):
-    '''MD5 digest hexstring-fier'''
+    '''MD5 digest hexi-fier'''
     from . import Crypto
     return Crypto.HexDigest(e)
 # endregion
@@ -68,7 +62,7 @@ def C(e):
     if (e > 127):
         return C(-129 + e - 127)
 def X(b):
-    '''Integer decomposer - int(32 bits) -> [4 bytes]'''
+    '''Integer to bytes - int(32 bits) -> [4 bytes]'''
     return [C(b >> 24 & 255),C(b >> 16 & 255),C(b >> 8 & 255),C(b & 255)]
 def Z(e):
     '''encodeURIComponent()'''
@@ -99,7 +93,7 @@ def La(e):
         g[q] = C(-g[q])
     return gb(g)
 def ga(e, c, d, r, g):
-    # Array shuffler
+    '''Array shuffler'''
     for h in range(0,g):d[r + h] = e[c + h]
 def hb(e):
     '''Hexstring to integer array'''
@@ -110,7 +104,7 @@ def hb(e):
         c.append(C(h + m))
     return c    
 def Qb(e, c, d=0, r=Rb, g=db):
-    '''String to integer array'''
+    '''Integer array to obfuscated string'''
     h, m,g = 0,[],str(g)
     def push(*a):m.extend(a)
     if d == 1:
@@ -185,9 +179,7 @@ def bc(c,f=1,g=WM_DID):
 
 def checkToken(deviceId=WM_DID):
     '''Generates `checkToken` parameter
-
-    Still WIP but works pretty well already...maybe you should use your own WM_DID instead
-
+    
     Args:
         deviceId (str, optional): XXX: Device ID fetched. Defaults to WM_DID.
 

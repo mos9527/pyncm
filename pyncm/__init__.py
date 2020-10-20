@@ -7,24 +7,40 @@ from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.4.6"
+__version__ = "1.4.7"
 
 class Session(requests.Session):   
     '''Represents an API session'''
-    HOST = "https://music.163.com"
-    
+    HOST          = "https://music.163.com"
+    UA_DEFAULT    = 'Mozilla/5.0 (linux@github.com/greats3an/pyncm) Chrome/But.It.Was.Actually.PyNCM.%s' % __version__ # this is just stupid
+    UA_EAPI       = 'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)'
+    UA_LINUX_API  = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'    
+    CONFIG_EAPI   = {
+        'appver': '7.2.24', # the version used for decompilation
+        'buildver':'7002024',                # ...these don't matter   
+        'channel':'offical',                 # 
+        'deviceId': Crypto.RandomString(8),  #
+        'mobilename' : 'Pixel2XL',           # as long as these match our UA
+        'os': 'android',                     #
+        'osver':'10.0',                      # ...        
+        'resolution': '2712x1440',
+        'versioncode': '240'        
+    }
+
     def __init__(self,*a,**k):
         # Setting up our request session
         super().__init__(*a,**k)
-        self.headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "mos9527 Him Self/v15",
-            "Referer":Session.HOST
-        }
-        # Setting up default values
+        self.update_headers()
         self.login_info = {'success': False,'tick': time(), 'content': None}
         self.csrf_token = ''
 
+    def update_headers(self):
+        self.headers = {
+            "Content-Type"  : "application/x-www-form-urlencoded",  
+            "User-Agent"    : self.UA_DEFAULT,
+            "Referer"       : self.HOST
+        }
+        # Setting up default values
     def request(self, method: str, url: Union[str, bytes, Text], *a,**k) -> requests.Response:
         '''Initiates & fires a request
 
@@ -35,7 +51,8 @@ class Session(requests.Session):
         Returns:
             requests.Response: A requests.Response object
         '''
-        if url[:4] != 'http':url = Session.HOST + url
+        self.update_headers()
+        if url[:4] != 'http':url = self.HOST + url                
         return super().request(method,url,*a,**k)             
     
     DUMPS = {
@@ -46,10 +63,10 @@ class Session(requests.Session):
     }
     def dump(self) -> dict:
         '''Dumps partial class variables as dictionary'''
-        return {name:Session.DUMPS[name][0](self) for name in Session.DUMPS.keys()}
+        return {name:self.DUMPS[name][0](self) for name in self.DUMPS.keys()}
     def load(self,dumped):
         '''Loads dumped dictioary as class variables'''
-        for k,v in dumped.items():Session.DUMPS[k][1](self,v)
+        for k,v in dumped.items():self.DUMPS[k][1](self,v)
         return True
 
 class SessionManager():
@@ -79,9 +96,9 @@ logger = logging.getLogger('ncm')
 '''Logger to be used by local modules'''
 sessionManager          = SessionManager()
 '''Manages active session'''
-GetCurrentSession       = sessionManager.get
+GetCurrentSession : Session = sessionManager.get
 '''Retrives current active session'''
-SetCurrentSession       = sessionManager.set
+SetCurrentSession : Session = sessionManager.set
 '''Sets current active session'''
 def LoadSessionFromString(dump : str):
     '''Loads a session from dumped string'''
