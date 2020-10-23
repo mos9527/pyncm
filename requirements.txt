@@ -1,5 +1,4 @@
 requests
 pycryptodome
 mutagen
-colorama
 coloredlogs

@@ -87,7 +87,7 @@ def GetCurrentLoginStatus():
     '''
     return '/weapi/w/nuser/account/get',{}
 
-def LoginViaCellphone(phone='', password='',countrycode=86,remeberLogin=True) -> dict:
+def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=True) -> dict:
     '''网页端 - 手机号登陆
 
     Args:
@@ -113,15 +113,68 @@ def LoginViaCellphone(phone='', password='',countrycode=86,remeberLogin=True) ->
             md5_password = Crypto.HashHexDigest(sess.password)
             login_status = WeapiCryptoRequest(lambda:(path,{
                 "phone":str(sess.phone),
-                "checkToken":Crypto.checkToken(), # XXX
+                "checkToken":Crypto.checkToken(),
                 "password":str(md5_password),
                 "rememberLogin":str(remeberLogin).lower(),
-                "countrycode":str(countrycode),
+                "countrycode":str(ctcode),
             }))() 
             WriteLoginInfo(login_status)
             return sess.login_info
         else:
             raise LoginFailedException('Not enough login info provided')
+
+@WeapiCryptoRequest
+def SetSendRegisterVerifcationCodeViaCellphone(cell : str,ctcode=86):
+    '''网页端 - 发送验证码
+
+    - 验证码发送频率限制于session，刷新cookies或`pyncm.SetNewSession`可解决    
+
+    Args:
+        cell (str): 手机号
+        ctcode (int, optional): 国家代码. Defaults to 86.
+
+    Returns:
+        dict
+    '''
+    return '/weapi/sms/captcha/sent',{'cellphone': str(cell),'ctcode': ctcode}
+
+
+@WeapiCryptoRequest
+def GetRegisterVerifcationStatusViaCellphone(cell : str,captcha:str,ctcode=86):
+    '''网页端 - 检查验证码是否正确
+
+    Args:
+        cell (str): 手机号
+        captcha (str): 验证码
+        ctcode (int, optional): 国家代码. Defaults to 86.
+
+    Returns:
+        dict
+    '''
+    return '/weapi/sms/captcha/verify',{'cellphone': str(cell),'captcha':str(captcha),'ctcode': ctcode}
+
+@WeapiCryptoRequest
+def SetRegisterAccountViaCellphone(cell : str,captcha:str,nickname:str,password:str):
+    '''网页端 - 手机号注册
+
+    - 需要已通过 `SetSendRegisterVerifcationCodeViaCellphone` 发送验证码
+
+    Args:
+        cell (str): 手机号
+        captcha (str): 验证码
+        nickname (str): 昵称
+        password (str): 密码
+
+    Returns:
+        dict
+    '''
+    return '/weapi/w/register/cellphone',{
+        'captcha':str(captcha),
+        'nickname':str(nickname),
+        'password':Crypto.HashHexDigest(password),
+        'phone':str(cell),
+        'checkToken':Crypto.checkToken(),
+    }    
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell : str,prefix=86):

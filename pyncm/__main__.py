@@ -1,7 +1,6 @@
 '''CLI 使用前端'''
 import logging
 import coloredlogs
-import colorama
 
 import traceback
 import json
@@ -79,7 +78,6 @@ class ConfigManager():
             os.remove(ConfigManager.path)
             logging.warning('Destroyed config file')
 
-colorama.init()
 parser = argparse.ArgumentParser(
     description='NCM All-in-One Downloader for python', formatter_class=argparse.RawTextHelpFormatter)
 # Parser begin----------------------------------------------------------------------------

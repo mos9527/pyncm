@@ -15,18 +15,17 @@ class RSAPublicKey():
     def __init__(self, n, e):
         self.n = int(n, 16)
         self.e = int(e, 16)
-
 # region Constant values
 WEAPI_AES_KEY    = "0CoJUm6Qyw8W8jud" # cbc
 WEAPI_AES_IV     = "0102030405060708" # cbc
 WEAPI_RSA_PUBKEY = RSAPublicKey(
     "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",
-    "10001" # signle-block,no padding
+    "10001" # textbook rsa without padding
 )
 WEAPI_RSA_DEFAULT_CRYPTO = (
-    'mos9527ItoooItop', 
+    'www.mos9527.top!', # maybe spare a little drop-by? ;)
     # plaintext (aes_key_2)
-    '01a1c399271006da676da55763419f10f0e589515c49530b33418eec82202fc42dae0cd3aa4a2b7bdc3dafa7c6a918e405f3cdbc5d0349ef86913fc2dbe8764ed782e202e7828b547e85f6ae28b8b120bcf5fd3777a55731521612dcaff9813246a42876303b0f2307c9f264671ddc87159ff162e689fdfae5acb3af10250754'
+    '8aedbe4ad50512d5ef69e18025ab02b094ef6e96cb352c5dadc69f9a5b9b7a07cdd2b27446bd6273a2cb3ebf8de9cef5564d646cc04718fd6ca99f25dee031a10e93a39ecfa885280d0936d94af034fce82d9cdd285351f5a71f76d9da043a2289a25b588832f0342dec14a41398cdae5dfdda0b6f4f07d72615cbab4d97e395'
     # (key->rsa_pubkey) ciphertext (encSecKey)
 )   # signle-block,no padding
 LINUXAPI_AES_KEY = "rFgB&h#%2?^eDg:Q" # ecb
@@ -62,16 +61,16 @@ class Crypto():
     @staticmethod
     def HexCompose(hexstr : str):
         '''Composes a hex string back to a `bytearray`'''
-        if len(hexstr) % 2:raise Exception('Hex-string length should be a even number')
+        if len(hexstr) % 2:raise Exception('Hex-string length should be an even number')
         return bytearray([int(hexstr[i:i+2],16) for i in range(0,len(hexstr),2)])
     @staticmethod
     def HashDigest(text):
-        '''Hexdecimal MD5 hash generator'''
+        '''Digests 128 bit md5 hash'''
         HASH = md5(text.encode('utf-8'))
         return HASH.digest()        
     @staticmethod
     def HashHexDigest(text):
-        '''Hexdecimal MD5 hash generator'''
+        '''Digests 128 bit md5 hash,then digest it as a hexstring'''
         return Crypto.HexDigest( Crypto.HashDigest(text) )
     # endregion
     # region Cryptos
@@ -103,7 +102,7 @@ class Crypto():
     def RSAEncrypt(data:str, pubkey: RSAPublicKey, reverse=True):
         '''Signle-block textbook RSA encrpytion (c ≡ n ^ e % N),encodes text to hexstring first'''
         def toInt(s): return int(s.encode('utf-8').hex(), 16)
-        n = data # do not modify in place
+        n = data
         if reverse:n = reversed(n)
         n, e, N = toInt(''.join(n)), pubkey.e, pubkey.n
         return Crypto.HexCompose(hex(n ** e % N)[2:].zfill(256))
@@ -146,7 +145,7 @@ class Crypto():
     
     @staticmethod
     def EapiCrypto(url,params):
-        '''Used in mobile clients'''
+        '''Used in mobile and PC clients'''
         url,params = str(url),str(params)
         digest = Crypto.HashHexDigest(EAPI_DIGEST_SALT % {'url':url,'text':params})
         params = EAPI_DATA_SALT % ({'url':url,'text':params,'digest':digest})

@@ -1,6 +1,5 @@
 '''歌曲 - Track APIs'''
-from . import EapiEncipered, WeapiCryptoRequest,EapiCryptoRequest,LoginRequiredApi
-from . import logger
+from . import EapiEncipered, WeapiCryptoRequest,LoginRequiredApi
 import json
 @WeapiCryptoRequest
 def GetTrackDetail(song_ids : list):
@@ -27,10 +26,6 @@ def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
     Returns:
         dict
     '''
-    if not quality in ['standard', 'higher', 'lossless']:
-        logger.warn('Invalid quality config `%s`,falling back to `standard`')
-        quality = 'standard'
-    # Quality check
     ids = song_ids if isinstance(song_ids,list) else [song_ids]
     return '/weapi/song/enhance/player/url/v1',{"ids":ids,"level":quality,"encodeType":encodeType}
 
@@ -69,8 +64,6 @@ def GetTrackComments(song_id, offset=0, limit=20,beforeTime=0):
 @LoginRequiredApi
 def SetLikeTrack(trackId,like=True,userid=0,e_r=True):
     '''PC端 - 收藏歌曲到 `我喜欢的音乐`
-
-    TODO: defeat `watchman.js` obfuscation
     
     Args:
         trackId (int): 歌曲 ID

@@ -3,10 +3,10 @@
 - 需要安装 ffplay；或可根据其它播放器修改 `executable` 变量 
  - e.g. play --title "%(title)s" -i "%(url)s"
 '''
-executable = 'ffplay  -noborder -v quiet -x 1920 -y 200 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
+executable = 'ffplay  -noborder -v quiet -x 1280 -y 500 -hide_banner -loglevel info -autoexit -showmode 2 -window_title "%(title)s" -i "%(url)s"'
 
 from pyncm.utils.helper import TrackHelper
-import pyncm,os,sys,random,logging,colorama
+import pyncm,os,sys,random,logging,colorama,getpass
 colorama.init()
 logging.disable(logging.ERROR)
 stdout_write = sys.stdout.write
@@ -19,7 +19,7 @@ def myfm():
     if not pyncm.GetCurrentSession().login_info['success']:
         print('🔑 需要登陆')
         phone = input('手机号：')
-        passw = input('  密码：')
+        passw = getpass.getpass('密码：')
         pyncm.login.LoginViaCellphone(phone,passw)
     return pyncm.miniprograms.radio.GetMoreRaidoContent()
 bpm=10

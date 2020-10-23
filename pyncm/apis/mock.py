@@ -1,5 +1,5 @@
 '''伪装，Anti-AntiCSRF 有关 APIs'''
-from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
+from . import WeapiCryptoRequest
 import json
 @WeapiCryptoRequest
 def MockWeblog(logs):

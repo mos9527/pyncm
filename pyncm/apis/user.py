@@ -1,5 +1,5 @@
 '''用户 - User 有关 APIs'''
-from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi,EapiCryptoRequest
+from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi
 
 
 @WeapiCryptoRequest

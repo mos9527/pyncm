@@ -97,8 +97,7 @@ class NcmHelper():
             pool_size   :       Cocurrent download worker count
             buffer_size :       Size of iter_content(chunk_size)'s chunk_size
             logger      :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging
-            random_keys     :       Whether uses random 2nd AES key or the constant 'mos9527ItoooItop' and its encypted RSA string
-        Functions inside are well described,read them for more info.
+            random_keys     :       Whether uses random 2nd AES key or the pre-calculated one        
     '''
 
     def __init__(self, temp='temp', output='output', merge_only=False, pool_size=4, buffer_size=256, reporter=sys.stdout):
