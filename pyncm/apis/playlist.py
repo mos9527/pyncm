@@ -1,6 +1,7 @@
 '''歌单 - Playlist APIs'''
 import json
-from . import LapiCryptoRequest, WeapiCryptoRequest
+from . import Crypto
+from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):
@@ -60,3 +61,15 @@ def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True)
         [type]: [description]
     '''
     return '/api/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower(),"e_r":str(e_r).lower()}
+
+
+@EapiCryptoRequest
+def SetManipulatePlaylistTracks(name : str,privacy=False,e_r=True):
+    '''PC 端 - 新建歌单
+
+    Args:
+        name (str): 歌单名
+        privacy (bool, optional) : 是否私享. Defaults to False.
+        e_r (bool, optional): 暂存. Defaults to True.
+    '''
+    return 'https://interface3.music.163.com/eapi/playlist/create',{"name":str(name),"privacy":str(privacy*1),"e_r":str(e_r).lower(),"checkToken":Crypto.checkToken()}

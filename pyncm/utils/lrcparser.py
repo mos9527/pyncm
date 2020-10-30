@@ -1,5 +1,6 @@
 '''Another lrc file parser'''
 from os import times
+import math
 import re
 from collections import defaultdict,OrderedDict
 
@@ -108,7 +109,7 @@ class LrcParser:
                         #   [00:01.12][00:08.12]Yeah
                         # So an extra loop could work it around                        
                         timestamp = tag2stamp(_IDTag)
-                        if timestamp:
+                        if timestamp >= 0:
                             if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
                             if Lyrics:self.lyrics[timestamp].append((_IDTag,Lyrics)) # Ignore empty lines
                 except:
@@ -144,7 +145,7 @@ class LrcParser:
             if not isinstance(value,Exception): # If such value do exist
                 lrc += f'[{attr}:{value}]' + '\n'        
         # Adding lyrics
-        for timestamps,lyrics in self.lyrics_sorted.items(): # write the sorted one
+        for timestamps,lyrics in self.lyrics.items(): # write the sorted one
             IDTag,Lyrics = None,[]
             for _IDTag,_Lyrics in lyrics:
                 IDTag = _IDTag
@@ -163,10 +164,10 @@ class LrcParser:
             Returns None if the match isn't inside the window
         '''
         def serach(val,src:list,l,r):    
-            '''Binary serach'''
-            if (l > r):return None
-            pivot = (l+r) >> 1
-            in_between = (pivot==0 or (src[pivot-1] <= val)) and val <= src[pivot]            
+            '''Binary serach'''            
+            pivot = (l+r)>>1
+            if (l >= r or pivot == l or pivot == r):return pivot            
+            in_between = (pivot<=0 or (src[pivot-1] <= val)) and val <= src[pivot]            
             if in_between:            
                 if src[pivot] == val:
                     return pivot
@@ -174,7 +175,7 @@ class LrcParser:
                     return pivot - 1
                 else:
                     return pivot
-            return serach(val,src,pivot + 1,r) if src[pivot] < val else serach(val,src,l,pivot - 1)
+            return serach(val,src,pivot,r) if src[pivot] < val else serach(val,src,l,pivot)        
         timestamps = list(lyrics.keys())
-        index      = serach(timestamp,timestamps,0,len(lyrics))
+        index      = serach(timestamp,timestamps,0,len(lyrics))        
         return (timestamps[index],lyrics[timestamps[index]],index)

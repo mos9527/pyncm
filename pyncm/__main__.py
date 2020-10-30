@@ -1,4 +1,5 @@
 '''CLI 使用前端'''
+from build.lib.pyncm import SetCurrentSession
 import logging
 import coloredlogs
 
@@ -10,7 +11,7 @@ import sys
 import argparse 
 
 from pathlib import Path
-from . import GetCurrentSession,Crypto,LoadSessionFromString,DumpCurrentSessionAsString
+from . import GetCurrentSession,Crypto,LoadSessionFromString,DumpSessionAsString
 from .utils.helper import NcmHelper
 
 coloredlogs.install()
@@ -58,14 +59,14 @@ class ConfigManager():
         config = open(ConfigManager.path).read()
         config = json.loads(config)
         self.pyncm = config['pyncm'] # cmdlet options
-        LoadSessionFromString(config['session']) # session settings
+        SetCurrentSession(LoadSessionFromString(config['session'])) # session settings
         if GetCurrentSession().login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
         return logging.debug('Loaded config file')
     @DestroyOnError
     def save(self):
         # Rewrite the config file with local settings
         config = {
-            'session':DumpCurrentSessionAsString(),# session settings
+            'session':DumpSessionAsString(GetCurrentSession()),# session settings
             'pyncm':self.pyncm # cmdlet options
         }
         config = json.dumps(config)
@@ -196,11 +197,6 @@ if phone and password:
     # passport provided,login with them
     helper.Login(phone, password)
 
-'''
-    Reflect the operations to certain functions
-'''
-
-
 def NoExecWrapper(func, *args, **kwargs):
     '''
         Wrapper that treats functions like a variable then returns them
@@ -208,8 +204,6 @@ def NoExecWrapper(func, *args, **kwargs):
     def wrapper():
         func(*args, **kwargs)
     return wrapper
-
-
 def SaveConfig():
     config.pyncm = {k: v for k, v in args.items() if k in arg_whitelist}
     config.save()
@@ -221,7 +215,7 @@ reflection = {
     'reset':config.destroy,
     'config': SaveConfig,
     'song_audio': NoExecWrapper(helper.DownloadTrackAudio, id=id, quality=quality),
-    'song_lyric':   NoExecWrapper(helper.DownloadAndFormatLyrics, id=id),
+    'song_lyric': NoExecWrapper(helper.DownloadAndFormatLyrics, id=id),
     'song_meta': NoExecWrapper(helper.DownloadTrackInfo, id=id),
     'song_down': NoExecWrapper(helper.DownloadAll, id=id, quality=quality),
     'song':  NoExecWrapper(helper.DownloadAllAndMerge, id=id, quality=quality),

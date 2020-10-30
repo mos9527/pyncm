@@ -121,13 +121,13 @@ def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=True) -> dict
             WriteLoginInfo(login_status)
             return sess.login_info
         else:
-            raise LoginFailedException('Not enough login info provided')
+            raise LoginFailedException('Phone number or password not set')
 
 @WeapiCryptoRequest
 def SetSendRegisterVerifcationCodeViaCellphone(cell : str,ctcode=86):
     '''网页端 - 发送验证码
 
-    - 验证码发送频率限制于session，刷新cookies或`pyncm.SetNewSession`可解决    
+    - 验证码 24h 内最多发送五次
 
     Args:
         cell (str): 手机号
@@ -137,7 +137,7 @@ def SetSendRegisterVerifcationCodeViaCellphone(cell : str,ctcode=86):
         dict
     '''
     return '/weapi/sms/captcha/sent',{'cellphone': str(cell),'ctcode': ctcode}
-
+    
 
 @WeapiCryptoRequest
 def GetRegisterVerifcationStatusViaCellphone(cell : str,captcha:str,ctcode=86):
@@ -158,6 +158,8 @@ def SetRegisterAccountViaCellphone(cell : str,captcha:str,nickname:str,password:
     '''网页端 - 手机号注册
 
     - 需要已通过 `SetSendRegisterVerifcationCodeViaCellphone` 发送验证码
+    - `忘记密码` 同样使用该 API
+    - 成功后，现`Session`将登陆进入该账号
 
     Args:
         cell (str): 手机号

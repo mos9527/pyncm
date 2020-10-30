@@ -7,7 +7,7 @@ from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.4.8"
+__version__ = "1.5.0"
 
 class Session(requests.Session):   
     '''Represents an API session'''
@@ -99,17 +99,17 @@ sessionManager              = SessionManager()
 def GetCurrentSession() -> Session:
     '''Retrives current active session'''
     return sessionManager.get()
-def SetCurrentSession(session):
+def SetCurrentSession(session : Session):
     '''Sets current active session'''
     sessionManager.set(session)
 def SetNewSession():
     '''Creates and sets new session'''
     sessionManager.set(Session())
-def LoadSessionFromString(dump : str):
+def LoadSessionFromString(dump : str) -> Session:
     '''Loads a session from dumped string'''
     session = SessionManager.parse(dump)
-    SetCurrentSession(session)
-def DumpCurrentSessionAsString():
-    '''Dumps current session as encrypted string'''
-    return SessionManager.stringify(GetCurrentSession())
+    return session
+def DumpSessionAsString(session : Session) -> str:
+    '''Dumps session as encrypted string'''
+    return SessionManager.stringify(session)
 from .apis import *

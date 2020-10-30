@@ -10,10 +10,9 @@ Tc = '='
 Rb = 'LPc4uQNptC2A6y.R90DOBIroS+qnx/eb3FM8fW1UZG7VmwvksgjhaTKzlXdiYEHJ'
 db = 5
 '''Default obfuscation chars'''
-WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT'
+WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT' # fallback value
 '''DeviceID - XXX - device Id - Probably won't be bothering with this anymore...'''
 # endregion
-
 # region Bitwise operations
 '''These exsist beacues JS's bit handling is not correct arithmeticly - AND,OR,XOR,NOT,and LS,RS are few examples'''
 def _int(v):return ctypes.c_int(v).value
@@ -32,7 +31,6 @@ def  _or(v1,v2): return _int( _truncate(v1) | _truncate(v2))
 def _xor(v1,v2): return _int( _truncate(v1) ^ _truncate(v2))
 def _not(v1):    return _int(~_truncate(v1))
 # endregion
-
 # region MD5
 def ha(b, c):
     '''Bitwise sum'''
@@ -164,7 +162,6 @@ def b():
     c = hb(c[:16])
     c = Tb(c+e)
     return c
- 
 def bc(c,f=1,g=WM_DID):
     '''Generates hash of our local config'''
     t = ac(Z(str(f) + str(g) + str(c) + "WoeTpXnDDPhiAvsJUUIY3RdAo2PKaVwi"))
@@ -176,7 +173,6 @@ def bc(c,f=1,g=WM_DID):
         't': Tb(t)
     }))
 # end region    
-
 def checkToken(deviceId=WM_DID):
     '''Generates `checkToken` parameter
     

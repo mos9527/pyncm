@@ -42,7 +42,9 @@ def BaseWrapper(requestFunc):
             method    = ret[-1] if ret[-1] in ['POST','GET'] else 'POST'        
             rsp = requestFunc(url,plain,method)                        
             try:
-                return json.loads(rsp.text) if isinstance(rsp,Response) else json.loads(rsp)
+                payload = rsp.text if isinstance(rsp,Response) else rsp
+                payload = payload.decode() if not isinstance(payload,str) else payload
+                return json.loads(payload.strip('\x10')) # weird caveat - they padded plaintext responses as well,though they always end with \x10(16)
             except json.JSONDecodeError:
                 return rsp
         return wrapper
