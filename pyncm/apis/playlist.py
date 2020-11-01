@@ -55,21 +55,33 @@ def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True)
         playlistId ([int]): 要操作的歌单ID
         op (str, optional): 操作 . Defaults to "add".
         imme (bool, optional): 暂存. Defaults to True.
-        e_r (bool, optional): 暂存. Defaults to True.
 
     Returns:
         [type]: [description]
     '''
-    return '/api/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower(),"e_r":str(e_r).lower()}
+    trackIds = trackIds if isinstance(trackIds,list) else [trackIds]
+    return '/api/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower()}
 
 
 @EapiCryptoRequest
-def SetManipulatePlaylistTracks(name : str,privacy=False,e_r=True):
+def SetCreatePlaylist(name : str,privacy=False):
     '''PC 端 - 新建歌单
 
     Args:
         name (str): 歌单名
         privacy (bool, optional) : 是否私享. Defaults to False.
-        e_r (bool, optional): 暂存. Defaults to True.
     '''
-    return 'https://interface3.music.163.com/eapi/playlist/create',{"name":str(name),"privacy":str(privacy*1),"e_r":str(e_r).lower(),"checkToken":Crypto.checkToken()}
+    return '/eapi/playlist/create',{"name":str(name),"privacy":str(privacy*1),"checkToken":Crypto.checkToken()}
+
+@EapiCryptoRequest
+def SetRemovePlaylist(ids : list,self = True):
+    '''移动端 - 删除歌单
+
+    Args:
+        ids (list): 歌单 ID
+        self (bool): 未知. Defaults to True
+    Returns:
+        dict
+    '''
+    ids = ids if isinstance(ids,list) else [ids]
+    return '/eapi/playlist/remove',{"ids":str(ids),"self":str(self),"checkToken":Crypto.checkToken()}

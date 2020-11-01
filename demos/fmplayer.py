@@ -126,7 +126,6 @@ while True:
             if 'uncollected' in lrc:return lyrics.AddLyrics(1,' - 歌词未收集，请敬待曲库更新 -')                
             return lyrics.AddLyrics(1,' - 无歌词 -')
         ('lrc' in lrc or preLrc()) and (lrc['lrc']['lyric'] or preLrc()) and (lyrics.LoadLrc(lrc['lrc']['lyric']) or True) and 'tlyric' in lrc and lrc['tlyric']['lyric'] and lyrics.LoadLrc(lrc['tlyric']['lyric'])
-        pyncm.track.SetLikeTrack(track['id'])        
         try:
             print('\33]0;%s\a' % tr.TrackName,end='')
             execute(executable % {'title':track['name'],'url':audio})
