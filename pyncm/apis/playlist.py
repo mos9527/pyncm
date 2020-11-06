@@ -16,7 +16,7 @@ def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):
     Returns:
         dict
     '''
-    return '/weapi/v6/playlist/detail',{"id":str(playlist_id),"offset":str(offset),"total":str(total).lower(),"limit":str(limit)}
+    return '/weapi/v6/playlist/detail',{"id":str(playlist_id),"offset":str(offset),"total":str(total).lower(),"limit":str(limit),"n":str(limit)}
 
 @WeapiCryptoRequest
 def GetPlaylistComments(playlist_id : str, offset=0, limit=20 ,beforeTime=0):
