@@ -61,4 +61,8 @@ def test_delete_playlist():
     if r1['code'] != 200:return False    
     return pyncm.apis.playlist.SetRemovePlaylist(r1['id'])
 r2 = test_delete_playlist()
+@Testpoint
+def test_fetch_fav_artists():
+    return pyncm.apis.user.GetUserArtistSubs()
+r3 = test_fetch_fav_artists()
 Results()

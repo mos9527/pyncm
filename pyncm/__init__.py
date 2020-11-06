@@ -1,13 +1,14 @@
 '''# pyncm
 本模块提供`Get/Set/DumpCurrentSession`,`LoadNewSessionFromDump` 以管理请求
-API 使用请参见 `pyncm.apis` 文档'''
+API 使用请参见 `pyncm.apis` 文档 
+'''
 
 from .utils.crypto import Crypto
 from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 class Session(requests.Session):   
     '''Represents an API session'''

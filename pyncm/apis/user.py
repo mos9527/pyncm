@@ -1,7 +1,6 @@
 '''用户 - User 有关 APIs'''
 from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi
 
-
 @WeapiCryptoRequest
 @UserIDBasedApi
 def GetUserDetail(user_id = 0):
@@ -29,6 +28,18 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
         dict
     '''    
     return '/weapi/user/playlist',{'offset': str(offset), 'limit': str(limit),'uid': str(user_id)}
+
+@WeapiCryptoRequest
+@LoginRequiredApi
+def GetUserArtistSubs(limit=30):
+    '''网页端 - 获取收藏歌手内容
+    Args:
+        limit (int, optional): 单次获取量. Defaults to 30.
+
+    Returns:
+        dict
+    '''
+    return '/api/artist/sublist', {"limit": str(limit)}
 
 SIGNIN_TYPE_MOBILE = 0
 '''移动端签到 +4 EXP'''
