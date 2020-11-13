@@ -63,6 +63,10 @@ def test_delete_playlist():
 r2 = test_delete_playlist()
 @Testpoint
 def test_fetch_fav_artists():
-    return pyncm.apis.user.GetUserArtistSubs()
+    return pyncm.apis.user.GetUserArtistSubs()    
 r3 = test_fetch_fav_artists()
+@Testpoint
+def test_fetch_track_lyrics_with_romaji():
+    return pyncm.apis.track.GetTrackLyrics('31140606')
+r4 = test_fetch_track_lyrics_with_romaji()
 Results()

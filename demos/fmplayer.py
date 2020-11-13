@@ -7,6 +7,7 @@ executable = 'ffplay -autoexit -left 0 -top 0 -x 1280 -v quiet -hide_banner -log
 
 from os import times
 from os.path import isfile
+from pyncm.apis.track import GetTrackDetail
 from pyncm import GetCurrentSession, LoadSessionFromString
 from pyncm.utils.helper import TrackHelper
 from pyncm.utils.lrcparser import LrcParser
@@ -114,7 +115,14 @@ if not sel in sem.keys():
 while True:
     print('[',sem[sel.lower()][1],']')
     tracks = sem[sel.lower()][0]()    
-    for track in tracks['data'] if isinstance(tracks['data'],list) else tracks['data']['list']:
+    # getting tracks out from all sorts of dicts
+    if 'data' in tracks:
+        _tracks = tracks['data'] if isinstance(tracks['data'],list) else tracks['data']['list']
+    elif 'playlist' in tracks:
+        _tracks = GetTrackDetail([t['id'] for t in tracks['playlist']['trackIds']])['songs']
+    else:
+        _tracks = {}
+    for track in _tracks:
         lyrics.ClearLyrics()
         last = 0
         tr = TrackHelper(track)
@@ -125,7 +133,8 @@ while True:
             if 'nolyric' in lrc:return lyrics.AddLyrics(1,' - 纯音乐，请欣赏 -')   
             if 'uncollected' in lrc:return lyrics.AddLyrics(1,' - 歌词未收集，请敬待曲库更新 -')                
             return lyrics.AddLyrics(1,' - 无歌词 -')
-        ('lrc' in lrc or preLrc()) and (lrc['lrc']['lyric'] or preLrc()) and (lyrics.LoadLrc(lrc['lrc']['lyric']) or True) and 'tlyric' in lrc and lrc['tlyric']['lyric'] and lyrics.LoadLrc(lrc['tlyric']['lyric'])
+        rawlrcs= [lrc[k]['lyric'] for k in set(lrc.keys()).intersection({'lrc','tlyric','romalrc'}) if 'lyric' in lrc[k].keys()]                    
+        for lrc_ in rawlrcs:lyrics.LoadLrc(lrc_)        
         try:
             print('\33]0;%s\a' % tr.TrackName,end='')
             execute(executable % {'title':track['name'],'url':audio})

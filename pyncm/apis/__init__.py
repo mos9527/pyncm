@@ -6,12 +6,17 @@
 
 编写的所有的 API 过程应遵循下列格式：
 
-    @[API 请求类型] # 可根据抓到包的 URL 判断
-    @[API 限制条件] # 可选
-    @[API 预、后处理] # 可选
-    def [API 名]([API 参数]):
-        """[Google 风格多行注释]"""
-        return '[API URL]',{[API 参数]}
+@[API 请求类型] # 可根据抓到包的 URL 判断
+
+@[API 限制条件] # 可选
+
+@[API 预、后处理] # 可选
+
+def [API 名] ([API 参数]):
+
+    """[Google 风格多行注释]"""
+
+    return '[API URL]',{[API 参数]}
 
 对于需要 `checkToken` 参数的 API,请使用 `Crypto.checkToken()` 计算 - 该参数时效性约为 1 月
 '''

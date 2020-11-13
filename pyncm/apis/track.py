@@ -22,7 +22,7 @@ def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
         song_ids (list): 歌曲 ID
         quality (str, optional): standard / high / lossless . Defaults to 'lossless'.
         encodeType (str, optional): 歌曲编码 . Defaults to 'aac'.
-
+    
     Returns:
         dict
     '''
@@ -31,16 +31,21 @@ def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
 
 
 @WeapiCryptoRequest
-def GetTrackLyrics(song_id : str):
+def GetTrackLyrics(song_id : str,lv=-1,tv=-1,rv=-1):
     '''网页端 - 获取歌曲歌词
 
     Args:
-        song_id (str): 歌曲ID
+        song_id (str): 歌曲 ID
+        lv (int, optional): 歌词版本. Defaults to -1.
+        tv (int, optional): 翻译版本. Defaults to -1.
+        rv (int, optional): 罗马音版本. Defaults to -1.
+
+    `版本` 参数为 `-1` 时均会回退至最新版本
 
     Returns:
         dict
     '''
-    return '/weapi/song/lyric',{"id": str(song_id), "lv": -1, "tv": -1}
+    return '/weapi/song/lyric',{"id": str(song_id), "lv": str(lv),"tv":str(tv),"rv":str(rv)}
 
 
 @WeapiCryptoRequest

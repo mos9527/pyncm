@@ -290,7 +290,7 @@ class NcmHelper():
         export = export if export else self.output        
         lyrics = json.loads(open(self.GenerateDownloadPath(filename='lyrics.json',folder=folder), encoding='utf-8').read())  
         track  = json.loads(open(self.GenerateDownloadPath(filename='track.json', folder=folder), encoding='utf-8').read())
-        rawlrcs= [lyrics[k]['lyric'] for k in set(lyrics.keys()).intersection({'lrc','tlyric'}) if 'lyric' in lyrics[k].keys()]
+        rawlrcs= [lyrics[k]['lyric'] for k in set(lyrics.keys()).intersection({'lrc','tlyric','romalrc'}) if 'lyric' in lyrics[k].keys()]
         lrc    = LrcParser()
         for rawlrc in rawlrcs:
             this = LrcParser(rawlrc)
