@@ -182,6 +182,7 @@ class NcmHelper():
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
         target = self.GenerateDownloadPath(filename=filename, folder=folder)
         url = info['data'][0]['url']
+        logger.debug('Queueing for %s' % info['name'])
         self.QueueDownload(url, target)
         return target
 
@@ -210,13 +211,15 @@ class NcmHelper():
         # Go through every track inside the JSON
         done, total = 0, len(info['songs'])
         trackIds = [song['id'] for song in info['songs']]
-        tracks = NCM.track.GetTrackDetail(trackIds)
-        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)
-
-        for trackId in trackIds:
+        tracks = NCM.track.GetTrackDetail(trackIds)['songs']
+        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)['data']
+        
+        tracks = sorted(tracks,key=lambda song:song['id'])
+        trackAudios = sorted(trackAudios,key=lambda song:song['id'])        
+        
+        for i in range(0,len(tracks)):
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
-            track = [t for t in tracks['songs'] if t['id'] == trackId][0]
-            trackAudio = [t for t in trackAudios['data'] if t['id'] == trackId][0]
+            track,trackAudio = tracks[i],trackAudios[i]
             # Generates track header,and saves them
             tHelper = TrackHelper(track)
             track_root = self.GenerateDownloadPath(id=trackId, folder=root)
@@ -249,12 +252,16 @@ class NcmHelper():
         trackIds = [tid['id'] for tid in info['playlist']['trackIds']]
 
         done, total = 0, len(trackIds)
-        tracks = NCM.track.GetTrackDetail(trackIds)
-        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)
-        for trackId in trackIds:
+
+        tracks = NCM.track.GetTrackDetail(trackIds)['songs']
+        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)['data']
+
+        tracks = sorted(tracks,key=lambda song:song['id'])
+        trackAudios = sorted(trackAudios,key=lambda song:song['id'])        
+
+        for i in range(0,len(tracks)):
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
-            track = [t for t in tracks['songs'] if t['id'] == trackId][0]
-            trackAudio = [t for t in trackAudios['data'] if t['id'] == trackId][0]
+            track,trackAudio = tracks[i],trackAudios[i]
             trackId = track['id']
             tHelper = TrackHelper(track)
             # Generates track header,and saves them
@@ -263,7 +270,7 @@ class NcmHelper():
                  mode='w', encoding='utf-8').write(json.dumps(track))
             # Download lyrics
             self.DownloadAndFormatLyrics(trackId, folder=track_root)
-            # Queue to download audio and cover image
+            # Queue to download audio and cover image        
             self.QueueDownload(trackAudio['url'], self.GenerateDownloadPath(
                 filename=f'audio.{trackAudio["type"]}', folder=track_root))
             self.QueueDownload(tHelper.AlbumCover, self.GenerateDownloadPath(
@@ -326,7 +333,7 @@ class NcmHelper():
         folder = str(folder)
         audio = [f for f in os.listdir(folder) if f.split('.')[-1].lower() in ['mp3', 'm4a', 'flac','ogg']]
         if not audio:
-            logger.error('Supported audio file is missing,Cannot continue formatting!')
+            logger.error('Supported audio file for %s is missing,Cannot continue formatting!' % folder)
             return     
         audio = audio[-1]
         audio = self.GenerateDownloadPath(filename=audio, folder=folder)
@@ -512,3 +519,4 @@ class NcmHelper():
                                     Have finished downloading first
         '''
         return self.MutilWrapper(self.QueueDownloadAllTracksInAlbum)(id, quality, folder, merge_only)
+

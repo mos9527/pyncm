@@ -29,7 +29,7 @@ class LrcRegexes:
     LIDTag_Content = re.compile(r'(?<=[a-z]{2}:).*')
     LLyrics_ = re.compile(r'[^\[\]]*$')
     LBrackets = re.compile(r'(?<=\[).*(?=\])')
-    LTimestamp = re.compile(r'\d{2,}:\d{2,}.\d{2,}')
+    LTimestamp = re.compile(r'\d*[\.,:]\d*[\.,:]\d*')
 # region Static methods
 # Timestamp parsers
 def stamp2tag(timestamp):
@@ -41,8 +41,12 @@ def stamp2tag(timestamp):
 def tag2stamp(IDTag):
     IDTag = ''.join(LrcRegexes.LTimestamp.findall(IDTag))
     if not IDTag:return None
-    mm,ss = IDTag.split(':') 
-    ss,xx = ss.split('.') # xx is hunderth of a second,but NE didn't think so
+    div = IDTag.split(':') 
+    if (len(div)==2):
+        mm,ss = div
+        ss,xx = ss.split('.') # xx is hunderth of a second,but NE didn't think so
+    else:
+        mm,ss,xx = div
     timestamp = int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx)) # <- workaround
     return timestamp
 # endregion
@@ -107,13 +111,13 @@ class LrcParser:
                     for _IDTag in IDTag:
                         # Some LRC lyrics would pile a bunch of timestamps in on line,like 
                         #   [00:01.12][00:08.12]Yeah
-                        # So an extra loop could work it around                        
+                        # So an extra loop could work it around                             
                         timestamp = tag2stamp(_IDTag)
                         if timestamp >= 0:
                             if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
                             if Lyrics:self.lyrics[timestamp].append((_IDTag,Lyrics)) # Ignore empty lines
                 except:
-                    pass                                
+                    pass
         self.lyrics = self.lyrics_sorted # sort stuff once loaded
 
     def AddLyrics(self,timestamp,value):

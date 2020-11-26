@@ -1,5 +1,4 @@
 '''CLI 使用前端'''
-from build.lib.pyncm import SetCurrentSession
 import logging
 import coloredlogs
 
@@ -11,7 +10,7 @@ import sys
 import argparse 
 
 from pathlib import Path
-from . import GetCurrentSession,Crypto,LoadSessionFromString,DumpSessionAsString
+from . import GetCurrentSession,SetCurrentSession,Crypto,LoadSessionFromString,DumpSessionAsString
 from .utils.helper import NcmHelper
 
 coloredlogs.install()
@@ -57,10 +56,11 @@ class ConfigManager():
         if not self.present:
             return logging.warn('Cannot load config from %s as it\'s not present' % ConfigManager.path)
         config = open(ConfigManager.path).read()
-        config = json.loads(config)
+        config = json.loads(config)    
         self.pyncm = config['pyncm'] # cmdlet options
         SetCurrentSession(LoadSessionFromString(config['session'])) # session settings
-        if GetCurrentSession().login_info['success']:logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
+        if GetCurrentSession().login_info['success']:
+            logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
         return logging.debug('Loaded config file')
     @DestroyOnError
     def save(self):
