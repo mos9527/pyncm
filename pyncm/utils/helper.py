@@ -182,7 +182,6 @@ class NcmHelper():
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
         target = self.GenerateDownloadPath(filename=filename, folder=folder)
         url = info['data'][0]['url']
-        logger.debug('Queueing for %s' % info['name'])
         self.QueueDownload(url, target)
         return target
 

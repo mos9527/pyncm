@@ -113,7 +113,7 @@ class LrcParser:
                         #   [00:01.12][00:08.12]Yeah
                         # So an extra loop could work it around                             
                         timestamp = tag2stamp(_IDTag)
-                        if timestamp >= 0:
+                        if timestamp is not None and timestamp >= 0:
                             if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
                             if Lyrics:self.lyrics[timestamp].append((_IDTag,Lyrics)) # Ignore empty lines
                 except:
