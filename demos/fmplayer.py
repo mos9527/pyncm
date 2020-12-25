@@ -15,7 +15,7 @@ import pyncm,sys,random,logging,colorama,getpass,time,subprocess
 
 PIPE_POLL_INTERVAL = 1/60
 LYRICS_WINDOW = 1
-SESSION_DUMP_FILENAME = 'fmplayer.ncm'
+SESSION_DUMP_FILENAME = 'session.ncm'
 
 colorama.init()
 logging.disable(logging.ERROR)

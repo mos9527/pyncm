@@ -26,7 +26,7 @@ def Results():
     if not status['failed']:print('     None')
     print('END OF DIAGNOSE  ================')
 '''Login'''
-SESSION_DUMP_FILENAME = 'fmplayer.ncm'
+SESSION_DUMP_FILENAME = 'session.ncm'
 @Testpoint
 def login():
     def save():
