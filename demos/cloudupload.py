@@ -38,13 +38,12 @@ if __name__ == "__main__":
     print('[-] Checking file ( MD5:',md5,')')
     cresult = pyncm.cloud.GetCheckCloudUpload(md5)
     songId = cresult['songId']
-    '''Before uploading,performing a sanity check is always a good idea'''
+    '''网盘资源发布 4 步走：
+    1.拿到上传令牌 - 需要文件名，MD5，文件大小'''
+    token = pyncm.cloud.GetNosToken(fname,md5,fsize,fext)['result']    
     if cresult['needUpload']:
         print('[+] %s needs to be uploaded ( %s B )' % (fname,fsize))
-        '''There are couple procedures for uploading.Let's walk them through
-        1. A Nos Token must be aquired for authentication'''
-        token = pyncm.cloud.GetNosToken(fname,md5,fsize,fext)['result']
-        '''2. The token is used to upload the object'''
+        '''2. 若文件未曾上传完毕，则完成其上传'''
         upload_result = pyncm.cloud.SetUploadObject(
             open(f,'rb'),
             md5,fsize,token['objectKey'],token['token']
@@ -54,7 +53,10 @@ if __name__ == "__main__":
     ID  :   {songId}
     MD5 :   {md5}
     NAME:   {fname}''')
-    submit_result = pyncm.cloud.SetUploadCloudInfo(songId,md5,fname,'testme','pyncm',bitrate=128)
-    '''3. Lastly,we're submitting the resource'''
+    submit_result = pyncm.cloud.SetUploadCloudInfo(token['resourceId'],songId,md5,fname,'Le test','PyNCM',bitrate=1000)    
+    '''3. 提交资源'''
     print('[-] Response:\n  ',submit_result)
+    '''4. 发布资源'''
+    publish_result = pyncm.cloud.SetPublishCloudResource(submit_result['songId'])
+    print('[-] Response:\n  ',publish_result)
     

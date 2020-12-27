@@ -101,12 +101,15 @@ def GetCheckCloudUpload(md5,ext='',length=0,bitrate=0,songId=0,version=1):
 
 
 @EapiCryptoRequest
-def SetUploadCloudInfo(songid,md5,filename,song='.',artist='.',album='.',bitrate=128):
+def SetUploadCloudInfo(resourceId,songid,md5,filename,song='.',artist='.',album='.',bitrate=128):
     '''移动端 - 云盘资源提交
     
-    注：MD5 对应文件需已被 SetUploadObject 上传
+    注：
+        - MD5 对应文件需已被 SetUploadObject 上传
+        - song 项不得包含字符 .和/
     
     Args:
+        resourceId (str): GetNosToken 获得
         songid (str): GetCheckCloudUpload 获得
         md5 (str): 文件MD5哈希
         filename (str): 文件名
@@ -120,4 +123,16 @@ def SetUploadCloudInfo(songid,md5,filename,song='.',artist='.',album='.',bitrate
     Returns:
         dict
     '''
-    return '/eapi/upload/cloud/info/v2',{"songid":str(songid),"song":str(song),"md5":str(md5),"filename":str(filename),"bitrate":bitrate,"artist":str(artist),"album":str(album)}
+    return '/eapi/upload/cloud/info/v2',{"resourceId":str(resourceId),"songid":str(songid),"md5":str(md5),"filename":str(filename),"song":str(song),"artist":str(artist),"album":str(album),"bitrate":bitrate}
+
+@EapiCryptoRequest
+def SetPublishCloudResource(songid):
+    '''移动端 - 云盘资源发布
+
+    Args:
+        songid (str): 来自 SetUploadCloudInfo
+
+    Returns:
+        SetUploadCloudInfo
+    '''
+    return '/eapi/cloud/pub/v2',{"songid":str(songid),"checkToken":Crypto.checkToken()}
