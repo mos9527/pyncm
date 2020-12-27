@@ -1,27 +1,7 @@
-from pyncm.utils.crypto import Crypto
-import pyncm,getpass,hashlib,os,sys,urllib3
+import pyncm,getpass,hashlib,os,logging
 from pyncm import GetCurrentSession,LoadSessionFromString
+
 SESSION_FILE = 'session.ncm'
-urllib3.disable_warnings()
-class upload_in_chunks(object):# sth from stackoverflow
-    def __init__(self, filename, chunksize=1 << 13):
-        self.filename = filename
-        self.chunksize = chunksize
-        self.totalsize = os.path.getsize(filename)
-        self.readsofar = 0
-    def __iter__(self):
-        with open(self.filename, 'rb') as file:
-            while True:
-                data = file.read(self.chunksize)
-                if not data:
-                    sys.stderr.write("\n")
-                    break
-                self.readsofar += len(data)
-                percent = self.readsofar * 1e2 / self.totalsize
-                sys.stderr.write("Uploading...{percent:3.0f}%   \r".format(percent=percent))
-                yield data
-    def __len__(self):
-        return self.totalsize
 def login(session_file):
     def save():
         with open(session_file,'w+') as f:
@@ -33,14 +13,13 @@ def login(session_file):
             pyncm.SetCurrentSession(LoadSessionFromString(f.read()))
         return pyncm.GetCurrentSession().login_info['success']    
     if load():
-        return print('Recovered session data of [ %s ]' % pyncm.GetCurrentSession().login_info['content']['profile']['nickname']) or True
+        return print('[-] Recovered session data of [ %s ]' % pyncm.GetCurrentSession().login_info['content']['profile']['nickname']) or True
     phone = input('Phone >>>')
     passw = getpass.getpass('Password >')
     pyncm.login.LoginViaCellphone(phone,passw)
-    print(pyncm.GetCurrentSession().login_info['content']['profile']['nickname'],'has logged in')
+    print('[+]',pyncm.GetCurrentSession().login_info['content']['profile']['nickname'],'has logged in')
     return save()
-login(SESSION_FILE)
-GetCurrentSession().verify = False      
+'''Login whatnot,try not to mind these'''
 def md5sum(file):
     md5sum = hashlib.md5()
     with open(file,'rb') as f:
@@ -48,30 +27,34 @@ def md5sum(file):
             md5sum.update(chunk)
     return md5sum
 
-def upload(file):
-    print('Calculating MD5 hash')
-    md5 = md5sum(file).hexdigest()
-    size=os.stat(file).st_size    
-    token = pyncm.cloud.GetNosTokenAlloc(
-        file,md5,size,file.split('.')[-1]
-    )
-    print('Tokenzied %s' % file,'  Hash %s' % md5,'  Size %s' % size,sep='\n')
-    r = pyncm.cloud.UploadObject(
-        upload_in_chunks(file),
-        md5,
-        size,
-        token['result']['objectKey'],
-        token['result']['token']
-    )
-    print(r)
-    r1 = pyncm.cloud.UploadCloudInfoV2(
-        token['result']['resourceId'],
-        Crypto.RandomString(128,chars='0123456789ABCDEF'),
-        'le radio.mp3',
-        md5,
-        file,
-        128,
-        'Download'
-    )
-    print(r1)
-upload('notes/radio.mp3')
+if __name__ == "__main__":
+    login(SESSION_FILE)
+    f = input('[-] Path to file:')
+    fname = os.path.basename(f)
+    fext = f.split('.')[-1]
+    '''Parsing file names'''
+    fsize = os.stat(f).st_size
+    md5 = md5sum(f).hexdigest()
+    print('[-] Checking file ( MD5:',md5,')')
+    cresult = pyncm.cloud.GetCheckCloudUpload(md5)
+    songId = cresult['songId']
+    '''Before uploading,performing a sanity check is always a good idea'''
+    if cresult['needUpload']:
+        print('[+] %s needs to be uploaded ( %s B )' % (fname,fsize))
+        '''There are couple procedures for uploading.Let's walk them through
+        1. A Nos Token must be aquired for authentication'''
+        token = pyncm.cloud.GetNosToken(fname,md5,fsize,fext)['result']
+        '''2. The token is used to upload the object'''
+        upload_result = pyncm.cloud.SetUploadObject(
+            open(f,'rb'),
+            md5,fsize,token['objectKey'],token['token']
+        )
+        print('[-] Response:\n  ',upload_result)    
+    print(f'''[!] Assuming upload has finished,preparing to submit    
+    ID  :   {songId}
+    MD5 :   {md5}
+    NAME:   {fname}''')
+    submit_result = pyncm.cloud.SetUploadCloudInfo(songId,md5,fname,'testme','pyncm',bitrate=128)
+    '''3. Lastly,we're submitting the resource'''
+    print('[-] Response:\n  ',submit_result)
+    

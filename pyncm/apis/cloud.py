@@ -31,7 +31,7 @@ def GetCloudDriveItemInfo(song_ids:list):
     return '/weapi/v1/cloud/get/byids',{'songIds':ids}
 
 @EapiCryptoRequest
-def GetNosTokenAlloc(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket='',local=False):
+def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket='',local=False):
     '''移动端 - 云盘占位
 
     Args:
@@ -49,20 +49,17 @@ def GetNosTokenAlloc(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket
     '''
     return '/eapi/nos/token/alloc',{"type":str(type),"nos_product":str(nos_product),"md5":str(md5),"local":str(local).lower(),"filename":str(filename),"fileSize":str(fileSize),"ext":str(ext),"bucket":str(bucket),"checkToken":Crypto.checkToken()}
 
-@EapiCryptoRequest
-def UploadCloudInfoV2(resourceId,songid,song,md5,filename,bitrate,album):
-    return '/eapi/upload/cloud/info/v2',{"resourceId":str(resourceId),"songid":str(songid),"song":str(song),"md5":str(md5),"filename":str(filename),"bitrate":str(bitrate),"album":str(album),"checkToken":Crypto.checkToken()}
 
-def UploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
-    '''移动端 - 上传云盘内容
+def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
+    '''移动端 - 上传内容
 
     Args:
-        stream : IOStream-like object
-        md5 : 文件哈希
-        objectKey : GetNosTokenAlloc 获得
-        token : GetNosTokenAlloc 获得
+        stream : bytes / File 等数据体 .e.g open('file.mp3')
+        md5 : 数据体哈希
+        objectKey : GetNosToken 获得
+        token : GetNosToken 获得
         offset (int, optional): 续传起点. Defaults to 0.
-        compete (bool, optional): 全部上传. Defaults to True.
+        compete (bool, optional): 文件是否被全部上传. Defaults to True.
 
     Returns:
         dict
@@ -83,3 +80,44 @@ def UploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
         }
     )
     return json.loads(r.text)
+
+
+@EapiCryptoRequest
+def GetCheckCloudUpload(md5,ext='',length=0,bitrate=0,songId=0,version=1):
+    '''移动端 - 检查云盘资源 
+
+    Args:
+        md5 (str): 资源MD5哈希
+        ext (str, optional): 文件拓展名. Defaults to ''.
+        length (int, optional): 文件大小. Defaults to 0.
+        bitrate (int, optional): 音频 - 比特率. Defaults to 0.
+        songId (int, optional): 云盘资源ID. Defaults to 0 表示新资源.
+        version (int, optional): 上传版本. Defaults to 1.
+
+    Returns:
+        dict
+    '''
+    return '/eapi/cloud/upload/check',{"songId":str(songId),"version":str(version),"md5":str(md5),"length":str(length),"ext":str(ext),"bitrate":str(bitrate),"checkToken":Crypto.checkToken()}
+
+
+@EapiCryptoRequest
+def SetUploadCloudInfo(songid,md5,filename,song='.',artist='.',album='.',bitrate=128):
+    '''移动端 - 云盘资源提交
+    
+    注：MD5 对应文件需已被 SetUploadObject 上传
+    
+    Args:
+        songid (str): GetCheckCloudUpload 获得
+        md5 (str): 文件MD5哈希
+        filename (str): 文件名
+        song (str, optional): 歌名 / 标题. Defaults to ''.
+        artist (str, optional): 艺术家名. Defaults to ''.
+        album (str, optional): 专辑名. Defaults to ''.
+        bitrate (int, optional): 音频 - 比特率. Defaults to 0.
+
+    WIP - 封面ID,歌词ID 等
+
+    Returns:
+        dict
+    '''
+    return '/eapi/upload/cloud/info/v2',{"songid":str(songid),"song":str(song),"md5":str(md5),"filename":str(filename),"bitrate":bitrate,"artist":str(artist),"album":str(album)}

@@ -30,7 +30,7 @@ img = qrcode.make(url) # dimesion will always be 490,490
 img.paste(im1,(10,10))
 img.paste(im2,(7,430))
 img.show() # though tkinter was too expensive to use so here's my repalcement (((
-print('[-] 二维码 UUID:',uuid)
+print('[-] UUID:',uuid)
 while True:
     rsp = pyncm.login.LoginQrcodeCheck(uuid)
     if rsp['code'] == 803 or rsp['code'] == 800:break
@@ -38,7 +38,7 @@ while True:
     print(message,next(dot),end='\r')
     time.sleep(1)
 WriteLoginInfo(GetCurrentLoginStatus())
-print('[+] 登录成功。欢迎，%s (上一次登录 IP: %s)' % (
+print('[+] Logged in as %s (Last known IP: %s)' % (
         pyncm.GetCurrentSession().login_info['content']['profile']['nickname'],
         pyncm.GetCurrentSession().login_info['content']['profile']['lastLoginIP']
     )

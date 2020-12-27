@@ -13,6 +13,8 @@ r = pyncm.Crypto.HexCompose(r)
 r = pyncm.Crypto.EapiDecrypt(r).decode()
 url,payload,_ = r.split('-36cd479b6b5-')
 payload = json.loads(payload)
+print('Payload  ===============')
+print(payload)
 # Digesting info
 print('API Info ================')
 print(' URL:        ',url)
