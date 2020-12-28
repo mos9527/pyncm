@@ -1,5 +1,5 @@
 '''歌曲 - Track APIs'''
-from . import EapiEncipered, WeapiCryptoRequest,LoginRequiredApi
+from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest,LoginRequiredApi
 import json
 @WeapiCryptoRequest
 def GetTrackDetail(song_ids : list):
@@ -14,20 +14,22 @@ def GetTrackDetail(song_ids : list):
     ids = song_ids if isinstance(song_ids,list) else [song_ids]
     return '/weapi/v3/song/detail',{"c":json.dumps([{'id': str(id)} for id in ids])}
 
-@WeapiCryptoRequest
-def GetTrackAudio(song_ids:list, quality='lossless',encodeType='aac'):
+@EapiCryptoRequest
+def GetTrackAudio(song_ids:list,encodeType='aac',bitrate=320000,quality=None):
     '''网页端 - 获取歌曲音频详情（文件URL、MD5...）
 
     Args:
-        song_ids (list): 歌曲 ID
-        quality (str, optional): standard / high / lossless . Defaults to 'lossless'.
+        song_ids (list): 歌曲 ID        
         encodeType (str, optional): 歌曲编码 . Defaults to 'aac'.
-    
+        bitrate (int, optional): 比特率. Defaults to 320000
+        quality (str, optional, deprecated): standard / high / lossless . Defaults to None.
     Returns:
         dict
     '''
+    if quality: # this will soon be deprecated
+        bitrate = {'standard':96000,'high':320000,'lossless':3200000}[quality.lower()]
     ids = song_ids if isinstance(song_ids,list) else [song_ids]
-    return '/weapi/song/enhance/player/url/v1',{"ids":ids,"level":quality,"encodeType":encodeType}
+    return '/eapi/song/enhance/player/url',{"ids":ids,"encodeType":encodeType,"br":str(bitrate)}
 
 
 @WeapiCryptoRequest

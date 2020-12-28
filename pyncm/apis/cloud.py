@@ -75,7 +75,7 @@ def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
         headers={
             'x-nos-token':token,
             'Content-MD5':md5,
-            'Content-Type':'audio/mpeg',
+            'Content-Type':'cloudmusic',
             'Content-Length':str(fileSize)
         }
     )
