@@ -167,7 +167,7 @@ class LrcParser:
 
             Returns None if the match isn't inside the window
         '''
-        def serach(val,src:list,l,r):    
+        def search(val,src:list,l,r):    
             '''Binary serach'''            
             pivot = (l+r)>>1
             if (l >= r or pivot == l or pivot == r):return pivot            
@@ -179,7 +179,7 @@ class LrcParser:
                     return pivot - 1
                 else:
                     return pivot
-            return serach(val,src,pivot,r) if src[pivot] < val else serach(val,src,l,pivot)        
+            return search(val,src,pivot,r) if src[pivot] < val else search(val,src,l,pivot)        
         timestamps = list(lyrics.keys())
-        index      = serach(timestamp,timestamps,0,len(lyrics))        
+        index      = search(timestamp,timestamps,0,len(lyrics))        
         return (timestamps[index],lyrics[timestamps[index]],index)
