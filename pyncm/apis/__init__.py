@@ -18,7 +18,7 @@ def [API 名] ([API 参数]):
 
     return '[API URL]',{[API 参数]}
 
-对于需要 `checkToken` 参数的 API,请使用 `Crypto.checkToken()` 计算 - 该参数时效性约为 1 月
+对于需要 `checkToken` 参数的 API,请使用 `Crypto.checkToken()` 计算 
 '''
 import base64
 from logging import getLogger
