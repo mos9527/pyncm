@@ -13,7 +13,7 @@ def LrcProperty(tagname):
             try:
                 return getattr(self,tagname)
             except:
-                # So this is how we emurate all the attributes on startup
+                # So this is how we enmurate all the attributes on startup
                 # As no values are assigned (not inintalized),they will surely cause errors
                 # Making it fallback to another value.Here,we fallback to its raw tagname
                 return Exception(tagname)
@@ -77,11 +77,11 @@ class LrcParser:
     def __init__(self,lrc=''):
         '''Takes lyrics in `LRC` format,then provides lyrics based on timestamps'''
         # Parsing lrc,line by line
-        def EmurateAttributes():
+        def EnmurateAttributes():
             for m in dir(self):
                 if any(f in m for f in ['__','Add','Load','Clear','Find','Update','Dump','lyrics']):continue
                 yield (m,str(getattr(self,m)))        
-        self.lrcAttributes = list(EmurateAttributes())
+        self.lrcAttributes = list(EnmurateAttributes())
         # This function will only work when no attributes are defined
         self.lyrics = defaultdict(list)
         if not lrc:
