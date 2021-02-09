@@ -1,4 +1,4 @@
-![Logo](https://github.com/greats3an/pyncm/raw/master/demos/logo.png)
+![Logo](https://github.com/greats3an/pyncm/raw/master/demos/_logo.png)
 
 # PyNCM
 
