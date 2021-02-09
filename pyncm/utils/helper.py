@@ -107,6 +107,9 @@ class NcmHelper():
         self.pool_size = pool_size
         self.reporter = reporter
 
+    def parse_quality(self,quality):        
+        return {'standard':96000,'high':320000,'lossless':3200000}[quality.lower()]
+
     def ReportStatus(self, title, done, total):
         precentage = str(int(done * 100 / total)).center(3,' ') if total else '--'
         self.reporter(
@@ -176,7 +179,7 @@ class NcmHelper():
         '''
             This will queue to download only the song's audio file (named 'audio.*') to a certain directory.
         '''
-        info = NCM.track.GetTrackAudio(song_ids=id, quality=quality)
+        info = NCM.track.GetTrackAudio(song_ids=id, bitrate=self.parse_quality(quality))
         if not info['code'] == 200:
             return
         filename = '{}.{}'.format('audio', info['data'][0]['type'])
@@ -211,7 +214,7 @@ class NcmHelper():
         done, total = 0, len(info['songs'])
         trackIds = [song['id'] for song in info['songs']]
         tracks = NCM.track.GetTrackDetail(trackIds)['songs']
-        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)['data']
+        trackAudios = NCM.track.GetTrackAudio(trackIds, bitrate=self.parse_quality(quality))['data']
         
         tracks = sorted(tracks,key=lambda song:song['id'])
         trackAudios = sorted(trackAudios,key=lambda song:song['id'])        
@@ -219,7 +222,8 @@ class NcmHelper():
         for i in range(0,len(tracks)):
             # Since the begging of 2020,NE no longer put complete playlist in the `tracks` key
             track,trackAudio = tracks[i],trackAudios[i]
-            # Generates track header,and saves them
+            # Generates track header,and saves them\
+            trackId = track['id']
             tHelper = TrackHelper(track)
             track_root = self.GenerateDownloadPath(id=trackId, folder=root)
             open(self.GenerateDownloadPath(filename='track.json', folder=track_root),
@@ -253,7 +257,7 @@ class NcmHelper():
         done, total = 0, len(trackIds)
 
         tracks = NCM.track.GetTrackDetail(trackIds)['songs']
-        trackAudios = NCM.track.GetTrackAudio(trackIds, quality=quality)['data']
+        trackAudios = NCM.track.GetTrackAudio(trackIds, bitrate=self.parse_quality(quality))['data']
 
         tracks = sorted(tracks,key=lambda song:song['id'])
         trackAudios = sorted(trackAudios,key=lambda song:song['id'])        
