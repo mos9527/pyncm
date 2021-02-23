@@ -33,14 +33,14 @@ def TrackHelperProperty(default=None):
 
 class TrackHelper():
     '''Helper class for handling generic track objects'''
+
     def __init__(self, track_dict) -> None:
         self.track = track_dict
 
     @TrackHelperProperty()
     def TrackPublishTime(self):
         '''The publish year of the track'''
-        epoch = self.track['publishTime'] / 1000 # js timestamps are in milliseconds.
-                                                 # converting to unix timestamps (in seconds),we need to divide by 1000
+        epoch = self.track['publishTime'] / 1000 # stored as unix timestamp though only the year was ever useful
         return time.gmtime(epoch).tm_year
 
     @TrackHelperProperty()
@@ -86,7 +86,13 @@ class TrackHelper():
     def Title(self):
         '''A formatted title for this song'''
         return f'{",".join(self.Artists)} - {self.TrackName}'
-
+    _illegal_chars = set('\x00\\/:*?"<>|')
+    @TrackHelperProperty()
+    def SanitizedTitle(self):
+        '''Sanitized title for FS compatibility; Limits max length to 200 chars,and substitutes illegal chars with their full-width counterparts'''
+        def _T(s,l=100):
+            return ''.join([c if not c in self._illegal_chars else chr(ord(c)+0xFEE0) for c in s])[:l]
+        return f'{_T(",".join(self.Artists),100)} - {_T(self.TrackName,100)}'
 class NcmHelper():
     '''Helper class to manage & queue downloads
 
@@ -96,8 +102,7 @@ class NcmHelper():
                                 Applies to MutilWrapper ones
             pool_size   :       Cocurrent download worker count
             buffer_size :       Size of iter_content(chunk_size)'s chunk_size
-            logger      :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging
-            random_keys     :       Whether uses random 2nd AES key or the pre-calculated one        
+            logger      :       For logging.Uses simple_logger from ncm.strings,leave empty for not logging    
     '''
 
     def __init__(self, temp='temp', output='output', merge_only=False, pool_size=4, buffer_size=256, reporter=sys.stdout):
@@ -139,22 +144,6 @@ class NcmHelper():
 
             Specify folder to change the root folder somewhere else
         '''
-        def normalize(s):
-            mapping = {
-                '\\': ' ',
-                '/': '',
-                ':': '：',
-                '*': '·',
-                '?': '？',
-                '"': '”',
-                '<': '《',
-                '>': '》',
-                '|': '、'
-            }
-            for k, v in mapping.items():
-                s = s.replace(k, v)
-            return s
-        filename = normalize(filename)
         folder = os.path.join(folder, str(
             id)) if folder else os.path.join(self.temp, str(id))
         result = os.path.join(folder, filename)
@@ -318,7 +307,7 @@ class NcmHelper():
 
         # Saving the lyrics        
         
-        path = self.GenerateDownloadPath(filename=tHelper.Title + '.lrc', folder=export)
+        path = self.GenerateDownloadPath(filename=tHelper.SanitizedTitle + '.lrc', folder=export)
         open(path, mode='w', encoding='utf-8').write(lrc.DumpLyrics())
         logger.debug('Downloaded lyrics ...%s' % path[-truncate_length:])
         return True
@@ -399,7 +388,7 @@ class NcmHelper():
                 song["metadata_block_picture"] = [base64.b64encode(pic.write()).decode('ascii')]
                 song.save()
         # Rename & move file
-        savename = tHelper.Title + '.' + format
+        savename = tHelper.SanitizedTitle + '.' + format
         try:
             path = self.GenerateDownloadPath(filename=savename, folder=export)
             shutil.copy(audio, path)
