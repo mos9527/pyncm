@@ -39,7 +39,8 @@ class Session(requests.Session):
         self.headers = {
             "Content-Type"  : "application/x-www-form-urlencoded",  
             "User-Agent"    : self.UA_DEFAULT,
-            "Referer"       : self.HOST
+            "Referer"       : self.HOST,
+            "X-Real-IP"     : "118.88.88.88"
         }
         # Setting up default values
     def request(self, method: str, url: Union[str, bytes, Text], *a,**k) -> requests.Response:
