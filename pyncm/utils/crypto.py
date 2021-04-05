@@ -22,16 +22,15 @@ LINUXAPI_AES_KEY = "rFgB&h#%2?^eDg:Q" # ecb
 EAPI_DIGEST_SALT = "nobody%(url)suse%(text)smd5forencrypt"
 EAPI_DATA_SALT   = "%(url)s-36cd479b6b5-%(text)s-36cd479b6b5-%(digest)s"
 EAPI_AES_KEY     = "e82ckenh8dichen8" # ecb
+
 BASE62           = 'PJArHa0dpwhvMNYqKnTbitWfEmosQ9527ZBx46IXUgOzD81VuSFyckLRljG3eC'
-# checkToken (watchman.js) values
-Sc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-Tc = '='
-'''Base64 chars'''
-Rb = 'LPc4uQNptC2A6y.R90DOBIroS+qnx/eb3FM8fW1UZG7VmwvksgjhaTKzlXdiYEHJ'
-db = 5
-'''Default obfuscation chars'''
-WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT' # fallback value
-'''DeviceID - XXX - device Id - Probably won't be bothering with this anymore...'''
+BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+_obfs_Rb = 'LPc4uQNptC2A6y.R90DOBIroS+qnx/eb3FM8fW1UZG7VmwvksgjhaTKzlXdiYEHJ'
+_obfs_db = 5
+
+WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT' 
+'''DeviceID - for checkToken (watchman.js)'''
 # endregion
 
 # region checkToken (watchman.js) stuff
@@ -48,20 +47,11 @@ def _truncate(v):
 def _xor(v1,v2): return _int( _truncate(v1) ^ _truncate(v2))
 # endregion
 # region MD5
-def ha(b, c):
-    '''Bitwise sum'''
-    d = (b & 65535) + (c & 65535)
-    br16 = _rshift(b,16)
-    cr16 = _rshift(c,16)
-    dr16 = _rshift(d,16)
-    r = br16 + cr16 + dr16
-    rl16 = _lshift(r,16)    
-    return rl16 | d & 65535
-def Yb(e):
+def _hash_Yb(e):
     '''MD5 hasher'''
     from . import Crypto
     return Crypto.HashDigest(e)
-def Zb(e):
+def _hex_Zb(e):
     '''MD5 digest hexi-fier'''
     from . import Crypto
     return Crypto.HexDigest(e)
@@ -84,9 +74,6 @@ def _encodeURIComponent_Z(e):
 def _unescape_ac(e):
     '''unescape()'''
     return e
-def _parseInt_la(e):
-    '''parseInt()'''
-    return int(e)
 def _charcodes_ya(e):    
     '''String to charcode array'''
     return [ord(char) for char in _encodeURIComponent_Z(e)] if isinstance(e,str) else e
@@ -117,7 +104,7 @@ def _hexstr_to_int_hb(e):
         m = int(e[r + 1], 16)
         c.append(_map_int_C(h + m))
     return c    
-def _obfuscate_array_Qb(e, c, d=0, r=Rb, g=db):
+def _obfuscate_array_Qb(e, c, d=0, r=_obfs_Rb, g=_obfs_db):
     '''Integer array to obfuscated string'''
     h, m,g = 0,[],str(g)
     def push(*a):m.extend(a)
@@ -138,7 +125,7 @@ def _obfuscate_array_Qb(e, c, d=0, r=Rb, g=db):
     else:
         return None
     return ''.join(m)
-def _double_mapping_Sb(e, c=[], d=db):
+def _double_mapping_Sb(e, c=[], d=_obfs_db):
     '''Characters mapped to another array'''
     r = 3
     h = 0
@@ -152,7 +139,7 @@ def _double_mapping_Sb(e, c=[], d=db):
             break
     return "".join(g)
 def _map_string_Tb(a):
-    return _double_mapping_Sb(a,Sc,Tc)
+    return _double_mapping_Sb(a,BASE64,'=')
 def _generate_OTP_b():
     '''OTP tokenizer'''
     e = int(time() * 1000) # it seems that this timestamp should within 1mo of today's time
@@ -174,14 +161,14 @@ def _generate_OTP_b():
             e[g] = e[g] | (d[f] & 1) << 0 | (d[f] & 2) << 1 | (d[f] & 4) << 2 | (d[f] & 8) << 3 | (c[f] & 1) << 1 | (c[f] & 2) << 2 | (c[f] & 4) << 3 | (c[f] & 8) << 4
         e[g] = _map_int_C(e[g])
     c = _str_to_hex_gb(e)
-    c = Zb(Yb(_unescape_ac(_encodeURIComponent_Z(c + "dAWsBhCqtOaNLLJ25hBzWbqWXwiK99Wd"))))
+    c = _hex_Zb(_hash_Yb(_unescape_ac(_encodeURIComponent_Z(c + "dAWsBhCqtOaNLLJ25hBzWbqWXwiK99Wd"))))
     c = _hexstr_to_int_hb(c[:16])
     c = _map_string_Tb(c+e)
     return c
 def _generate_config_chiper_bc(c,f=1,g=WM_DID):
     '''Generates cipher of our local config'''
     t = _unescape_ac(_encodeURIComponent_Z(str(f) + str(g) + str(c) + "WoeTpXnDDPhiAvsJUUIY3RdAo2PKaVwi"))
-    t = Yb(t)
+    t = _hash_Yb(t)
     return _xor_with_array_La(json.dumps({
         'r': f,      # config.va - should be 1 all the time
         'd': g,      # g || "",device ID

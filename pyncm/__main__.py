@@ -14,7 +14,7 @@ from os import remove
 from urllib.parse import urlparse,parse_qs
 
 import sys,argparse,base64,re
-__desc__ = '''PyNCM Netease Cloudmusic Utility'''
+__desc__ = '''PyNCM 网易云音乐下载工具'''
 max_workers = 4
 # Detect gooey
 try:
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     basicConfig(level='INFO',format='[%(levelname)s] %(message)s')    
     if gooey_installed:
         Gooey(              
-            program_name='PyNCM Gooey GUI',
+            program_name=__desc__,
             progress_regex=r"\((?P<curr>(\d{1,3}))\/(?P<total>(\d{1,3}))\)",
             hide_progress_msg=True,
             progress_expr="curr / total * 100",
