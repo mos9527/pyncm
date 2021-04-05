@@ -11,7 +11,6 @@ from threading import Thread
 from time import sleep
 from os.path import join,exists
 from os import remove
-from urllib.parse import urlparse,parse_qs
 
 import sys,argparse,base64,re
 __desc__ = '''PyNCM 网易云音乐下载工具'''
@@ -66,12 +65,12 @@ class NETrackDownloadTask(BaseKeyValueClass):
 
 class Subroutine:
     def setup_parser(self,parser : MultiParser):pass
-    def entry(self,args):pass
+    def __call__(self,args):pass
     
 BITRATES = {'standard':96000,'high':320000,'lossless':3200000}
 class Song(Subroutine):
     __subcommand__ = 'song'
-    def entry(self, args):
+    def __call__(self, args):
         dSong = track.GetTrackDetail([match_id(args.url)])['songs'][0]
         song = TrackHelper(dSong)        
         dAudio = track.GetTrackAudio([match_id(args.url)],bitrate=BITRATES[args.quality])['data'][0]        
@@ -108,14 +107,14 @@ class Playlist(Subroutine):
             )          
             queued += queue_task(tSong)
         return queued
-    def entry(self, args):
+    def __call__(self, args):
         dList = playlist.GetPlaylistInfo(match_id(args.url))
         logger.info('歌单   ：%s' % dList['playlist']['name'])
         return self.forIds([tid['id'] for tid in dList['playlist']['trackIds']],args)
 
 class Album(Playlist):
     __subcommand__ = 'album'
-    def entry(self, args):
+    def __call__(self, args):
         dList = album.GetAlbumInfo(match_id(args.url))
         logger.info('专辑   ：%s' % dList['album']['name'])
         return self.forIds([tid['id'] for tid in dList['songs']],args)
@@ -139,18 +138,28 @@ def parse_args():
     group.add_argument('--password',metavar='密码',default='',help='网易账户密码')
     args = parser.parse_args()
     # Parsing URL
-    url = urlparse(args.url)
-    qs = parse_qs(url.query)
-    path = url.path.split('/')[-1].lower()
-    if not path in subs:
-        raise NotImplementedError(path)
-    args.url = qs.get('id')[0]
-    args.func = subs[path].entry
+    url,suburl = args.url,''
+    def found(sub):
+        nonlocal suburl
+        index = str(url).find(sub)
+        if index:
+            suburl=url[index:] 
+            return True
+        return False
+    if found('song'):
+        args.func = subs['song']        
+    elif found('playlist'):
+        args.func = subs['playlist']
+    elif found('album'):
+        args.func = subs['album']
+    else:
+        raise Exception("URL %s is invalid")
+    args.url = suburl        
     return args    
 
 def match_id(s):
     if type(s) is int:return s
-    return int(re.compile('\d{5,}').match(s).group())
+    return int(re.findall('\d{5,}',s)[0])
 
 def tag(tHelper : TrackHelper,audio : str,cover : str):
     from mutagen.flac import FLAC, Picture
