@@ -135,7 +135,7 @@ def parse_args():
     group.add_argument('--output',**parser.filter_argument(metavar='输出',default='.',help='输出文件夹',widget='DirChooser'))
     group = parser.add_argument_group('登陆')
     group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
-    group.add_argument('--password',metavar='密码',default='',help='网易账户密码')
+    group.add_argument('--password',**parser.filter_argument(metavar='密码',default='',help='网易账户密码',widget='PasswordField'))
     args = parser.parse_args()
     # Parsing URL
     url,suburl = args.url,''
