@@ -12,7 +12,7 @@ from time import sleep
 from os.path import join,exists
 from os import remove
 
-import sys,argparse,base64,re
+import sys,argparse,base64,re,math
 __desc__ = '''PyNCM 网易云音乐下载工具'''
 max_workers = 4
 # Detect gooey
@@ -142,7 +142,7 @@ def parse_args():
     def found(sub):
         nonlocal suburl
         index = str(url).find(sub)
-        if index:
+        if index > 0:
             suburl=url[index:] 
             return True
         return False
@@ -220,13 +220,15 @@ def tag(tHelper : TrackHelper,audio : str,cover : str):
 
 total_queued = 0
 total_progress = 0
+total_xfered = 0
 def download(url,dest,account=False):
-    global total_progress
+    global total_progress,total_xfered
     # Downloads generic content
     response = GetCurrentSession().get(url,stream=True)                        
     length = int(response.headers.get('content-length'))
     with open(dest,'wb') as f:
         for chunk in response.iter_content(1024 * 2 ** 10):
+            total_xfered += len(chunk)
             if account:
                 total_progress += len(chunk) / length
             f.write(chunk) # write every 1MB read            
@@ -251,7 +253,7 @@ def executor_loop():
         # Cleaning up
         remove(dest_cvr)
         # Assigns the task as finished
-        logger.debug('下载完成：%s' % (task.song.Title))
+        logger.info('完成   ：%s' % (task.song.Title))
         task_queue.task_done()
     with ThreadPoolExecutor(max_workers=max_workers) as executor:        
         while True:
@@ -272,10 +274,15 @@ def __main__():
     # starts execution thread
     total_queued = args.func(args)
     # now wait until all tasks are done...report some progress maybe?
+    def report():
+        if total_xfered > 0:
+            power = math.floor(math.log(total_xfered)/math.log(1024))
+            xfered = '%.2f%s'%(total_xfered/1024**power,['B','KB','MB','GB'][power])
+            sys.stderr.write('[STAT] %.2f%% (%.0f/%d) - Xfer: %s\n' % (total_progress * 100 / total_queued,total_progress,total_queued,xfered))
     while task_queue.unfinished_tasks != 0:
-        sys.stderr.write('[STAT] %.2f%% (%.0f/%d)\n' % (total_progress * 100 / total_queued,total_progress,total_queued))
+        report()
         sleep(1)
-    sys.stderr.write('[STAT] %.2f%% (%.0f/%d)\n' % (total_progress * 100 / total_queued,total_progress,total_queued))
+    report()
     logger.info('下载完成')        
     return 0
 
@@ -285,8 +292,7 @@ if __name__ == '__main__':
     if gooey_installed:
         Gooey(              
             program_name=__desc__,
-            progress_regex=r"\((?P<curr>(\d{1,3}))\/(?P<total>(\d{1,3}))\)",
-            hide_progress_msg=True,
+            progress_regex=r"\((?P<curr>(\d{1,3}))\/(?P<total>(\d{1,3}))\)",            
             progress_expr="curr / total * 100",
             timing_options = {
                 'show_time_remaining':True,
