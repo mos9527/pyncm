@@ -25,20 +25,20 @@ except:
 
 class MultiParser(argparse.ArgumentParser):
     '''Handy parser for supporting both `Gooey` and legacy CLI'''
-    WHITELIST = {'add_argument','gooey_installed','parser'}
+    WHITELIST = {'filter_argument','parser'}
     ARGUMENT_WHITELIST = {'widget'}
     def __init__(self) -> None:
         if gooey_installed:
             self.parser = GooeyParser(description=__desc__)
         else:
             self.parser = argparse.ArgumentParser(description=__desc__, formatter_class=argparse.RawTextHelpFormatter)
-    def add_argument(self, *args, **kwargs):
+    def filter_argument(self, **kwargs):
         """
         add_argument(dest, ..., name=value, ...)
         add_argument(option_string, option_string, ..., name=value, ...)
         """
         gooey_whitelist = MultiParser.ARGUMENT_WHITELIST        
-        self.parser.add_argument(*args,**dict(filter(lambda v:gooey_installed or not v[0] in gooey_whitelist,kwargs.items())))
+        return dict(filter(lambda v:gooey_installed or not v[0] in gooey_whitelist,kwargs.items()))
     def __setattr__(self, name: str, value) -> None:
         if name in MultiParser.WHITELIST:
             return super().__setattr__(name,value)        
@@ -132,8 +132,8 @@ def parse_args():
     parser = MultiParser()
     parser.add_argument('url',metavar='链接',help='网易云音乐分享链接')
     group = parser.add_argument_group('下载')
-    group.add_argument('--quality',metavar='音质',choices=list(BITRATES.keys()),help='音频音质（高音质需要 CVIP）',default='standard')
-    group.add_argument('--output',metavar='输出',default='.',help='输出文件夹',widget='DirChooser')        
+    parser.add_argument('--quality',metavar='音质',choices=list(BITRATES.keys()),help='音频音质（高音质需要 CVIP）',default='standard')
+    parser.add_argument('--output',**parser.filter_argument(metavar='输出',default='.',help='输出文件夹',widget='DirChooser'))
     group = parser.add_argument_group('登陆')
     group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
     group.add_argument('--password',metavar='密码',default='',help='网易账户密码')
