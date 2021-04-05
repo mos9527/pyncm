@@ -74,7 +74,7 @@ class Song(Subroutine):
     def entry(self, args):
         dSong = track.GetTrackDetail([match_id(args.url)])['songs'][0]
         song = TrackHelper(dSong)        
-        dAudio = track.GetTrackAudio([match_id(args.url)],BITRATES[args.quality])['data'][0]
+        dAudio = track.GetTrackAudio([match_id(args.url)],bitrate=BITRATES[args.quality])['data'][0]        
         logger.info('单曲 - %s - %s (%dkbps)' % (song.Title,song.AlbumName,dAudio['br'] // 1000))        
         tSong = NETrackDownloadTask(
             song = song,
@@ -91,7 +91,7 @@ class Playlist(Subroutine):
     __subcommand__ = 'playlist'
     def forIds(self,ids,args):
         dDetails = track.GetTrackDetail(ids)['songs']
-        dAudios   = track.GetTrackAudio(ids,BITRATES[args.quality])['data']
+        dAudios   = track.GetTrackAudio(ids,bitrate=BITRATES[args.quality])['data']
         
         dDetails = sorted(dDetails,key=lambda song:song['id'])
         dAudios = sorted(dAudios,key=lambda song:song['id'])               
@@ -234,8 +234,9 @@ def executor_loop():
         lrc    = LrcParser()
         dLyrics = track.GetTrackLyrics(task.lyrics.id)
         for k in set(dLyrics.keys()).intersection({'lrc','tlyric','romalrc'}):
-            lrc.LoadLrc(dLyrics[k]['lyric'])                           
-        open(dest_lrc,'w',encoding='utf-8').write(lrc.DumpLyrics())
+            lrc.LoadLrc(dLyrics[k]['lyric'])    
+        lrc_text = lrc.DumpLyrics()                       
+        if lrc_text:open(dest_lrc,'w',encoding='utf-8').write(lrc_text)
         # Tagging the audio
         tag(task.song,dest_src,dest_cvr)
         # Cleaning up
