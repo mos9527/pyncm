@@ -87,14 +87,14 @@ def GetCurrentLoginStatus():
     '''
     return '/weapi/w/nuser/account/get',{}
 
-def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=True) -> dict:
+def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=False) -> dict:
     '''网页端 - 手机号登陆
 
     Args:
         phone (str, optional): 手机号. Defaults to ''.
         password (str, optional): 明文密码. Defaults to ''.
         countrycode (int, optional): 国家代码. Defaults to 86.
-        remeberLogin (bool, optional): 是否‘自动登录’，开启可延长 CSRF 令牌时效. Defaults to True.
+        remeberLogin (bool, optional): 是否‘自动登录’，开启可延长 CSRF 令牌时效. Defaults to False.
 
     Raises:
         LoginFailedException: 登陆失败时发生

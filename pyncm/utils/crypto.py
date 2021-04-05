@@ -1,9 +1,11 @@
 '''Implementation of some of NE's crypto functions'''
-import base64
+import base64,json,math,ctypes
 from Crypto.Cipher import AES
 from Crypto.Random import random
 from hashlib import md5
-from . import checkToken
+from hashlib import md5
+from time import time
+
 class RSAPublicKey():
     def __init__(self, n, e):
         '''RSA pubkey pubkey & modulus pair,values are interpeted as integers'''
@@ -21,13 +23,178 @@ EAPI_DIGEST_SALT = "nobody%(url)suse%(text)smd5forencrypt"
 EAPI_DATA_SALT   = "%(url)s-36cd479b6b5-%(text)s-36cd479b6b5-%(digest)s"
 EAPI_AES_KEY     = "e82ckenh8dichen8" # ecb
 BASE62           = 'PJArHa0dpwhvMNYqKnTbitWfEmosQ9527ZBx46IXUgOzD81VuSFyckLRljG3eC'
+# checkToken (watchman.js) values
+Sc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+Tc = '='
+'''Base64 chars'''
+Rb = 'LPc4uQNptC2A6y.R90DOBIroS+qnx/eb3FM8fW1UZG7VmwvksgjhaTKzlXdiYEHJ'
+db = 5
+'''Default obfuscation chars'''
+WM_DID = 'Eyj1ZVEWep5ERQEFFVMuN0xNxLvKykXT' # fallback value
+'''DeviceID - XXX - device Id - Probably won't be bothering with this anymore...'''
 # endregion
 
+# region checkToken (watchman.js) stuff
+# region Bitwise operations
+def _int(v):return ctypes.c_int(v).value
+def _lshift(v,bs):
+    return _int(v << (bs & 0x1F))
+def _rshift(v,bs):
+    return _int(v >> (bs & 0x1F))
+# Bit shifting only takes care of LS 5 bits
+def _truncate(v):
+    return v & 0xFFFFFFFF    
+# MDN : All javascript bit operations are done on 32 bit integers
+def _xor(v1,v2): return _int( _truncate(v1) ^ _truncate(v2))
+# endregion
+# region MD5
+def ha(b, c):
+    '''Bitwise sum'''
+    d = (b & 65535) + (c & 65535)
+    br16 = _rshift(b,16)
+    cr16 = _rshift(c,16)
+    dr16 = _rshift(d,16)
+    r = br16 + cr16 + dr16
+    rl16 = _lshift(r,16)    
+    return rl16 | d & 65535
+def Yb(e):
+    '''MD5 hasher'''
+    from . import Crypto
+    return Crypto.HashDigest(e)
+def Zb(e):
+    '''MD5 digest hexi-fier'''
+    from . import Crypto
+    return Crypto.HexDigest(e)
+# endregion
+# region Special functions
+def _map_int_C(e):
+    '''Integer mapping - (-inf,inf) -> [-127,127]'''
+    if e < -128:
+        return _map_int_C(128 - (-128 - e))
+    if (e >= -128 and e <= 127):
+        return e
+    if (e > 127):
+        return _map_int_C(-129 + e - 127)
+def _to_bytes_X(b):
+    '''Integer to bytes - int(32 bits) -> [4 bytes]'''
+    return [_map_int_C(b >> 24 & 255),_map_int_C(b >> 16 & 255),_map_int_C(b >> 8 & 255),_map_int_C(b & 255)]
+def _encodeURIComponent_Z(e):
+    '''encodeURIComponent()'''
+    return e
+def _unescape_ac(e):
+    '''unescape()'''
+    return e
+def _parseInt_la(e):
+    '''parseInt()'''
+    return int(e)
+def _charcodes_ya(e):    
+    '''String to charcode array'''
+    return [ord(char) for char in _encodeURIComponent_Z(e)] if isinstance(e,str) else e
+def _to_hex_Ub(e):
+    '''Char to hexdecimal [00,FF] string'''
+    c = "0123456789abcdef"
+    return c[e >> 4 & 15] + c[e & 15]
+def _str_to_hex_gb(e):
+    '''String to hexstring converter'''
+    return ''.join([_to_hex_Ub(a) for a in e])
+def _xor_with_array_La(e):    
+    '''Simple XOR cipherer'''
+    d = [31, 125, -12, 60, 32, 48]
+    e = _charcodes_ya(e)
+    g = []
+    for q in range(0,len(e)):         
+        g.append(_map_int_C(_xor(e[q],d[q % len(d)])))
+        g[q] = _map_int_C(-g[q])
+    return _str_to_hex_gb(g)
+def _shuffle_ga(e, c, d, r, g):
+    '''Array shuffler'''
+    for h in range(0,g):d[r + h] = e[c + h]
+def _hexstr_to_int_hb(e):
+    '''Hexstring to integer array'''
+    c = []
+    for r in range(0,len(e),2):
+        h = _lshift(int(e[r], 16),4)
+        m = int(e[r + 1], 16)
+        c.append(_map_int_C(h + m))
+    return c    
+def _obfuscate_array_Qb(e, c, d=0, r=Rb, g=db):
+    '''Integer array to obfuscated string'''
+    h, m,g = 0,[],str(g)
+    def push(*a):m.extend(a)
+    if d == 1:
+        d = e[c];
+        h = 0;
+        push(r[ d >> 2 & 63], r[(d << 4 & 48) + (h >> 4 & 15)], g, g)
+    elif d == 2:
+        d = e[c];
+        h = e[c + 1];
+        e = 0;
+        push(r[d >> 2 & 63], r[(d << 4 & 48) + (h >> 4 & 15)], r[(h << 2 & 60) + (e >> 6 & 3)], g)
+    elif d == 3:
+        d = e[c];
+        h = e[c + 1];
+        e = e[c + 2];
+        push(r[d >> 2 & 63], r[(d << 4 & 48) + (h >> 4 & 15)], r[(h << 2 & 60) + (e >> 6 & 3)], r[e & 63])
+    else:
+        return None
+    return ''.join(m)
+def _double_mapping_Sb(e, c=[], d=db):
+    '''Characters mapped to another array'''
+    r = 3
+    h = 0
+    g = []
+    while (h < len(e)):
+        if (h + r <= len(e)):
+            g.append(_obfuscate_array_Qb(e, h, r, c, d))
+            h += r
+        else:
+            g.append(_obfuscate_array_Qb(e, h, len(e) - h, c, d));
+            break
+    return "".join(g)
+def _map_string_Tb(a):
+    return _double_mapping_Sb(a,Sc,Tc)
+def _generate_OTP_b():
+    '''OTP tokenizer'''
+    e = int(time() * 1000) # it seems that this timestamp should within 1mo of today's time
+    c = math.floor(e / 4294967296)
+    d = e % 4294967296
+    e = _to_bytes_X(c)
+    d = _to_bytes_X(d)
+    c = [ 0 ] * 8    
+    _shuffle_ga(e, 0, c, 0, 4);
+    _shuffle_ga(d, 0, c, 4, 4);  
+    d = [ 0 ] * 8 # should be random nums of [0-255] * 8
+    e = [ 0 ] * 16
+    for g in range(0,len(c) * 2):
+        if (g % 2 == 0):
+            f = int(g / 2)
+            e[g] = e[g] | (d[f] & 16) >> 4 | (d[f] & 32) >> 3 | (d[f] & 64) >> 2 | (d[f] & 128) >> 1 | (c[f] & 16) >> 3 | (c[f] & 32) >> 2 | (c[f] & 64) >> 1 | (c[f] & 128) >> 0
+        else:
+            f = math.floor(g / 2)
+            e[g] = e[g] | (d[f] & 1) << 0 | (d[f] & 2) << 1 | (d[f] & 4) << 2 | (d[f] & 8) << 3 | (c[f] & 1) << 1 | (c[f] & 2) << 2 | (c[f] & 4) << 3 | (c[f] & 8) << 4
+        e[g] = _map_int_C(e[g])
+    c = _str_to_hex_gb(e)
+    c = Zb(Yb(_unescape_ac(_encodeURIComponent_Z(c + "dAWsBhCqtOaNLLJ25hBzWbqWXwiK99Wd"))))
+    c = _hexstr_to_int_hb(c[:16])
+    c = _map_string_Tb(c+e)
+    return c
+def _generate_config_chiper_bc(c,f=1,g=WM_DID):
+    '''Generates cipher of our local config'''
+    t = _unescape_ac(_encodeURIComponent_Z(str(f) + str(g) + str(c) + "WoeTpXnDDPhiAvsJUUIY3RdAo2PKaVwi"))
+    t = Yb(t)
+    return _xor_with_array_La(json.dumps({
+        'r': f,      # config.va - should be 1 all the time
+        'd': g,      # g || "",device ID
+        'b': c,
+        't': _map_string_Tb(t)
+    }))
+# endregion    
+# endregion    
+
 class Crypto():
-    '''The cryptography toolkit'''
+    '''The cryptography ...things'''
     # region Base cryptograhpy methods
     # region Utility
-    checkToken = checkToken
     @staticmethod
     def RandomString(len, chars=BASE62):
         '''Generates random string of `len` chars within a selected number of chars'''
@@ -50,7 +217,18 @@ class Crypto():
         '''Digests 128 bit md5 hash,then digest it as a hexstring'''
         return Crypto.HexDigest( Crypto.HashDigest(text) )
     # endregion
-    # region Cryptos
+    # region Cryptos    
+    @staticmethod
+    def checkToken(deviceId=WM_DID):
+        '''Generates `checkToken` parameter
+        
+        Args:
+            deviceId (str, optional): XXX: Device ID fetched. Defaults to WM_DID.
+
+        Returns:
+            str
+        '''
+        return _generate_config_chiper_bc(_generate_OTP_b(),g=deviceId)
     @staticmethod
     def AESEncrypt(
         data:str, key:str, mode=AES.MODE_ECB , iv=''       

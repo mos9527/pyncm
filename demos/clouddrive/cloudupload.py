@@ -1,3 +1,4 @@
+from pyncm.apis.cloud import GetCloudDriveInfo
 import pyncm,getpass,hashlib,os,logging
 from pyncm import GetCurrentSession,LoadSessionFromString
 
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     ID  :   {songId}
     MD5 :   {md5}
     NAME:   {fname}''')
-    submit_result = pyncm.cloud.SetUploadCloudInfo(token['resourceId'],songId,md5,fname,'Le test','PyNCM',bitrate=1000)    
+    submit_result = pyncm.cloud.SetUploadCloudInfo(token['resourceId'],songId,md5,fname,input('[-] Track name:'),input('[-] Artists:'),bitrate=1000)    
     '''3. 提交资源'''
     print('[-] Response:\n  ',submit_result)
     '''4. 发布资源'''

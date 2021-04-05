@@ -1,11 +1,8 @@
 '''Another lrc file parser'''
-from os import times
-import math
 import re
-from collections import defaultdict,OrderedDict
+from collections import defaultdict
 
-def LrcProperty(tagname):
-    
+def LrcProperty(tagname):    
     def wrapper(func):
         @property
         def _wrapper(self):

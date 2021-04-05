@@ -1,243 +1,295 @@
-'''CLI 使用前端'''
-import logging
-import coloredlogs
+'''`__main__` entry for PyNCM'''
+from logging import getLogger,basicConfig
+from pyncm import GetCurrentSession,__version__
+from pyncm.utils.lrcparser import LrcParser
+from pyncm.utils.helper import TrackHelper
+from pyncm.apis import login,track,playlist,album
 
-import traceback
-import json
-import os
-import shutil
-import sys
-import argparse 
+from queue import Queue
+from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
+from time import sleep
+from os.path import join,exists
+from os import remove
+from urllib.parse import urlparse,parse_qs
 
-from pathlib import Path
-from . import GetCurrentSession,SetCurrentSession,Crypto,LoadSessionFromString,DumpSessionAsString
-from .utils.helper import NcmHelper
+import sys,argparse,base64,re
+__desc__ = '''PyNCM Netease Cloudmusic Utility'''
+max_workers = 4
+# Detect gooey
+try:
+    from gooey import Gooey,GooeyParser
+    gooey_installed = True    
+except:
+    gooey_installed = False
 
-coloredlogs.install()
-
-arg_whitelist = [
-    'quality', 'output','temp','perserve_temp', 'pool_size', 'buffer_size', 'logging_level','report_output','insecure'
-]
-
-reporters = {
-    'stdout':lambda s:sys.stdout.write(s),
-    'stderr':lambda s:sys.stderr.write(s),
-    'logs':lambda s:logging.debug(s),
-}
-
-
-def DestroyOnError(func):
-    def wrapper(self,*a,**k):
-        try:
-            return func(self,*a,**k)
-        except Exception as e:
-            traceback.print_stack(file=sys.stderr)
-            # Exit with status code 1
-            logging.error('Failed operating config file %s (%s)' % (ConfigManager.path,e))
-            self.destroy()
-    return wrapper
-
-class ConfigManager():
-    path = os.path.join(str(Path.home()), '.pyncm')
-    @property
-    def present(self):return os.path.isfile(ConfigManager.path)
+class MultiParser(argparse.ArgumentParser):
+    '''Handy parser for supporting both `Gooey` and legacy CLI'''
+    WHITELIST = {'add_argument','gooey_installed','parser'}
+    ARGUMENT_WHITELIST = {'widget'}
     def __init__(self) -> None:
-        # Check if config file exisits
-        self.pyncm = {}
-        if self.present:
-            # Ready to parse
-            self.load()
+        if gooey_installed:
+            self.parser = GooeyParser(description=__desc__)
         else:
-            # Ignored.
-            pass
-    @DestroyOnError
-    def load(self):
-        # Load saved settings
-        if not self.present:
-            return logging.warn('Cannot load config from %s as it\'s not present' % ConfigManager.path)
-        config = open(ConfigManager.path).read()
-        config = json.loads(config)    
-        self.pyncm = config['pyncm'] # cmdlet options
-        SetCurrentSession(LoadSessionFromString(config['session'])) # session settings
-        if GetCurrentSession().login_info['success']:
-            logging.info('Reloaded login info for user %s' % GetCurrentSession().login_info['content']['profile']['nickname'])
-        return logging.debug('Loaded config file')
-    @DestroyOnError
-    def save(self):
-        # Rewrite the config file with local settings
-        config = {
-            'session':DumpSessionAsString(GetCurrentSession()),# session settings
-            'pyncm':self.pyncm # cmdlet options
-        }
-        config = json.dumps(config)
-        open(ConfigManager.path,'w').write(config)
-        return logging.debug('Saved config file')
+            self.parser = argparse.ArgumentParser(description=__desc__, formatter_class=argparse.RawTextHelpFormatter)
+    def add_argument(self, *args, **kwargs):
+        """
+        add_argument(dest, ..., name=value, ...)
+        add_argument(option_string, option_string, ..., name=value, ...)
+        """
+        gooey_whitelist = MultiParser.ARGUMENT_WHITELIST        
+        self.parser.add_argument(*args,**dict(filter(lambda v:gooey_installed or not v[0] in gooey_whitelist,kwargs.items())))
+    def __setattr__(self, name: str, value) -> None:
+        if name in MultiParser.WHITELIST:
+            return super().__setattr__(name,value)        
+        self.parser.__setattr__(name,value)
+    def __getattribute__(self, name: str):
+        if name in MultiParser.WHITELIST:
+            return super().__getattribute__(name)
+        return self.parser.__getattribute__(name)
 
-    def destroy(self):
-        # Deletes the config
-        if self.present:
-            os.remove(ConfigManager.path)
-            logging.warning('Destroyed config file')
+class BaseKeyValueClass:
+    def __init__(self,**kw) -> None:
+        for k,v in kw.items():self.__setattr__(k,v)
 
-parser = argparse.ArgumentParser(
-    description='NCM All-in-One Downloader for python', formatter_class=argparse.RawTextHelpFormatter)
-# Parser begin----------------------------------------------------------------------------
-parser.add_argument('operation', metavar='OPERATION',
-                    help='''What to do:
-[song_audio]   download audio file only to temporay folder
-[song_lyric]   download lyrics and coverts them into lrc to temporay folder
-[song_meta]    download metadata only to temporay folder
-[song_down]    download all above,but not perfoming migration
-[song]         download all above,and merge them together
-[playlist]     download every song in playlist
-[album]        download every song in album
-[config]       save some of the arguments,cookies,etc and do nothing else
-[reset]        reset the config file and cookies
-[viewcfg]      output the current config file as JSON to stdout        
-               argument whitelist: --''' + ' --'.join(arg_whitelist))
-parser.add_argument('--id', metavar='ID',
-                    help='''ID of the song / playlist / album''', default=-1)
-parser.add_argument('--quality', type=str, default='lossless',
-                    help='''Audio quality
-    Specifiy download quality,e.g.[lossless] will download the song in Lossless quality
-    (if exsists and user's account level statisfies requirement)
-    only [standard, higher, lossless] are accepted''')
-parser.add_argument('--temp', type=str, default='temp',
-                    help='''Folder to store downloads''')
-parser.add_argument('--output', type=str, default='output',
-                    help='''Folder to store all your output''')
-parser.add_argument('--phone', type=str,
-                    help='''Phone number of your account''', default='')
-parser.add_argument('--password', type=str,
-                    help='''Password of your account''', default='')
-parser.add_argument('--merge-only', action='store_true',
-                    help='''Only merge the downloaded stuff''')
-parser.add_argument('--perserve-temp', action='store_true',
-                    help='''Perserve (do not delete) the temp folder afterwards''')
-parser.add_argument('--pool-size', type=int, default=4,
-                    help='''Download pool size''')
-parser.add_argument('--buffer-size', type=int, default=256,
-                    help='''Download buffer size (KB)''')
-parser.add_argument('--logging-level', type=int, default=logging.DEBUG,
-                    help='''Logging Level,see the following list for help
-50 FATAL
-40 ERROR
-30 WARN
-20 INFO
-10 DEBUG (default)
-The logs are always ouptuted to stderr
-''')
-parser.add_argument('--report-output', type=str,default='stderr',
-                    help='''Where to output the report
-stdout Output to stdout
-stderr Output to stderr
-logs   Output via logging.debug''')
-parser.add_argument('--insecure', action='store_true',
-                    help='''Bypass SSL verifcation of `requests`''')
+class BaseDownloadTask(BaseKeyValueClass):
+    id : int
+    url : str
+    dest : str
 
-args = parser.parse_args()
-args = args.__dict__
+class NETrackDownloadTask(BaseKeyValueClass):
+    song : TrackHelper    
+    cover : BaseDownloadTask
+    lyrics : BaseDownloadTask
+    resource : BaseDownloadTask
+    resource_info : dict
 
-modified = [arg[2:].replace('-','_') for arg in sys.argv if arg[:2] == '--']
-# Actual modifed arguments
+class Subroutine:
+    def setup_parser(self,parser : MultiParser):pass
+    def entry(self,args):pass
+    
+BITRATES = {'standard':96000,'high':320000,'lossless':3200000}
+class Song(Subroutine):
+    __subcommand__ = 'song'
+    def entry(self, args):
+        dSong = track.GetTrackDetail([match_id(args.url)])['songs'][0]
+        song = TrackHelper(dSong)        
+        dAudio = track.GetTrackAudio([match_id(args.url)],BITRATES[args.quality])['data'][0]
+        logger.info('单曲 - %s - %s (%dkbps)' % (song.Title,song.AlbumName,dAudio['br'] // 1000))        
+        tSong = NETrackDownloadTask(
+            song = song,
+            cover = BaseDownloadTask(id=song.ID,url=song.AlbumCover,dest=args.output),
+            lyrics = BaseDownloadTask(id=song.ID,dest=args.output),
+            resource = BaseDownloadTask(id=song.ID,url=dAudio['url'],dest=args.output),
+            resource_info = dAudio
+        )
+        queue_task(tSong)
+        logger.info('下载任务已分配完成')
+        return 1 # we queued 1 track for this
 
-if len(sys.argv) < 2:
-    parser.print_help()
-    sys.exit(2)
+class Playlist(Subroutine):
+    __subcommand__ = 'playlist'
+    def forIds(self,ids,args):
+        dDetails = track.GetTrackDetail(ids)['songs']
+        dAudios   = track.GetTrackAudio(ids,BITRATES[args.quality])['data']
+        
+        dDetails = sorted(dDetails,key=lambda song:song['id'])
+        dAudios = sorted(dAudios,key=lambda song:song['id'])               
+        queued = 0
+        for dDetail,dAudio in zip(dDetails,dAudios):
+            song = TrackHelper(dDetail)
+            logger.info('歌单 / 专辑单曲 #%d / %d - %s - %s (%dkbps)' % (queued+1,len(dDetails),song.Title,song.AlbumName,dAudio['br'] // 1000))        
+            tSong = NETrackDownloadTask(
+                song = song,
+                cover = BaseDownloadTask(id=song.ID,url=song.AlbumCover,dest=args.output),
+                lyrics = BaseDownloadTask(id=song.ID,dest=args.output),
+                resource = BaseDownloadTask(id=song.ID,url=dAudio['url'],dest=args.output),
+                resource_info = dAudio
+            )          
+            queued += queue_task(tSong)
+        return queued
+    def entry(self, args):
+        dList = playlist.GetPlaylistInfo(match_id(args.url))
+        logger.info('歌单   ：%s' % dList['playlist']['name'])
+        return self.forIds([tid['id'] for tid in dList['playlist']['trackIds']],args)
 
-# region Loading Config & Arguments
-config = ConfigManager()  # for saved configs
+class Album(Playlist):
+    __subcommand__ = 'album'
+    def entry(self, args):
+        dList = album.GetAlbumInfo(match_id(args.url))
+        logger.info('专辑   ：%s' % dList['album']['name'])
+        return self.forIds([tid['id'] for tid in dList['songs']],args)
 
-operation, id, quality,  temp, output, phone, password, merge_only, perserve_temp,  pool_size, buffer_size, logging_level,report_output,insecure = args.values()
-# Parser end----------------------------------------------------------------------------
+subs = {'song':Song(),'playlist':Playlist(),'album':Album()}
 
-if config.pyncm:
-    # load saved arguments form config
-    for k, v in config.pyncm.items():
-        if not k in modified:locals()[k] = v
-        # ignore user set arguments        
-    coloredlogs.install(level=logging_level)
+task_queue = Queue()
+def queue_task(task : NETrackDownloadTask):        
+    task_queue.put(task)
+    return True
 
-# once the arguments are parsed, do our things
-logging.debug('''Initalized with the following settings:
-    ID                  :       {}
-    Operation           :       {}
-    Option              :       {}
-    Password Hash       :       {}
-    Phone               :       {}
-    Do perserve temp    :       {}
-    Do merge only       :       {}
-    Temporay folder     :       {}
-    Output folder       :       {}
-    Poolsize            :       {} Workers
-    Buffer Size         :       {} KB
-    Logging Level       :       {}
-    Report Output       :       {}
-    No SSL Verification :       {}'''.format(
-    id, operation, quality, Crypto.HashHexDigest(password) if password else '< no password specefied >',
-    phone, perserve_temp, merge_only, temp, output, pool_size, buffer_size, logging_level,report_output,insecure))
+def parse_args():    
+    '''Setting up __main__ argparser'''
+    parser = MultiParser()
+    parser.add_argument('url',metavar='链接',help='网易云音乐分享链接')
+    group = parser.add_argument_group('下载')
+    group.add_argument('--quality',metavar='音质',choices=list(BITRATES.keys()),help='音频音质（高音质需要 CVIP）',default='standard')
+    group.add_argument('--output',metavar='输出',default='.',help='输出文件夹',widget='DirChooser')        
+    group = parser.add_argument_group('登陆')
+    group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
+    group.add_argument('--password',metavar='密码',default='',help='网易账户密码')
+    args = parser.parse_args()
+    # Parsing URL
+    url = urlparse(args.url)
+    qs = parse_qs(url.query)
+    path = url.path.split('/')[-1].lower()
+    if not path in subs:
+        raise NotImplementedError(path)
+    args.url = qs.get('id')[0]
+    args.func = subs[path].entry
+    return args    
 
-helper = NcmHelper(temp, output, merge_only, pool_size, buffer_size,reporters[report_output])
+def match_id(s):
+    if type(s) is int:return s
+    return int(re.compile('\d{5,}').match(s).group())
 
-NCM = GetCurrentSession()
-# setting up our session 
-NCM.verify = not insecure
-# endregion
+def tag(tHelper : TrackHelper,audio : str,cover : str):
+    from mutagen.flac import FLAC, Picture
+    from mutagen.id3 import ID3, APIC
+    from mutagen.mp3 import EasyMP3
+    from mutagen import easymp4
+    from mutagen.mp4 import MP4, MP4Cover
+    from mutagen.oggvorbis import OggVorbis    
+    def write_keys(song):
+        # Write trackdatas
+        song['title'] = tHelper.TrackName
+        song['artist'] = tHelper.Artists
+        song['album'] = tHelper.AlbumName
+        song['tracknumber'] = str(tHelper.TrackNumber)
+        song['date'] = str(tHelper.TrackPublishTime)
+        song.save()    
+    format = audio.split('.')[-1].lower()
+    if format == 'm4a':
+        # Process m4a files: Apple’s MP4 (aka M4A, M4B, M4P)
+        song = easymp4.EasyMP4(audio)
+        write_keys(song)
+        if exists(cover):
+            song = MP4(audio)
+            # Write cover image
+            song['covr'] = [MP4Cover(open(cover, 'rb').read())]
+            song.save()
+    elif format == 'mp3':
+        # Process mp3 files: MPEG audio stream information and tags
+        song = EasyMP3(audio)
+        write_keys(song)
+        if exists(cover):
+            song = ID3(audio)
+            # Write cover image
+            song.add(APIC(encoding=3, mime='image/jpeg', type=3,
+                            desc='Cover', data=open(cover, 'rb').read()))
+            song.save()
+    elif format == 'flac':
+        # Process FLAC files:Free Lossless Audio Codec
+        song = FLAC(audio)
+        write_keys(song)
+        if exists(cover):
+            pic = Picture()
+            pic.data = open(cover, 'rb').read()
+            pic.mime = 'image/jpeg'
+            song.add_picture(pic)
+            song.save()
+    elif format == 'ogg':
+        # Process OGG files:Ogg Encapsulation Format
+        song = OggVorbis(audio)
+        write_keys(song)
+        if exists(cover):
+            pic = Picture()
+            pic.data = open(cover, 'rb').read()
+            pic.mime = 'image/jpeg'
+            song["metadata_block_picture"] = [base64.b64encode(pic.write()).decode('ascii')]
+            song.save()
+    return True
 
-if config.pyncm:
-    # load saved arguments form config
-    for k, v in config.pyncm.items():
-        if not k in modified:locals()[k] = v
-        # ignore user set arguments        
-    coloredlogs.install(level=logging_level)
-else:
-    coloredlogs.install(level=logging_level)
+total_queued = 0
+total_progress = 0
+def download(url,dest,account=False):
+    global total_progress
+    # Downloads generic content
+    response = GetCurrentSession().get(url,stream=True)                        
+    length = int(response.headers.get('content-length'))
+    with open(dest,'wb') as f:
+        for chunk in response.iter_content(1024 * 2 ** 10):
+            if account:
+                total_progress += len(chunk) / length
+            f.write(chunk) # write every 1MB read            
+    return dest
 
-if phone and password:
-    # passport provided,login with them
-    helper.Login(phone, password)
+def executor_loop():
+    def execute(task : NETrackDownloadTask):
+        # Downloding source audio
+        dest_src = download(task.resource.url,join(task.resource.dest,task.song.SanitizedTitle+'.'+task.resource_info['type']),account=True)
+        # Downloading cover
+        dest_cvr = download(task.cover.url,join(task.cover.dest,'%s.jpg' % task.cover.id))
+        # Downloading & Parsing lyrics
+        dest_lrc = join(task.lyrics.dest,task.song.SanitizedTitle + '.lrc')
+        lrc    = LrcParser()
+        dLyrics = track.GetTrackLyrics(task.lyrics.id)
+        for k in set(dLyrics.keys()).intersection({'lrc','tlyric','romalrc'}):
+            lrc.LoadLrc(dLyrics[k]['lyric'])                           
+        open(dest_lrc,'w',encoding='utf-8').write(lrc.DumpLyrics())
+        # Tagging the audio
+        tag(task.song,dest_src,dest_cvr)
+        # Cleaning up
+        remove(dest_cvr)
+        # Assigns the task as finished
+        logger.debug('下载完成：%s' % (task.song.Title))
+        task_queue.task_done()
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:        
+        while True:
+            task = task_queue.get()            
+            executor.submit(execute,task)
 
-def NoExecWrapper(func, *args, **kwargs):
-    '''
-        Wrapper that treats functions like a variable then returns them
-    '''
-    def wrapper():
-        func(*args, **kwargs)
-    return wrapper
-def SaveConfig():
-    config.pyncm = {k: v for k, v in args.items() if k in arg_whitelist}
-    config.save()
-    sys.exit(0)
+def __main__():
+    args = parse_args()
+    if args.phone and args.password:        
+        login.LoginViaCellphone(args.phone,args.password)
+        logger.info('使用账号：%s (VIP %s)' % (
+            GetCurrentSession().login_info['content']['profile']['nickname'],
+            GetCurrentSession().login_info['content']['profile']['vipType'])
+        )
+    eThread = Thread(target=executor_loop)
+    eThread.setDaemon(True)
+    eThread.start()
+    # starts execution thread
+    total_queued = args.func(args)
+    # now wait until all tasks are done...report some progress maybe?
+    while task_queue.unfinished_tasks != 0:
+        sys.stderr.write('[STAT] %.2f%% (%.0f/%d)\n' % (total_progress * 100 / total_queued,total_progress,total_queued))
+        sleep(1)
+    sys.stderr.write('[STAT] %.2f%% (%.0f/%d)\n' % (total_progress * 100 / total_queued,total_progress,total_queued))
+    logger.info('下载完成')        
+    return 0
 
-
-reflection = {
-    'viewcfg':lambda:print(open(ConfigManager.path, 'r+', encoding='utf-8').read()),
-    'reset':config.destroy,
-    'config': SaveConfig,
-    'song_audio': NoExecWrapper(helper.DownloadTrackAudio, id=id, quality=quality),
-    'song_lyric': NoExecWrapper(helper.DownloadAndFormatLyrics, id=id),
-    'song_meta': NoExecWrapper(helper.DownloadTrackInfo, id=id),
-    'song_down': NoExecWrapper(helper.DownloadAll, id=id, quality=quality),
-    'song':  NoExecWrapper(helper.DownloadAllAndMerge, id=id, quality=quality),
-    'playlist': NoExecWrapper(helper.DownloadAllTracksInPlaylistAndMerge, id=id, quality=quality, merge_only=merge_only),
-    'album': NoExecWrapper(helper.DownloadAllTracksInAlbumAndMerge, id=id, quality=quality, merge_only=merge_only)
-}
-if not operation in reflection.keys():
-    logging.error('Invalid operation:%s' % operation)
-else:
-    try:
-        result = reflection[operation]()
-        logging.info(f'Successfuly executed {operation}')
-    except Exception as e:
-        logging.error(f'Error while executing "{operation}" : {e}')
-        # Print out traceback
-        traceback.print_stack(file=sys.stderr)
-        # Exit with status code 1
-        sys.exit(1)
-
-if not perserve_temp and os.path.isdir(temp):
-    # Clears temporay folder if we dont want to save it
-    logging.debug('Clearing temp folder:%s' % temp)
-    shutil.rmtree(temp)
-# Quits gracefuly
-sys.exit(0)
+if __name__ == '__main__':
+    logger = getLogger()
+    basicConfig(level='INFO',format='[%(levelname)s] %(message)s')    
+    if gooey_installed:
+        Gooey(              
+            program_name='PyNCM Gooey GUI',
+            progress_regex=r"\((?P<curr>(\d{1,3}))\/(?P<total>(\d{1,3}))\)",
+            hide_progress_msg=True,
+            progress_expr="curr / total * 100",
+            timing_options = {
+                'show_time_remaining':True,
+                'hide_time_remaining_on_complete':True,
+            },
+            menu=[{'name':'About','items':[{
+                'type': 'AboutDialog',
+                'menuTitle': 'About',
+                'name': 'PyNCM',
+                'description': __desc__,
+                'version': __version__,
+                'website': 'https://github.com/greats3an/pyncm'
+            }]}]
+        )(__main__)()
+    else:
+        sys.exit(__main__())

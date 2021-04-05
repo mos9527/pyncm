@@ -7,32 +7,14 @@
 
 # 直接使用
     python -m pyncm -h
+
 ## 说明
-### 配置
-- `pyncm config` 会将本次输入参数存储于 `~/.pyncm`
-
-		python -m pyncm config [arguments]
-	- 存储的参数
-
-
-| 参数  | 说明  |
-| ------------ | ------------ |
-|`--phone --password`| 登录令牌；只会保存登录cookie|
-|`--output` | 输出文件夹|
-| `--clear-temp`| 自动清除下载临时文件|
-|`--quality`| 下载质量|
-|`--logging-level` |日志过滤等级 |
-- **优先级:** 若在使用中设置了其他参数，命令行的参数会作为该会话的设置
-- 存储的参数均已加密
-- 文件保存在 `~/.pyncm` 中
+    若 Python 环境已安装[Gooey](https://github.com/chriskiehl/Gooey),通过 `-m` 不带参数即启动GUI
+![Gooey GUI..?](https://github.com/greats3an/pyncm/raw/master/demos/_gooey_demo.png)
 
 ### 使用示例
-#### 下载歌曲
-`pyncm song --id [歌曲 ID]`
-#### 下载歌单
-`pyncm playlist --id [歌单 ID]`
-#### 下载专辑
-`pyncm album --id [专辑 ID]`
+    python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
+    python -m pyncm http://music.163.com/album?id=3111188&userid=315542615  ...  
 
 其他功能详见 
 - [Wiki](https://github.com/greats3an/pyncm/wiki)
