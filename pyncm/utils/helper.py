@@ -80,4 +80,4 @@ class TrackHelper():
         '''Sanitized title for FS compatibility; Limits max length to 200 chars,and substitutes illegal chars with their full-width counterparts'''
         def _T(s,l=100):
             return ''.join([c if not c in self._illegal_chars else chr(ord(c)+0xFEE0) for c in s])[:l]
-        return f'{_T(",".join(self.Artists),100)} - {_T(self.TrackName,100)}'
+        return f'{_T(self.TrackName,100)} - {_T(",".join(self.Artists),100)}'

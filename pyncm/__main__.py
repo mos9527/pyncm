@@ -238,7 +238,11 @@ def parse_args():
         artists- 艺术家名
     例：
         {track} - {artists} 等效于 {title}''',default=r'{title}')
-    group.add_argument('--quality',metavar='音质',choices=list(BITRATES.keys()),help='音频音质（高音质需要 CVIP）',default='standard')
+    group.add_argument('--quality',metavar='音质',choices=list(BITRATES.keys()),help=r'''音频音质（高音质需要 CVIP）
+    参数：
+        lossless - “无损”
+        high     - 较高
+        standard - 标准''',default='standard')
     group.add_argument('--output',metavar='输出',default='.',help='输出文件夹')
     group = parser.add_argument_group('歌词')
     group.add_argument('--lyric-no',metavar='跳过歌词',help=r'''跳过某些歌词类型的合并
@@ -250,7 +254,7 @@ def parse_args():
         --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词''', choices=['lrc','tylric','romalrc'], default='',nargs='+')
     group = parser.add_argument_group('登陆')
     group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
-    group.add_argument('--password',metavar='密码',default='',help='网易账户密码')
+    group.add_argument('--pwd',metavar='密码',default='',help='网易账户密码')
     args = parser.parse_args()        
     dest,query = parse_sharelink(args.url)
 
@@ -261,8 +265,8 @@ def parse_args():
 
 def __main__():
     ids,args,dest  = parse_args()
-    if args.phone and args.password:        
-        login.LoginViaCellphone(args.phone,args.password)
+    if args.phone and args.pwd:        
+        login.LoginViaCellphone(args.phone,args.pwd)
         logger.info('账号 ：%s (VIP %s)' % (
             GetCurrentSession().login_info['content']['profile']['nickname'],
             GetCurrentSession().login_info['content']['profile']['vipType'])

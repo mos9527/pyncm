@@ -6,7 +6,7 @@
     pip install pyncm
 
 # 使用
-    usage: __main__.py [-h] [--template 模板] [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机] [--password 密码] 链接
+    usage: __main__.py [-h] [--template 模板] [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机] [--pwd 密码] 链接
 
     PyNCM 网易云音乐下载工具
 
@@ -29,6 +29,10 @@
                                 例：
                                     {track} - {artists} 等效于 {title}
     --quality 音质          音频音质（高音质需要 CVIP）
+                                参数：
+                                    lossless - “无损”
+                                    high     - 较高
+                                    standard - 标准
     --output 输出           输出文件夹
 
     歌词:
@@ -43,7 +47,7 @@
 
     登陆:
     --phone 手机            网易账户手机号
-    --password 密码         网易账户密码
+    --pwd 密码              网易账户密码
 
 ### 使用示例
     python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
