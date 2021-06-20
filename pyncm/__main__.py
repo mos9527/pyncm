@@ -245,13 +245,13 @@ def parse_args():
         standard - 标准''',default='standard')
     group.add_argument('--output',metavar='输出',default='.',help='输出文件夹')
     group = parser.add_argument_group('歌词')
-    group.add_argument('--lyric-no',metavar='跳过歌词',help=r'''跳过某些歌词类型的合并
+    group.add_argument('--no-lyric',metavar='跳过歌词',help=r'''跳过某些歌词类型的合并
     参数：
         lrc    - 源语言歌词
         tlyric - 翻译后歌词
         romalrc- 罗马音歌词
     例：
-        --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词''', choices=['lrc','tylric','romalrc'], default='',nargs='+')
+        --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词''', choices=['lrc','tlyric','romalrc'], default='',nargs='+')
     group = parser.add_argument_group('登陆')
     group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
     group.add_argument('--pwd',metavar='密码',default='',help='网易账户密码')
