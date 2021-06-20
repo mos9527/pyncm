@@ -43,7 +43,7 @@
                                     tlyric - 翻译后歌词
                                     romalrc- 罗马音歌词
                                 例：
-                                    --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词
+                                    --lyric-no tlyric romalrc 将只下载源语言歌词
 
     登陆:
     --phone 手机            网易账户手机号

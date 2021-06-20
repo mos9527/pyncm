@@ -150,7 +150,7 @@ class LrcParser:
             Lyrics = []
             for tag,_lyric in lyrics:
                 Lyrics.append(_lyric)
-            lrc += '\n' + f'[{stamp2tag(timestamp)}]{delimiter.join(Lyrics[1:])}' 
+            lrc += '\n' + f'[{stamp2tag(timestamp)}]{delimiter.join(Lyrics)}' 
         return lrc # Done
     
     @staticmethod
