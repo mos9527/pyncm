@@ -35,6 +35,7 @@ def stamp2tag(timestamp):
     xx = int((timestamp - mm * 60 - ss) * 100) # We'd use standard 100th of a second here
     mm,ss,xx = str(mm).rjust(2,'0'),str(ss).rjust(2,'0'),str(xx).rjust(2,'0')
     return f'{mm}:{ss}.{xx}'                    
+    
 def tag2stamp(IDTag):
     IDTag = ''.join(LrcRegexes.LTimestamp.findall(IDTag))
     if not IDTag:return None
@@ -107,8 +108,7 @@ class LrcParser:
                 try:
                     for _IDTag in IDTag:
                         # Some LRC lyrics would pile a bunch of timestamps in on line,like 
-                        #   [00:01.12][00:08.12]Yeah
-                        # So an extra loop could work it around                             
+                        #   [00:01.12][00:08.12]Yeah                        
                         timestamp = tag2stamp(_IDTag)
                         if timestamp is not None and timestamp >= 0:
                             if not isinstance(self.Offset,Exception):timestamp += float(self.Offset)
@@ -146,12 +146,11 @@ class LrcParser:
             if not isinstance(value,Exception): # If such value do exist
                 lrc += f'[{attr}:{value}]' + '\n'        
         # Adding lyrics
-        for timestamps,lyrics in self.lyrics.items(): # write the sorted one
-            IDTag,Lyrics = None,[]
-            for _IDTag,_Lyrics in lyrics:
-                IDTag = _IDTag
-                Lyrics.append(_Lyrics)
-            lrc += '\n' + f'[{IDTag}]{delimiter.join(Lyrics)}' 
+        for timestamp,lyrics in self.lyrics.items(): # write the sorted one
+            Lyrics = []
+            for tag,_lyric in lyrics:
+                Lyrics.append(_lyric)
+            lrc += '\n' + f'[{stamp2tag(timestamp)}]{delimiter.join(Lyrics[1:])}' 
         return lrc # Done
     
     @staticmethod
