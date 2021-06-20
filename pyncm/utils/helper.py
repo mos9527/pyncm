@@ -73,7 +73,7 @@ class TrackHelper():
     @TrackHelperProperty()
     def Title(self):
         '''A formatted title for this song'''
-        return f'{",".join(self.Artists)} - {self.TrackName}'
+        return f'{self.TrackName} - {",".join(self.Artists)}'
     _illegal_chars = set('\x00\\/:*?"<>|')
     @TrackHelperProperty()
     def SanitizedTitle(self):
