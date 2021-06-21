@@ -3,7 +3,6 @@ from pyncm import GetCurrentSession,__version__,logger
 from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.helper import TrackHelper
 from pyncm.apis import login,track,playlist,album
-import tqdm
 
 from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
@@ -13,7 +12,7 @@ from os.path import join,exists
 from os import remove,makedirs
 
 from logging import getLogger,basicConfig
-import sys,argparse,base64,urllib.parse
+import sys,argparse
 
 __desc__ = '''PyNCM 网易云音乐下载工具'''
 max_workers = 4
@@ -45,62 +44,61 @@ class TrackDownloadTask(BaseKeyValueClass):
 
 class TaskPoolExecutorThread(Thread):
     @staticmethod
-    def tag_audio(tHelper : TrackHelper,audio : str,cover : str):
-        from mutagen.flac import FLAC, Picture
-        from mutagen.id3 import ID3, APIC
-        from mutagen.mp3 import EasyMP3
-        from mutagen import easymp4
-        from mutagen.mp4 import MP4, MP4Cover
-        from mutagen.oggvorbis import OggVorbis    
+    def tag_audio(track : TrackHelper,file : str,cover_img : str = ''):
         def write_keys(song):
             # Write trackdatas
-            song['title'] = tHelper.TrackName
-            song['artist'] = tHelper.Artists
-            song['album'] = tHelper.AlbumName
-            song['tracknumber'] = str(tHelper.TrackNumber)
-            song['date'] = str(tHelper.TrackPublishTime)
-            song.save()    
-        format = audio.split('.')[-1].lower()
-        if format == 'm4a':
-            # Process m4a files: Apple’s MP4 (aka M4A, M4B, M4P)
-            song = easymp4.EasyMP4(audio)
+            song['title'] = track.TrackName
+            song['artist'] = track.Artists
+            song['album'] = track.AlbumName
+            song['tracknumber'] = str(track.TrackNumber)
+            song['date'] = str(track.TrackPublishTime)
+            song.save()            
+        def mp4():            
+            from mutagen import easymp4
+            from mutagen.mp4 import MP4, MP4Cover
+            song = easymp4.EasyMP4(file)            
             write_keys(song)
-            if exists(cover):
-                song = MP4(audio)
-                # Write cover image
-                song['covr'] = [MP4Cover(open(cover, 'rb').read())]
+            if exists(cover_img):
+                song = MP4(file)                
+                song['covr'] = [MP4Cover(open(cover_img, 'rb').read())]
                 song.save()
-        elif format == 'mp3':
-            # Process mp3 files: MPEG audio stream information and tags
-            song = EasyMP3(audio)
+        def mp3():            
+            from mutagen.mp3 import EasyMP3
+            from mutagen.id3 import ID3, APIC
+            song = EasyMP3(file)
             write_keys(song)
-            if exists(cover):
-                song = ID3(audio)
-                # Write cover image
+            if exists(cover_img):
+                song = ID3(file)
+                song.update_to_v23() # better compatibility over v2.4
                 song.add(APIC(encoding=3, mime='image/jpeg', type=3,
-                                desc='Cover', data=open(cover, 'rb').read()))
-                song.save()
-        elif format == 'flac':
-            # Process FLAC files:Free Lossless Audio Codec
-            song = FLAC(audio)
+                                desc='Cover', data=open(cover_img, 'rb').read()))                                          
+                song.save(v2_version=3)
+        def flac():            
+            from mutagen.flac import FLAC, Picture
+            song = FLAC(file)
             write_keys(song)
-            if exists(cover):
+            if exists(cover_img):
                 pic = Picture()
-                pic.data = open(cover, 'rb').read()
+                pic.data = open(cover_img, 'rb').read()
                 pic.mime = 'image/jpeg'
                 song.add_picture(pic)
                 song.save()
-        elif format == 'ogg':
-            # Process OGG files:Ogg Encapsulation Format
-            song = OggVorbis(audio)
+        def ogg():            
+            import base64
+            from mutagen.flac import Picture
+            from mutagen.oggvorbis import OggVorbis   
+            song = OggVorbis(file)
             write_keys(song)
-            if exists(cover):
+            if exists(cover_img):
                 pic = Picture()
-                pic.data = open(cover, 'rb').read()
+                pic.data = open(cover_img, 'rb').read()
                 pic.mime = 'image/jpeg'
                 song["metadata_block_picture"] = [base64.b64encode(pic.write()).decode('ascii')]
                 song.save()
-        return True
+        format = file.split('.')[-1].upper()
+        for ext,method in [({'M4A', 'M4B', 'M4P','MP4'},mp4),({'MP3'},mp3),({'FLAC'},flac),({'OGG','OGV'},ogg)]:
+            if format in ext:return method() or True
+        return False        
 
     def download_by_url(self,url,dest,xfer=False):
         # Downloads generic content
@@ -171,7 +169,7 @@ def create_subroutine(sub_type) -> Subroutine:
             queued = 0
             for dDetail,dAudio in zip(dDetails,dAudios):
                 song = TrackHelper(dDetail)
-                logger.info('单曲 #%d / %d - %s - %s (%dkbps)' % (queued+1,len(dDetails),song.Title,song.AlbumName,dAudio['br'] // 1000))        
+                logger.info('单曲 #%d / %d - %s - %s (%dkbps) - %s' % (queued+1,len(dDetails),song.Title,song.AlbumName,dAudio['br'] // 1000,dAudio['type'].upper()))        
                 tSong = TrackDownloadTask(
                     song = song,
                     cover = BaseDownloadTask(id=song.ID,url=song.AlbumCover,dest=self.args.output),                    
@@ -217,6 +215,7 @@ def create_subroutine(sub_type) -> Subroutine:
     }[sub_type]
 
 def parse_sharelink(url):
+    import urllib.parse
     split = urllib.parse.urlsplit(url)
     dest  = split.path.split('/')[-1]
     query = urllib.parse.parse_qs(split.query)
@@ -280,7 +279,8 @@ def __main__():
 
     subroutine = create_subroutine(dest)(args,enqueue_task)
     total_queued = subroutine(ids) # Enqueue tasks
-
+    
+    import tqdm
     _tqdm = tqdm.tqdm(bar_format='已完成 {desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} [{elapsed}<{remaining}')
     _tqdm.total = total_queued
     def report():                        
