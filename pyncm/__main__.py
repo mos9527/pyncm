@@ -1,5 +1,5 @@
 '''`__main__` entry for PyNCM'''
-from pyncm import GetCurrentSession,__version__,logger
+from pyncm import DumpSessionAsString, GetCurrentSession, LoadSessionFromString, SetCurrentSession,__version__,logger
 from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.helper import TrackHelper
 from pyncm.apis import login,track,playlist,album
@@ -254,6 +254,8 @@ def parse_args():
     group = parser.add_argument_group('登陆')
     group.add_argument('--phone',metavar='手机',default='',help='网易账户手机号')
     group.add_argument('--pwd',metavar='密码',default='',help='网易账户密码')
+    group.add_argument('--save',metavar='[保存到]',default='',help='写本次登录信息于文件')
+    group.add_argument('--load',metavar='[保存的登陆信息文件]',default='',help='从文件读取登录信息供本次登陆使用')
     args = parser.parse_args()        
     dest,query = parse_sharelink(args.url)
 
@@ -270,6 +272,13 @@ def __main__():
             GetCurrentSession().login_info['content']['profile']['nickname'],
             GetCurrentSession().login_info['content']['profile']['vipType'])
         )
+    if args.load:
+        logger.info('读取登录信息 : %s' % args.load)
+        SetCurrentSession(LoadSessionFromString(open(args.load).read()))
+    if args.save:
+        logger.info('保存登陆信息于 : %s' % args.save)
+        open(args.save,'w').write(DumpSessionAsString(GetCurrentSession()))
+
     executor = TaskPoolExecutorThread()
     executor.setDaemon(True)
     executor.start()   

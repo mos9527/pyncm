@@ -8,7 +8,7 @@ from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.6.3.7"
+__version__ = "1.6.3.8"
 
 class Session(requests.Session):   
     '''Represents an API session'''
@@ -102,7 +102,7 @@ def SetCurrentSession(session : Session):
 def SetNewSession():
     '''Creates and sets new session'''
     sessionManager.set(Session())
-def LoadSessionFromString(dump : str) -> Session:
+def LoadSessionFromString(dump : str) -> Session: # TODO : use Pickle instead
     '''Loads a session from dumped string'''
     session = SessionManager.parse(dump)
     return session

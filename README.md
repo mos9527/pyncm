@@ -6,7 +6,11 @@
     pip install pyncm
 
 # 使用
-    usage: __main__.py [-h] [--template 模板] [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机] [--pwd 密码] 链接
+    python -m pyncm -h
+
+    usage: __main__.py [-h] [--template 模板] [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机] [--pwd 密码] [--save [保存到]]
+                    [--load [保存的登陆信息文件]]
+                    链接
 
     PyNCM 网易云音乐下载工具
 
@@ -43,11 +47,13 @@
                                     tlyric - 翻译后歌词
                                     romalrc- 罗马音歌词
                                 例：
-                                    --lyric-no tlyric romalrc 将只下载源语言歌词
+                                    --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词
 
     登陆:
     --phone 手机            网易账户手机号
     --pwd 密码              网易账户密码
+    --save [保存到]          写本次登录信息于文件
+    --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
 
 ### 使用示例
     python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
