@@ -70,8 +70,8 @@ class TaskPoolExecutorThread(Thread):
             if exists(cover_img):
                 song = ID3(file)
                 song.update_to_v23() # better compatibility over v2.4
-                song.add(APIC(encoding=3, mime='image/jpeg', type=3,
-                                desc='Cover', data=open(cover_img, 'rb').read()))                                          
+                song.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='',
+                              data=open(cover_img, 'rb').read()))                                          
                 song.save(v2_version=3)
         def flac():            
             from mutagen.flac import FLAC, Picture

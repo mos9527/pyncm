@@ -8,7 +8,7 @@ from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.6.3.8"
+__version__ = "1.6.3.9"
 
 class Session(requests.Session):   
     '''Represents an API session'''
