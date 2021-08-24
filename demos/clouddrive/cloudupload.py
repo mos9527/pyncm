@@ -41,7 +41,7 @@ def upload_one(path):
     print('[-] Response:\n  ',publish_result)
 
 if __name__ == "__main__":
-    login()
+    assert login(),"登陆失败"
     # login via phone,may change as you like
     upload_one(input('[-] Path to file:'))
     

@@ -4,9 +4,10 @@ from cloudupload import upload_one
 from phone import login
 from time import sleep
 
-tracks = r'(your folder here)'
-if __name__ == '__main__':
-    login()
+
+if __name__ == '__main__':    
+    assert login(),"登陆失败"
+    tracks = input('[-] Path to folder:')
     for path in os.listdir(tracks):
         full_path = os.path.join(tracks,path)
         print('[-] Uploading %s' % path)
