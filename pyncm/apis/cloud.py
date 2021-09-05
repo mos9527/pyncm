@@ -1,6 +1,7 @@
 '''我的音乐云盘 - Cloud APIs'''
 import json
 from . import WeapiCryptoRequest,LoginRequiredApi,EapiCryptoRequest,Crypto,GetCurrentSession
+BUCKET = 'jd-musicrep-privatecloud-audio-public'
 
 @WeapiCryptoRequest
 @LoginRequiredApi
@@ -31,7 +32,7 @@ def GetCloudDriveItemInfo(song_ids:list):
     return '/weapi/v1/cloud/get/byids',{'songIds':ids}
 
 @EapiCryptoRequest
-def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket='',local=False):
+def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket=BUCKET,local=False):
     '''移动端 - 云盘占位
 
     Args:
@@ -41,7 +42,7 @@ def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket='',l
         ext (str): 文件拓展名
         type (str, optional): 上传类型. Defaults to 'audio'.
         nos_product (int, optional): APP类型. Defaults to 3.
-        bucket (str, optional): 未知. Defaults to ''.
+        bucket (str, optional): 转存bucket. Defaults to 'jd-musicrep-privatecloud-audio-public'.
         local (bool, optional): 未知. Defaults to False.
 
     Returns:
@@ -50,7 +51,7 @@ def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket='',l
     return '/eapi/nos/token/alloc',{"type":str(type),"nos_product":str(nos_product),"md5":str(md5),"local":str(local).lower(),"filename":str(filename),"fileSize":str(fileSize),"ext":str(ext),"bucket":str(bucket),"checkToken":Crypto.checkToken()}
 
 
-def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
+def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True,bucket=BUCKET):
     '''移动端 - 上传内容
 
     Args:
@@ -65,7 +66,7 @@ def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True):
         dict
     '''
     r = GetCurrentSession().post(
-        'http://45.127.129.8/ymusic/' + objectKey.replace('/','%2F'),
+        'http://45.127.129.8/%s/' % bucket + objectKey.replace('/','%2F'),
         data=stream,
         params={
             'version':'1.0',
