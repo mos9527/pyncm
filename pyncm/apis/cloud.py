@@ -137,3 +137,18 @@ def SetPublishCloudResource(songid):
         SetUploadCloudInfo
     '''
     return '/eapi/cloud/pub/v2',{"songid":str(songid),"checkToken":Crypto.checkToken()}
+
+@LoginRequiredApi
+def SetRectifySongId(oldSongId, newSongId):
+    '''移动端 - 歌曲纠偏
+
+    Args:
+        oldSongId : 欲纠偏的源歌曲ID
+        newSongId : 欲纠偏的目标歌曲ID
+
+    Returns:
+        dict
+    '''
+
+    a = GetCurrentSession().get(f"https://music.163.com/api/cloud/user/song/match?songId={oldSongId}&adjustSongId={newSongId}")
+    return json.loads(a.text)

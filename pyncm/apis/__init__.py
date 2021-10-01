@@ -1,7 +1,7 @@
 '''# 网易云音乐 APIs
 
 ## 编写
-对 EAPI (非网页端所用) 请求，抓包后可将数据体 `params=` 后内容丢进 `utils/eapidumper.py` 直接生成相应 Python 函数。
+对 EAPI (非网页端所用) 请求，抓包后可将数据体 `params=` 后内容丢进 `tools/eapidumper.py` 直接生成相应 Python 函数。
 对于 Weapi (网页端，小程序所用) 请求，可在 `core.js` 内下断点后手动编写
 
 格式可参见现存 API 方法代码。欢迎 PR。
