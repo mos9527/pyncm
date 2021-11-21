@@ -1,6 +1,6 @@
 '''最嗨电音、爵士电台 - DI.FM APIs'''
 
-from . import WeapiCryptoRequest
+from .. import WeapiCryptoRequest
 
 @WeapiCryptoRequest
 def GetCurrentPlayingTrackList(channelId=101,limit=10,source=0):

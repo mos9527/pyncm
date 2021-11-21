@@ -1,7 +1,6 @@
 '''私人FM - Raido APIs'''
 
-from . import EapiCryptoRequest
-from .. import LoginRequiredApi
+from .. import EapiCryptoRequest,LoginRequiredApi
 
 @EapiCryptoRequest
 @LoginRequiredApi

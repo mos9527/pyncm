@@ -16,7 +16,6 @@ def TrackHelperProperty(default=None):
 
 class TrackHelper():
     '''Helper class for handling generic track objects'''
-
     def __init__(self, track_dict) -> None:
         self.track = track_dict
 
@@ -72,9 +71,10 @@ class TrackHelper():
 
     @TrackHelperProperty()
     def Title(self):
-        '''A formatted title for this song'''
+        '''A formatted title for this song : {TrackName} - {ArtistsName}'''
         return f'{self.TrackName} - {",".join(self.Artists)}'
     _illegal_chars = set('\x00\\/:*?"<>|')
+
     @TrackHelperProperty()
     def SanitizedTitle(self):
         '''Sanitized title for FS compatibility; Limits max length to 200 chars,and substitutes illegal chars with their full-width counterparts'''

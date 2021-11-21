@@ -1,6 +1,7 @@
-from logging import log
-from os import stat
-import pyncm,getpass
+import sys
+sys.path.insert(0,'\\'.join(sys.path[0].split('\\')[:-1]))
+# Try to use whatever is in the parent directory first
+import pyncm,pyncm.apis,getpass
 from pyncm import GetCurrentSession,LoadSessionFromString
 from os.path import isfile
 status = {'succeeded':[],'failed':[]}
@@ -47,13 +48,14 @@ def login():
             pass
     phone = input('手机号 >>>')
     passw = getpass.getpass('密码 >')
-    pyncm.login.LoginViaCellphone(phone,passw)
+    pyncm.apis.login.LoginViaCellphone(phone,passw)
     print(pyncm.GetCurrentSession().login_info['content']['profile']['nickname'],'登陆成功')
     return save()
 '''checkToken required APIs'''
 @Testpoint
 def test_create_playlist():
     return pyncm.apis.playlist.SetCreatePlaylist('PyNCM')
+print('PyNCM %s %s' % (pyncm.__version__,pyncm.__file__))
 login()
 r1 = test_create_playlist()
 @Testpoint

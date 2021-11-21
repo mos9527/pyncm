@@ -1,5 +1,5 @@
 '''Sports FM - 跑步FM APIs'''
-from . import EapiCryptoRequest
+from .. import EapiCryptoRequest
 import json
 
 @EapiCryptoRequest

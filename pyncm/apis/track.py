@@ -1,6 +1,7 @@
 '''歌曲 - Track APIs'''
 from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest,LoginRequiredApi
 import json
+
 @WeapiCryptoRequest
 def GetTrackDetail(song_ids : list):
     '''网页端 - 获取歌曲详情

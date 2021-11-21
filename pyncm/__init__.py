@@ -8,7 +8,7 @@ from typing import Text, Union
 from time import time
 import requests,logging,json
 
-__version__ = "1.6.3.10"
+__version__ = "1.6.4.0"
 
 class Session(requests.Session):   
     '''Represents an API session'''
@@ -109,4 +109,3 @@ def LoadSessionFromString(dump : str) -> Session: # TODO : use Pickle instead
 def DumpSessionAsString(session : Session) -> str:
     '''Dumps session as encrypted string'''
     return SessionManager.stringify(session)
-from .apis import *

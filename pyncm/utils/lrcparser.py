@@ -82,6 +82,8 @@ class LrcParser:
         self.lrcAttributes = list(EnmurateAttributes())
         # This function will only work when no attributes are defined
         self.lyrics = defaultdict(list)
+        self._lyrics_sorted = (None,None)
+        # Achieve some sort of LRU for lyrics_sorted; Stores ([ID],[sorted dict])
         if not lrc:
             # empty input,we are creating lyrics then
             return
@@ -90,7 +92,12 @@ class LrcParser:
     @property
     def lyrics_sorted(self):
         '''Returns sorted version of the lyrics'''
-        return defaultdict(list,sorted(self.lyrics.items()))        
+        lastID,lastDict = self._lyrics_sorted
+        if lastID != id(self.lyrics):
+            self._lyrics_sorted = (id(self.lyrics),defaultdict(list,sorted(self.lyrics.items())))
+            return self.lyrics_sorted
+        else:
+            return lastDict        
 
     def LoadLrc(self,lrc):
         '''Loads a LRC formmated lryics file'''
@@ -107,7 +114,7 @@ class LrcParser:
                 # We'll use the timestamp (into seconds) as lyrics' keys,as hashtables can handle that            
                 try:
                     for _IDTag in IDTag:
-                        # Some LRC lyrics would pile a bunch of timestamps in on line,like 
+                        # Some LRC lyrics would pile a bunch of timestamps in on a line,like 
                         #   [00:01.12][00:08.12]Yeah                        
                         timestamp = tag2stamp(_IDTag)
                         if timestamp is not None and timestamp >= 0:
@@ -155,13 +162,15 @@ class LrcParser:
     
     @staticmethod
     def Find(lyrics,timestamp):
-        '''Finds closest match in our hashable
+        '''Finds closest match in our hashable through binary search. Prioritiezs
+
+        ones that comes before the timestamp, Rather than ones with minimum distance
             
             lyrics  :   From `lrcparser.lyrics_sorted`
 
-            Returns `(timestamp_seconds,lyrics,indexof)`
+            Returns `(timestamp_seconds,lyrics[(timestamp_tag,lyrics)],indexof)`
 
-            Returns None if the match isn't inside the window
+            Returns None if nothing is found
         '''
         def search(val,src:list,l,r):    
             '''Binary serach'''            

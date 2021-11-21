@@ -1,7 +1,7 @@
 '''歌单 - Playlist APIs'''
-import json
-from . import Crypto
 from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
+from . import Crypto
+import json
 
 @WeapiCryptoRequest
 def GetPlaylistInfo(playlist_id,offset=0,total=True,limit=1000):

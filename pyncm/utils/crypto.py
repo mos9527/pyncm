@@ -49,11 +49,9 @@ def _xor(v1,v2): return _int( _truncate(v1) ^ _truncate(v2))
 # region MD5
 def _hash_Yb(e):
     '''MD5 hasher'''
-    from . import Crypto
     return Crypto.HashDigest(e)
 def _hex_Zb(e):
     '''MD5 digest hexi-fier'''
-    from . import Crypto
     return Crypto.HexDigest(e)
 # endregion
 # region Special functions

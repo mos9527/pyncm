@@ -4,7 +4,7 @@
 - `CLASSICAL` 古典
 '''
 
-from . import EapiCryptoRequest
+from .. import EapiCryptoRequest
 
 @EapiCryptoRequest
 def GetFmZoneInfo(limit=3,zone="CLASSICAL",e_r=True):

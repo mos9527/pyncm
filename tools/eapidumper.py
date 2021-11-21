@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0,'\\'.join(sys.path[0].split('\\')[:-1]))
+
 import pyncm,json,functools
 SEC_ARGS = {'checkToken'}
 SEC_RESOLUTION = {'checkToken':'Crypto.checkToken()'}
