@@ -14,7 +14,7 @@
 
 from time import time
 from requests.models import Response
-from ..utils.crypto import Crypto
+from ..utils.crypto import EapiDecrypt,EapiEncrypt,LinuxApiEncrypt,WeapiEncrypt,AbroadDecrypt
 from .. import GetCurrentSession,logger
 import json,urllib.parse
 
@@ -38,7 +38,11 @@ def BaseWrapper(requestFunc):
             try:
                 payload = rsp.text if isinstance(rsp,Response) else rsp
                 payload = payload.decode() if not isinstance(payload,str) else payload
-                return json.loads(payload.strip('\x10')) # weird caveat - they padded plaintext responses as well,though they always end with \x10(16)
+                payload = json.loads(payload.strip('\x10')) # plaintext responses are also padded...
+                if 'abroad' in payload and payload['abroad']: # addresses #15                
+                    real_payload = AbroadDecrypt(payload['result'])
+                    payload = json.loads(real_payload)
+                return payload
             except json.JSONDecodeError:
                 return rsp
         return wrapper
@@ -66,7 +70,7 @@ def EapiEncipered(func):
     def wrapper(*a,**k):
         payload = func(*a,**k)
         try:            
-            return Crypto.EapiDecrypt(payload).decode()
+            return EapiDecrypt(payload).decode()
         except:
             return payload
     return wrapper        
@@ -84,7 +88,7 @@ def WeapiCryptoRequest(url,plain,method):
             'csrf_token':GetCurrentSession().csrf_token
         },
         data={
-            **Crypto.WeapiCrypto(payload)
+            **WeapiEncrypt(payload)
         },
     )
 # region Port of `Binaryify/NeteaseCloudMusicApi`
@@ -102,7 +106,7 @@ def LapiCryptoRequest(url,plain,method):
         headers={            
             'User-Agent':GetCurrentSession().UA_LINUX_API
         },
-        data={**Crypto.LinuxCrypto(payload)}
+        data={**LinuxApiEncrypt(payload)}
     )
 
 @BaseWrapper
@@ -126,7 +130,7 @@ def EapiCryptoRequest(url,plain,method):
             'Referer':None
         },
         cookies=cookies,
-        data={**Crypto.EapiCrypto(parse(url).path.replace('/eapi/','/api/'),json.dumps(payload))}
+        data={**EapiEncrypt(parse(url).path.replace('/eapi/','/api/'),json.dumps(payload))}
     )
     return request.content
 # endregion

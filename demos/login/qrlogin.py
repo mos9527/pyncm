@@ -4,19 +4,17 @@
  - qrcode
  - Pillow
 '''
+import sys
+sys.path.insert(0,'\\'.join(sys.path[0].split('\\')[:-2]))
 
-from io import BytesIO
-from logging import debug
-from pyncm import GetCurrentSession,logger
+import pyncm.apis
+from pyncm import GetCurrentSession,logger,__version__
 from pyncm.apis.login import GetCurrentLoginStatus, WriteLoginInfo,LoginQrcodeUnikey,LoginQrcodeCheck
-from PIL import Image
-import qrcode,time,base64
-# region boring GUI stuff
+import qrcode,time
+print(__version__)
 def dot_thingy():    
     while True:
-        yield '...'
-        yield '.. '
-        yield '.  '
+        yield '...';yield '.. ';yield '.  '
 dot = dot_thingy()
 def login():    
     uuid = LoginQrcodeUnikey()['unikey']
@@ -37,6 +35,9 @@ def login():
             GetCurrentSession().login_info['content']['profile']['lastLoginIP']
         )
     )))
+    # testing search
+    print('测试搜索 : hi')
+    print(pyncm.apis.cloudsearch.GetSearchResult('hi'))
     return True
 if __name__ == '__main__':
     print('[-] Testing login')

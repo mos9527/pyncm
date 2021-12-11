@@ -280,7 +280,7 @@ def __main__():
         open(args.save,'w').write(DumpSessionAsString(GetCurrentSession()))
 
     executor = TaskPoolExecutorThread()
-    executor.setDaemon(True)
+    executor.daemon = True
     executor.start()   
     
     def enqueue_task(task):        

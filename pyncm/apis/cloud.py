@@ -1,6 +1,7 @@
 '''我的音乐云盘 - Cloud APIs'''
 import json
-from . import WeapiCryptoRequest,LoginRequiredApi,EapiCryptoRequest,Crypto,GetCurrentSession
+from . import WeapiCryptoRequest,LoginRequiredApi,EapiCryptoRequest,GetCurrentSession
+from ..utils.crypto import GenerateCheckToken
 BUCKET = 'jd-musicrep-privatecloud-audio-public'
 
 @WeapiCryptoRequest
@@ -48,7 +49,7 @@ def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket=BUCK
     Returns:
         dict
     '''
-    return '/eapi/nos/token/alloc',{"type":str(type),"nos_product":str(nos_product),"md5":str(md5),"local":str(local).lower(),"filename":str(filename),"fileSize":str(fileSize),"ext":str(ext),"bucket":str(bucket),"checkToken":Crypto.checkToken()}
+    return '/eapi/nos/token/alloc',{"type":str(type),"nos_product":str(nos_product),"md5":str(md5),"local":str(local).lower(),"filename":str(filename),"fileSize":str(fileSize),"ext":str(ext),"bucket":str(bucket),"checkToken":GenerateCheckToken()}
 
 
 def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True,bucket=BUCKET):
@@ -98,7 +99,7 @@ def GetCheckCloudUpload(md5,ext='',length=0,bitrate=0,songId=0,version=1):
     Returns:
         dict
     '''
-    return '/eapi/cloud/upload/check',{"songId":str(songId),"version":str(version),"md5":str(md5),"length":str(length),"ext":str(ext),"bitrate":str(bitrate),"checkToken":Crypto.checkToken()}
+    return '/eapi/cloud/upload/check',{"songId":str(songId),"version":str(version),"md5":str(md5),"length":str(length),"ext":str(ext),"bitrate":str(bitrate),"checkToken":GenerateCheckToken()}
 
 
 @EapiCryptoRequest
@@ -136,7 +137,7 @@ def SetPublishCloudResource(songid):
     Returns:
         SetUploadCloudInfo
     '''
-    return '/eapi/cloud/pub/v2',{"songid":str(songid),"checkToken":Crypto.checkToken()}
+    return '/eapi/cloud/pub/v2',{"songid":str(songid),"checkToken":GenerateCheckToken()}
 
 @LoginRequiredApi
 def SetRectifySongId(oldSongId, newSongId):

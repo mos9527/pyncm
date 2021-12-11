@@ -1,5 +1,6 @@
 '''登录、Anti - AntiCSRF 有关 APIs'''
-from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,Crypto,LoginFailedException
+from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,LoginFailedException
+from ..utils.crypto import HashHexDigest,GenerateCheckToken
 import time
 
 def WriteLoginInfo(response):
@@ -110,10 +111,10 @@ def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=True) -> dict
         return LoginViaCellphone()
     else:
         if (hasattr(sess,'phone') and hasattr(sess,'password')):
-            md5_password = Crypto.HashHexDigest(sess.password)
+            md5_password = HashHexDigest(sess.password)
             login_status = WeapiCryptoRequest(lambda:(path,{
                 "phone":str(sess.phone),
-                "checkToken":Crypto.checkToken(),
+                "checkToken":GenerateCheckToken(),
                 "password":str(md5_password),
                 "rememberLogin":str(remeberLogin).lower(),
                 "countrycode":str(ctcode),
@@ -173,9 +174,9 @@ def SetRegisterAccountViaCellphone(cell : str,captcha:str,nickname:str,password:
     return '/weapi/w/register/cellphone',{
         'captcha':str(captcha),
         'nickname':str(nickname),
-        'password':Crypto.HashHexDigest(password),
+        'password':HashHexDigest(password),
         'phone':str(cell),
-        'checkToken':Crypto.checkToken(),
+        'checkToken':GenerateCheckToken(),
     }    
 
 @EapiCryptoRequest

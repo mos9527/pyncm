@@ -2,13 +2,12 @@
 本模块提供`Get/Set/DumpCurrentSession`,`LoadNewSessionFromDump` 以管理请求
 API 使用请参见 `pyncm.apis` 文档 
 '''
-
-from .utils.crypto import Crypto
 from typing import Text, Union
 from time import time
+from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests,logging,json
 
-__version__ = "1.6.4.0"
+__version__ = "1.6.4.1"
 
 class Session(requests.Session):   
     '''Represents an API session'''
@@ -18,7 +17,7 @@ class Session(requests.Session):
     UA_LINUX_API  = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'    
     CONFIG_EAPI   = {
         # template EAPI config pulled from version 7.2.24, which would be overriden if some of the keys were specified in cookies 
-        'appver': '7.2.24','buildver':'7002024','channel':'offical','deviceId': Crypto.RandomString(8),
+        'appver': '7.2.24','buildver':'7002024','channel':'offical','deviceId': RandomString(8),
         'mobilename' : 'Pixel2XL','os': 'android','osver':'10.1','resolution': '2712x1440','versioncode': '240'         
     }
 
@@ -77,12 +76,12 @@ class SessionManager():
     # region Session serialization
     @staticmethod
     def stringify(session : Session) -> str:
-        return Crypto.EapiCrypto('pyncm',json.dumps(session.dump()))['params']
+        return EapiEncrypt('pyncm',json.dumps(session.dump()))['params']
     @staticmethod
     def parse(dump : str) -> Session:
         session = Session() # a new session WILL be created
-        dump = Crypto.HexCompose(dump)
-        dump = Crypto.EapiDecrypt(dump).decode()
+        dump = HexCompose(dump)
+        dump = EapiDecrypt(dump).decode()
         dump = dump.split('-36cd479b6b5-')
         assert dump[0] == 'pyncm' # check magic
         session.load(json.loads(dump[1])) # loading config dict in

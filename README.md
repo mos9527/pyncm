@@ -84,7 +84,7 @@
 # Credit
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
-[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js)
+[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
 
 ### 衍生项目
 [PyNCMd](https://github.com/greats3an/pyncmd)

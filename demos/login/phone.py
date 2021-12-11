@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0,'\\'.join(sys.path[0].split('\\')[:-1]))
+
 import getpass
 from pyncm import GetCurrentSession,logger,apis
 def login():

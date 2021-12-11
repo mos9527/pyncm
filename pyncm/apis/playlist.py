@@ -1,6 +1,6 @@
 '''歌单 - Playlist APIs'''
 from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
-from . import Crypto
+from ..utils.crypto import GenerateCheckToken
 import json
 
 @WeapiCryptoRequest
@@ -71,7 +71,7 @@ def SetCreatePlaylist(name : str,privacy=False):
         name (str): 歌单名
         privacy (bool, optional) : 是否私享. Defaults to False.
     '''
-    return '/eapi/playlist/create',{"name":str(name),"privacy":str(privacy*1),"checkToken":Crypto.checkToken()}
+    return '/eapi/playlist/create',{"name":str(name),"privacy":str(privacy*1),"checkToken":GenerateCheckToken()}
 
 @EapiCryptoRequest
 def SetRemovePlaylist(ids : list,self = True):
@@ -84,4 +84,4 @@ def SetRemovePlaylist(ids : list,self = True):
         dict
     '''
     ids = ids if isinstance(ids,list) else [ids]
-    return '/eapi/playlist/remove',{"ids":str(ids),"self":str(self),"checkToken":Crypto.checkToken()}
+    return '/eapi/playlist/remove',{"ids":str(ids),"self":str(self),"checkToken":GenerateCheckToken()}
