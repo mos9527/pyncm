@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Essential implementations of some of netease's security algorithms
+
 import base64
 from Crypto.Cipher import AES
 from . import HexCompose,HexDigest,HashHexDigest,RandomString,security

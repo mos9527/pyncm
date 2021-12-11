@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''最嗨电音、爵士电台 - DI.FM APIs'''
 
 from .. import WeapiCryptoRequest

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''歌单 - Playlist APIs'''
 from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
 from ..utils.crypto import GenerateCheckToken

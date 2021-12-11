@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''我的音乐云盘 - Cloud APIs'''
 import json
 from . import WeapiCryptoRequest,LoginRequiredApi,EapiCryptoRequest,GetCurrentSession

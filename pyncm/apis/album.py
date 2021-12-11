@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''专辑 - Album APIs'''
 from . import WeapiCryptoRequest
 

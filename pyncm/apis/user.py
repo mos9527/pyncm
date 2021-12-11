@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''用户 - User 有关 APIs'''
 from . import WeapiCryptoRequest,UserIDBasedApi,LoginRequiredApi
 

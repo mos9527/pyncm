@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''网易云搜索 - Cloudsearch APIs'''
 from . import WeapiCryptoRequest
 from enum import Enum

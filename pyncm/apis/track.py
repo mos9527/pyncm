@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''歌曲 - Track APIs'''
 from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest,LoginRequiredApi
 import json

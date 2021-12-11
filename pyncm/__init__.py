@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''# pyncm
 本模块提供`Get/Set/DumpCurrentSession`,`LoadNewSessionFromDump` 以管理请求
 API 使用请参见 `pyncm.apis` 文档 
@@ -7,16 +8,15 @@ from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests,logging,json
 
-__version__ = "1.6.4.1"
+__version__ = "1.6.4.2"
 
 class Session(requests.Session):   
     '''Represents an API session'''
     HOST          = "https://music.163.com/"
-    UA_DEFAULT    = 'Mozilla/5.0 (linux@github.com/greats3an/pyncm) Chrome/But.It.Was.Actually.PyNCM.%s' % __version__ # XXX this is just stupid
+    UA_DEFAULT    = 'Mozilla/5.0 (linux@github.com/greats3an/pyncm) Chrome/PyNCM.%s' % __version__
     UA_EAPI       = 'NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)'
     UA_LINUX_API  = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'    
-    CONFIG_EAPI   = {
-        # template EAPI config pulled from version 7.2.24, which would be overriden if some of the keys were specified in cookies 
+    CONFIG_EAPI   = {        
         'appver': '7.2.24','buildver':'7002024','channel':'offical','deviceId': RandomString(8),
         'mobilename' : 'Pixel2XL','os': 'android','osver':'10.1','resolution': '2712x1440','versioncode': '240'         
     }

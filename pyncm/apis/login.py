@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''登录、Anti - AntiCSRF 有关 APIs'''
 from . import EapiCryptoRequest, WeapiCryptoRequest,GetCurrentSession,logger,LoginFailedException
 from ..utils.crypto import HashHexDigest,GenerateCheckToken

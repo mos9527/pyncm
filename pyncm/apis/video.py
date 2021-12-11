@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''视频 - Video - 有关 APIs'''
 from . import WeapiCryptoRequest
 

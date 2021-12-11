@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging,time
 truncate_length = 64
 logger = logging.getLogger('NCMHelper')

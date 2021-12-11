@@ -1,4 +1,6 @@
-'''`__main__` entry for PyNCM'''
+# -*- coding: utf-8 -*-
+# PyNCM CLI interface
+
 from pyncm import DumpSessionAsString, GetCurrentSession, LoadSessionFromString, SetCurrentSession,__version__,logger
 from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.helper import TrackHelper

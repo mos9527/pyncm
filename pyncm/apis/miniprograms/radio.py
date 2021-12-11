@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''私人FM - Raido APIs'''
 
 from .. import EapiCryptoRequest,LoginRequiredApi

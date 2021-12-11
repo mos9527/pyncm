@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''伪装，Anti-AntiCSRF 有关 APIs'''
 from . import WeapiCryptoRequest
 import json
