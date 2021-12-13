@@ -10,10 +10,7 @@ def LrcProperty(tagname):
             if not hasattr(self,tagname):return Exception(tagname)
             try:
                 return getattr(self,tagname)
-            except:
-                # So this is how we enmurate all the attributes on startup
-                # As no values are assigned (not inintalized),they will surely cause errors
-                # Making it fallback to another value.Here,we fallback to its raw tagname
+            except:                
                 return Exception(tagname)
         @_wrapper.setter
         def _wrapper(self,v):
@@ -43,16 +40,16 @@ def tag2stamp(IDTag):
     div = IDTag.split(':') 
     if (len(div)==2):
         mm,ss = div
-        ss,xx = ss.split('.') # xx is hunderth of a second,but NE didn't think so
+        ss,xx = ss.split('.')
     else:
         mm,ss,xx = div
-    timestamp = int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx)) # <- workaround
+    timestamp = int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx)) # <- workaround for NE's bizarre tag format
     return timestamp
 # endregion
 
 class LrcParser:
     '''Parses lrc into mutable dict-like objects'''
-    # region Properties from Wikipedia [https://en.wikipedia.org/wiki/LRC_(file_format)]
+    # region Properties
     @LrcProperty('ar')
     def Artist(self):pass
     @LrcProperty('al')
