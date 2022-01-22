@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Helper utilites to aid operations w/ API responses
 import logging,time
 truncate_length = 64
 logger = logging.getLogger('NCMHelper')
