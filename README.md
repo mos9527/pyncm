@@ -4,6 +4,9 @@
 
 # 安装
     pip install pyncm
+推荐同时安装 （若不考虑使用CLI则可忽略）
+- `mutagen` : 为下载的音乐打上封面等
+- `tqdm`    : 显示实时下载进度
 
 # 使用
     python -m pyncm -h

@@ -88,9 +88,7 @@ def WeapiCryptoRequest(url,plain,method):
         params={
             'csrf_token':GetCurrentSession().csrf_token
         },
-        data={
-            **WeapiEncrypt(payload)
-        },
+        data={**WeapiEncrypt(payload)},
     )
 # region Port of `Binaryify/NeteaseCloudMusicApi`
 @BaseWrapper

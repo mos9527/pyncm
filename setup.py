@@ -1,14 +1,12 @@
 import setuptools,pyncm
 
-requirements = [
-    requirement.strip() for requirement in open('requirements.txt','r',encoding='utf-8').readlines()
-]
+requirements = ['requests']
 
 with open("README.md", "r",encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="pyncm", # Replace with your own username
+    name="pyncm",
     version=pyncm.__version__,
     author="greats3an",
     author_email="greats3an@gmail.com",

@@ -8,7 +8,7 @@ from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests,logging,json
 
-__version__ = "1.6.4.2"
+__version__ = "1.6.5.0"
 
 class Session(requests.Session):   
     '''Represents an API session'''

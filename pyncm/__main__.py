@@ -16,6 +16,15 @@ from os import remove,makedirs
 from logging import getLogger,basicConfig
 import sys,argparse
 
+# Import checks
+OPTIONALS = {'mutagen' : False,'tqdm' : False}
+OPTIONALS_MISSING_INFO = {'mutagen' : '无法为下载的音乐添加歌手信息，封面等资源' , 'tqdm' : '将不会显示下载进度条'}
+from importlib.util import find_spec
+for import_name in OPTIONALS:
+    OPTIONALS[import_name] = find_spec(import_name)   
+    if not OPTIONALS[import_name]:
+        sys.stderr.writelines([f'[WARN] {import_name} 没有安装，{OPTIONALS_MISSING_INFO[import_name]}\n']) 
+        
 __desc__ = '''PyNCM 网易云音乐下载工具'''
 max_workers = 4
     
@@ -47,6 +56,7 @@ class TrackDownloadTask(BaseKeyValueClass):
 class TaskPoolExecutorThread(Thread):
     @staticmethod
     def tag_audio(track : TrackHelper,file : str,cover_img : str = ''):
+        if not OPTIONALS['mutagen']: return
         def write_keys(song):
             # Write trackdatas
             song['title'] = track.TrackName
@@ -291,14 +301,18 @@ def __main__():
     subroutine = create_subroutine(dest)(args,enqueue_task)
     total_queued = subroutine(ids) # Enqueue tasks
     
-    import tqdm
-    _tqdm = tqdm.tqdm(bar_format='已完成 {desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} [{elapsed}<{remaining}')
-    _tqdm.total = total_queued
-    def report():                        
-        _tqdm.desc = _tqdm.format_sizeof(executor.xfered,suffix='B',divisor=1024)        
-        _tqdm.update(min(executor.finished_tasks,total_queued) - _tqdm.n)
-        return True    
-
+    if OPTIONALS['tqdm']:
+        import tqdm
+        _tqdm = tqdm.tqdm(bar_format='已完成 {desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} [{elapsed}<{remaining}')
+        _tqdm.total = total_queued
+        def report():                        
+            _tqdm.desc = _tqdm.format_sizeof(executor.xfered,suffix='B',divisor=1024)        
+            _tqdm.update(min(executor.finished_tasks,total_queued) - _tqdm.n)
+            return True    
+    else:
+        def report():                        
+            sys.stderr.write(f'下载中 : {executor.finished_tasks:.1f} / {total_queued} ({(executor.finished_tasks * 100 / total_queued):.1f} %,{executor.xfered >> 20} MB)               \r')            
+            return True    
     while executor.task_queue.unfinished_tasks >= 0:
         report() and sleep(.5)
         if executor.task_queue.unfinished_tasks == 0:break
