@@ -40,7 +40,7 @@ def GetUserArtistSubs(limit=30):
     Returns:
         dict
     '''
-    return '/api/artist/sublist', {"limit": str(limit)}
+    return '/weapi/artist/sublist', {"limit": str(limit)}
 
 SIGNIN_TYPE_MOBILE = 0
 '''移动端签到 +4 EXP'''

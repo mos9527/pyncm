@@ -29,11 +29,11 @@ def GetMVResource(mv_id:str, res=1080):
 
 
 @WeapiCryptoRequest
-def GetMVComments(mv_id, offset=0, limit=20,total=False):   
+def GetMVComments(mv_id : str, offset=0, limit=20,total=False):   
     '''网页端 - 获取MV评论
 
     Args:
-        album_id (str): 歌曲ID
+        mv_id (str): MV ID
         offset (int, optional): 时间顺序偏移数. Defaults to 0.
         limit (int, optional): 单次评论获取量. Defaults to 20.
         beforeTime (int, optional): 评论将从该时间戳（秒为单位）开始. Defaults to 0.

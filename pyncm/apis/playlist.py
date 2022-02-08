@@ -61,7 +61,7 @@ def SetManipulatePlaylistTracks(trackIds,playlistId,op="add",imme=True,e_r=True)
         [type]: [description]
     '''
     trackIds = trackIds if isinstance(trackIds,list) else [trackIds]
-    return '/api/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower()}
+    return '/weapi/v1/playlist/manipulate/tracks',{"trackIds":json.dumps(trackIds),"pid":str(playlistId),"op":op,"imme":str(imme).lower()}
 
 
 @EapiCryptoRequest

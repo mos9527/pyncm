@@ -79,4 +79,4 @@ def SetLikeTrack(trackId,like=True,userid=0,e_r=True):
     Returns:
         dict
     '''
-    return '/api/song/like',{"trackId":str(trackId),"userid":str(userid),"like":str(like).lower(),"e_r":str(e_r).lower()}    
+    return '/weapi/song/like',{"trackId":str(trackId),"userid":str(userid),"like":str(like).lower(),"e_r":str(e_r).lower()}    

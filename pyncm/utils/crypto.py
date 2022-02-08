@@ -110,7 +110,7 @@ def split_blocks(message, block_size=16, require_padding=True):
         return [message[i:i+16] for i in range(0, len(message), block_size)]
 class AES:
     """
-    Class for AES-128 encryption with CBC mode
+    Class for AES-128 encryption with CBC / ECB modes
 
     This is a raw implementation of AES, without key stretching or IV
     management

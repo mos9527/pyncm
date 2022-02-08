@@ -68,16 +68,18 @@
 - [Demo](https://github.com/greats3an/pyncm/tree/master/demos)
 
 # API 使用示例
-    >>> from pyncm import apis
-    >>> # 获取歌曲信息    
-    >>> apis.track.GetTrackAudio(29732235)
-    	`{'data': [{'id': 29732235, 'url': 'http://m701.music...`
-    >>> # 获取歌曲详情
-    >>> apis.track.GetTrackDetail(29732235)    
-    	`{'songs': [{'name': 'Supernova', 'id': 2...`
-    >>> # 获取歌曲评论
-    >>> apis.track.GetTrackComments(29732235)    
-    	`{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
+```python
+>>> from pyncm import apis
+# 获取歌曲信息    
+>>> apis.track.GetTrackAudio(29732235)
+    `{'data': [{'id': 29732235, 'url': 'http://m701.music...`
+# 获取歌曲详情
+>>> apis.track.GetTrackDetail(29732235)    
+    `{'songs': [{'name': 'Supernova', 'id': 2...`
+# 获取歌曲评论
+>>> apis.track.GetTrackComments(29732235)    
+    `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
+```
 
 ## 已实现的算法，APIs
 [Wiki - Pages](https://github.com/greats3an/pyncm/wiki) 
