@@ -72,21 +72,19 @@
 >>> from pyncm import apis
 # 获取歌曲信息    
 >>> apis.track.GetTrackAudio(29732235)
-    `{'data': [{'id': 29732235, 'url': 'http://m701.music...`
+{'data': [{'id': 29732235, 'url': 'http://m701.music...
 # 获取歌曲详情
 >>> apis.track.GetTrackDetail(29732235)    
-    `{'songs': [{'name': 'Supernova', 'id': 2...`
+{'songs': [{'name': 'Supernova', 'id': 2...
 # 获取歌曲评论
 >>> apis.track.GetTrackComments(29732235)    
-    `{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...`
+{'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 ```
 
-## 已实现的算法，APIs
-[Wiki - Pages](https://github.com/greats3an/pyncm/wiki) 
+## API 说明
+[移步 Wiki](https://github.com/greats3an/pyncm/wiki/05---%E6%AD%8C%E6%9B%B2) 
 
-[Wiki - Cryptograhpy](https://github.com/greats3an/pyncm/wiki/%23---Cryptography)
-
-# Credit
+# 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
