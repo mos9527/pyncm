@@ -180,26 +180,29 @@ def create_subroutine(sub_type) -> Subroutine:
             dAudios = sorted(dAudios,key=lambda song:song['id'])               
             queued = 0
             for dDetail,dAudio in zip(dDetails,dAudios):
-                song = TrackHelper(dDetail)
-                logger.info('单曲 #%d / %d - %s - %s (%dkbps) - %s' % (queued+1,len(dDetails),song.Title,song.AlbumName,dAudio['br'] // 1000,dAudio['type'].upper()))        
-                tSong = TrackDownloadTask(
-                    song = song,
-                    cover = BaseDownloadTask(id=song.ID,url=song.AlbumCover,dest=self.args.output),                    
-                    resource = BaseDownloadTask(id=song.ID,url=dAudio['url'],dest=self.args.output),
-                    lyrics = LyricsDownloadTask(id=song.ID,dest=self.args.output,lrc_blacklist=set(self.args.lyric_no)),
-                    resource_info = dAudio,
-                    save_as = self.args.template.format(**{
-                        'id':song.ID,
-                        'year':song.TrackPublishTime,
-                        'no': song.TrackNumber,
-                        'track' : song.TrackName,
-                        'album' : song.AlbumName,
-                        'title' : song.SanitizedTitle,
-                        'artists' : ' / '.join(song.Artists),
-                    })
-                )          
-                self.put(tSong)
-                queued += 1
+                try:
+                    song = TrackHelper(dDetail)
+                    logger.info('单曲 #%d / %d - %s - %s (%dkbps) - %s' % (queued+1,len(dDetails),song.Title,song.AlbumName,dAudio['br'] // 1000,dAudio['type'].upper()))        
+                    tSong = TrackDownloadTask(
+                        song = song,
+                        cover = BaseDownloadTask(id=song.ID,url=song.AlbumCover,dest=self.args.output),                    
+                        resource = BaseDownloadTask(id=song.ID,url=dAudio['url'],dest=self.args.output),
+                        lyrics = LyricsDownloadTask(id=song.ID,dest=self.args.output,lrc_blacklist=set(self.args.lyric_no)),
+                        resource_info = dAudio,
+                        save_as = self.args.template.format(**{
+                            'id':song.ID,
+                            'year':song.TrackPublishTime,
+                            'no': song.TrackNumber,
+                            'track' : song.TrackName,
+                            'album' : song.AlbumName,
+                            'title' : song.SanitizedTitle,
+                            'artists' : ' / '.join(song.Artists),
+                        })
+                    )          
+                    self.put(tSong)
+                    queued += 1
+                except Exception as e:
+                    logger.warning('单曲 #%d / %d - %s - %s 无法下载： %s' % (queued+1,len(dDetails),song.Title,song.AlbumName,e))
             return queued
         def __call__(self,ids): 
             queued = 0           
