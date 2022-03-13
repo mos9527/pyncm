@@ -60,7 +60,7 @@ def UserIDBasedApi(func):
     '''API 第一参数为用户 ID，而该参数可留 0 而指代已登录的用户 ID'''
     def wrapper(user_id=0,*a,**k):
         if user_id == 0 and GetCurrentSession().login_info['success']:
-            user_id = GetCurrentSession().login_info['content']['account']['id']
+            user_id = GetCurrentSession().uid
         elif user_id == 0:
             raise LOGIN_REQUIRED
         return func(user_id,*a,**k)

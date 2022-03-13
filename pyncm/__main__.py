@@ -284,8 +284,8 @@ def __main__():
     if args.phone and args.pwd:        
         login.LoginViaCellphone(args.phone,args.pwd)
         logger.info('账号 ：%s (VIP %s)' % (
-            GetCurrentSession().login_info['content']['profile']['nickname'],
-            GetCurrentSession().login_info['content']['profile']['vipType'])
+            GetCurrentSession().nickname,
+            GetCurrentSession().vipType)
         )
     if args.load:
         logger.info('读取登录信息 : %s' % args.load)

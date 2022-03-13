@@ -21,7 +21,7 @@ def WriteLoginInfo(response):
     sess.login_info['success'] = True
     cookie = sess.cookies.get_dict()
     sess.csrf_token = cookie['__csrf']
-    logger.debug('Updated login info for user %s' % sess.login_info['content']['profile']['nickname'])
+    logger.debug('Updated login info for user %s' % sess.nickname)
 
 @WeapiCryptoRequest
 def LoginLogout():
@@ -105,25 +105,17 @@ def LoginViaCellphone(phone='', password='',ctcode=86,remeberLogin=True) -> dict
         dict
     '''
     path ='/weapi/w/login/cellphone'
-    sess = GetCurrentSession()
-    if (phone and password):
-        sess.phone = phone
-        sess.password = password
-        return LoginViaCellphone()
-    else:
-        if (hasattr(sess,'phone') and hasattr(sess,'password')):
-            md5_password = HashHexDigest(sess.password)
-            login_status = WeapiCryptoRequest(lambda:(path,{
-                "phone":str(sess.phone),
-                "checkToken":GenerateCheckToken(),
-                "password":str(md5_password),
-                "rememberLogin":str(remeberLogin).lower(),
-                "countrycode":str(ctcode),
-            }))() 
-            WriteLoginInfo(login_status)
-            return sess.login_info
-        else:
-            raise LoginFailedException('Phone number or password not set')
+    sess = GetCurrentSession()            
+    passwordHash = HashHexDigest(password)
+    login_status = WeapiCryptoRequest(lambda:(path,{
+        "phone":str(phone),
+        "checkToken":GenerateCheckToken(),
+        "password":str(passwordHash),
+        "rememberLogin":str(remeberLogin).lower(),
+        "countrycode":str(ctcode),
+    }))() 
+    WriteLoginInfo(login_status)
+    return sess.login_info        
 
 @WeapiCryptoRequest
 def SetSendRegisterVerifcationCodeViaCellphone(cell : str,ctcode=86):

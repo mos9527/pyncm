@@ -8,7 +8,7 @@ from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests,logging,json
 
-__version__ = "1.6.5.1"
+__version__ = "1.6.5.2"
 
 class Session(requests.Session):   
     '''Represents an API session'''
@@ -30,7 +30,28 @@ class Session(requests.Session):
         }
         self.login_info = {'success': False,'tick': time(), 'content': None}
         self.csrf_token = ''
-
+    # region Shorthands
+    @property
+    def uid(self):
+        '''用户 ID'''
+        return self.login_info['content']['account']['id'] if self.logged_in else 0
+    @property
+    def nickname(self):
+        '''登陆用户的昵称'''
+        return self.login_info['content']['profile']['nickname'] if self.logged_in else ''
+    @property
+    def lastIP(self):
+        '''登陆时，上一次登陆的 IP'''
+        return self.login_info['content']['profile']['lastLoginIP'] if self.logged_in else ''
+    @property
+    def vipType(self):
+        '''账号 VIP 等级'''
+        return self.login_info['content']['profile']['vipType'] if self.logged_in else 0
+    @property
+    def logged_in(self):
+        '''是否已经登陆'''
+        return self.login_info['success']
+    # endregion
     def request(self, method: str, url: Union[str, bytes, Text], *a,**k) -> requests.Response:
         '''Initiates & fires a request
 
