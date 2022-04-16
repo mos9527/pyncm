@@ -15,7 +15,7 @@
                     [--load [保存的登陆信息文件]]
                     链接
 
-    PyNCM 网易云音乐下载工具
+    PyNCM 网易云音乐下载工具 1.6.5.3
 
     positional arguments:
     链接                    网易云音乐分享链接
@@ -63,8 +63,6 @@
     python -m pyncm http://music.163.com/album?id=3111188&userid=315542615  ...  
 
 其他功能详见 
-- [Wiki](https://github.com/greats3an/pyncm/wiki)
-
 - [Demo](https://github.com/greats3an/pyncm/tree/master/demos)
 
 # API 使用示例
@@ -82,7 +80,7 @@
 ```
 
 ## API 说明
-[移步 Wiki](https://github.com/greats3an/pyncm/wiki/05---%E6%AD%8C%E6%9B%B2) 
+大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/greats3an/pyncm/tree/master/pyncm/apis) 获得支持
 
 # 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)

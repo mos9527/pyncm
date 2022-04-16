@@ -21,7 +21,7 @@ from os.path import join, exists
 from os import remove, makedirs
 
 from logging import getLogger, basicConfig
-import sys, argparse
+import sys, argparse, re
 
 # Import checks
 OPTIONALS = {"mutagen": False, "tqdm": False}
@@ -159,11 +159,11 @@ class TaskPoolExecutorThread(Thread):
         length = int(response.headers.get("content-length"))
 
         with open(dest, "wb") as f:
-            for chunk in response.iter_content(1024 * 2**10):
+            for chunk in response.iter_content(128 * 2**10):
                 self.xfered += len(chunk)
                 if xfer:
                     self.finished_tasks += len(chunk) / length  # task [0,1]
-                f.write(chunk)  # write every 1MB read
+                f.write(chunk)  # write every 128KB read
         return dest
 
     def __init__(self, *a, **k):
@@ -317,12 +317,32 @@ def create_subroutine(sub_type) -> Subroutine:
 
 
 def parse_sharelink(url):
-    import urllib.parse
+    """Parses (partial) URLs for NE resources and determines its ID and type
 
-    split = urllib.parse.urlsplit(url)
-    dest = split.path.split("/")[-1]
-    query = urllib.parse.parse_qs(split.query)
-    return dest, query
+    e.g.
+        31140560 (plain song id)
+        https://greats3an.github.io/pyncmd/?trackId=1818064296 (pyncmd)
+        分享Ali Edwards的单曲《Devil Trigger》: http://music.163.com/song/1353163404/?userid=6483697162 (来自@网易云音乐) (mobile app)
+        "分享mos9527创建的歌单「東方 PC」: http://music.163.com/playlist?id=72897851187" (desktop app)
+    """
+    rurl = re.findall("(?:http|https):\/\/.*", url)
+    if rurl:
+        url = rurl[0]  # Use first URL found. Otherwise use value given as is.
+    numerics = re.findall("\d{4,}", url)
+    assert numerics, "未在链接中找到任何 ID"
+    ids = numerics[:1]  # Only pick the first match
+    table = {
+        "song": ["trackId", "song"],
+        "playlist": ["playlist"],
+        "album": ["album"],
+    }
+    rtype = "song"  # Defaults to songs (tracks)
+    for rtype_, rkeyword in table.items():
+        for kw in rkeyword:
+            if kw in url:
+                rtype = rtype_
+                break  # Match type by keyword
+    return rtype, ids
 
 
 def parse_args():
@@ -383,16 +403,13 @@ def parse_args():
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
     args = parser.parse_args()
-    dest, query = parse_sharelink(args.url)
+    rtype, ids = parse_sharelink(args.url)
 
-    ids = query["id"]
-    dest = dest
-
-    return ids, args, dest
+    return ids, args, rtype
 
 
 def __main__():
-    ids, args, dest = parse_args()
+    ids, args, rtype = parse_args()
     if args.phone and args.pwd:
         login.LoginViaCellphone(args.phone, args.pwd)
         logger.info(
@@ -413,7 +430,7 @@ def __main__():
     def enqueue_task(task):
         executor.task_queue.put(task)
 
-    subroutine = create_subroutine(dest)(args, enqueue_task)
+    subroutine = create_subroutine(rtype)(args, enqueue_task)
     total_queued = subroutine(ids)  # Enqueue tasks
 
     if OPTIONALS["tqdm"]:
