@@ -150,7 +150,7 @@ def SetRectifySongId(oldSongId, newSongId):
 
     Returns:
         dict
-    '''
-
-    a = GetCurrentSession().get(f"https://music.163.com/api/cloud/user/song/match?songId={oldSongId}&adjustSongId={newSongId}")
-    return json.loads(a.text)
+    '''    
+    return GetCurrentSession().get(
+        "/api/cloud/user/song/match",params={"songId":str(oldSongId),"adjustSongId":str(newSongId)}
+    ).json()

@@ -62,7 +62,7 @@ class Session(requests.Session):
         Returns:
             requests.Response: A requests.Response object
         '''    
-        if url[:4] != 'http':url = self.HOST + url                
+        if url[:4] != 'http':url = self.HOST + url        
         return super().request(method,url,*a,**k)  
 
     # region auth IO

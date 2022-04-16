@@ -109,13 +109,7 @@ def split_blocks(message, block_size=16, require_padding=True):
         assert len(message) % block_size == 0 or not require_padding
         return [message[i:i+16] for i in range(0, len(message), block_size)]
 class AES:
-    """
-    Class for AES-128 encryption with CBC / ECB modes
-
-    This is a raw implementation of AES, without key stretching or IV
-    management
-    """
-    MODE_CBC = 0xfe 
+    MODE_CBC = 0xfe
     MODE_ECB = 0xff
     BLOCKSIZE = 128 >> 3 # blocksize in bytes, used for padding
     rounds_by_key_size = {16: 10, 24: 12, 32: 14}
@@ -200,7 +194,7 @@ class AES:
         """
         Decrypts `plaintext` using ECB mode 
         Assumes data is already padded.
-        """        
+        """
         return bytearray(b''.join([self.decrypt_block(plaintext_block) for plaintext_block in split_blocks(ciphertext)]))
 
     def encrypt_cbc_nopadding(self, plaintext, iv):
@@ -256,11 +250,11 @@ EAPI_AES_KEY     = "e82ckenh8dichen8" # ecb
 def GenerateCheckToken():
     '''Generates `checkToken` parameter ,which is needed by a handful of Weapis'''        
     return security.wm_generate_config_chiper_bc(security.wm_generate_OTP_b())
-# endregion 
+# endregion
 # region NE's encryption algos
 def AESEncrypt(data:str, key:str, iv='',mode=AES.MODE_CBC):
     '''AES encipherer'''
-    def pad(data,blocksize=AES.BLOCKSIZE): # does anyone know what scheme this is?        
+    def pad(data,blocksize=AES.BLOCKSIZE): # PKCS#7
         return data + (blocksize - len(data) % blocksize) * chr(blocksize - len(data) % blocksize)
     cipher = AES(key.encode())        
     if mode == AES.MODE_CBC:

@@ -25,7 +25,7 @@ for import_name in OPTIONALS:
     if not OPTIONALS[import_name]:
         sys.stderr.writelines([f'[WARN] {import_name} 没有安装，{OPTIONALS_MISSING_INFO[import_name]}\n']) 
         
-__desc__ = '''PyNCM 网易云音乐下载工具'''
+__desc__ = '''PyNCM 网易云音乐下载工具 %s''' % __version__
 max_workers = 4
     
 BITRATES = {'standard':96000,'high':320000,'lossless':3200000}
