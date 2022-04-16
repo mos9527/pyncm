@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
-'''专辑 - Album APIs'''
+"""专辑 - Album APIs"""
 from . import WeapiCryptoRequest
 
+
 @WeapiCryptoRequest
-def GetAlbumInfo(album_id : str):
-    '''网页端 - 获取专辑信息
+def GetAlbumInfo(album_id: str):
+    """网页端 - 获取专辑信息
 
     Args:
         album_id (str): 专辑ID
 
     Returns:
         dict
-    '''
-    return '/weapi/v1/album/%s' % album_id,{}
+    """
+    return "/weapi/v1/album/%s" % album_id, {}
+
 
 @WeapiCryptoRequest
-def GetAlbumComments(album_id : str, offset=0, limit=20, beforeTime=0):
-    '''网页端 - 获取专辑评论
+def GetAlbumComments(album_id: str, offset=0, limit=20, beforeTime=0):
+    """网页端 - 获取专辑评论
 
     Args:
         album_id (str): 专辑ID
@@ -26,5 +28,11 @@ def GetAlbumComments(album_id : str, offset=0, limit=20, beforeTime=0):
 
     Returns:
         dict
-    '''
-    return '/weapi/v1/resource/comments/R_AL_3_%s' % album_id,{"rid":"R_AL_3_%s" % album_id,"offset":str(offset),"total":"true","limit":str(limit),"beforeTime":str(beforeTime * 1000)}
+    """
+    return "/weapi/v1/resource/comments/R_AL_3_%s" % album_id, {
+        "rid": "R_AL_3_%s" % album_id,
+        "offset": str(offset),
+        "total": "true",
+        "limit": str(limit),
+        "beforeTime": str(beforeTime * 1000),
+    }

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-'''私享云FM - Cloud FM APIs
+"""私享云FM - Cloud FM APIs
 
 `zone`即分区，已知的分区有
 - `CLASSICAL` 古典
-'''
+"""
 
 from .. import EapiCryptoRequest
 
+
 @EapiCryptoRequest
-def GetFmZoneInfo(limit=3,zone="CLASSICAL",e_r=True):
-    '''获取电台内容
+def GetFmZoneInfo(limit=3, zone="CLASSICAL", e_r=True):
+    """获取电台内容
 
     Args:
         limit (int, optional): 获取数目. Defaults to 3.
@@ -18,12 +19,17 @@ def GetFmZoneInfo(limit=3,zone="CLASSICAL",e_r=True):
 
     Returns:
         dict
-    '''
-    return '/eapi/zone/fm/get',{"limit":str(limit),"zone":zone,"e_r":str(e_r).lower()}
+    """
+    return "/eapi/zone/fm/get", {
+        "limit": str(limit),
+        "zone": zone,
+        "e_r": str(e_r).lower(),
+    }
+
 
 @EapiCryptoRequest
-def SetSkipFmTrack(id,zone="CLASSICAL",e_r=True):
-    '''跳过电台歌曲
+def SetSkipFmTrack(id, zone="CLASSICAL", e_r=True):
+    """跳过电台歌曲
 
     Args:
         id (int): 歌曲ID
@@ -32,5 +38,11 @@ def SetSkipFmTrack(id,zone="CLASSICAL",e_r=True):
 
     Returns:
         dict
-    '''
-    return '/eapi/zone/fm/skip',{"songId":str(id),"zone":zone,"e_r":str(e_r).lower(),"alg":"CLSalternate","time":"0"}
+    """
+    return "/eapi/zone/fm/skip", {
+        "songId": str(id),
+        "zone": zone,
+        "e_r": str(e_r).lower(),
+        "alg": "CLSalternate",
+        "time": "0",
+    }

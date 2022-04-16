@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
-'''视频 - Video - 有关 APIs'''
+"""视频 - Video - 有关 APIs"""
 from . import WeapiCryptoRequest
 
+
 @WeapiCryptoRequest
-def GetMVDetail(mv_id:str):
-    '''网页端 - 获取 MV 详情
+def GetMVDetail(mv_id: str):
+    """网页端 - 获取 MV 详情
 
     Args:
         mv_id (str): MV ID
 
     Returns:
         dict
-    '''
-    return '/weapi/v1/mv/detail',{'id':str(mv_id)}
+    """
+    return "/weapi/v1/mv/detail", {"id": str(mv_id)}
+
 
 @WeapiCryptoRequest
-def GetMVResource(mv_id:str, res=1080):
-    '''网页端 - 获取 MV 音视频资源
+def GetMVResource(mv_id: str, res=1080):
+    """网页端 - 获取 MV 音视频资源
 
     Args:
         mv_id (str): MV ID
@@ -24,13 +26,13 @@ def GetMVResource(mv_id:str, res=1080):
 
     Returns:
         dict
-    '''
-    return '/weapi/song/enhance/play/mv/url',{"id":str(mv_id),"r":str(res)}
+    """
+    return "/weapi/song/enhance/play/mv/url", {"id": str(mv_id), "r": str(res)}
 
 
 @WeapiCryptoRequest
-def GetMVComments(mv_id : str, offset=0, limit=20,total=False):   
-    '''网页端 - 获取MV评论
+def GetMVComments(mv_id: str, offset=0, limit=20, total=False):
+    """网页端 - 获取MV评论
 
     Args:
         mv_id (str): MV ID
@@ -40,5 +42,10 @@ def GetMVComments(mv_id : str, offset=0, limit=20,total=False):
 
     Returns:
         dict
-    '''
-    return '/weapi/v1/resource/comments/R_MV_5_%s' % mv_id,{"rid":"R_MV_5_%s" % mv_id,"offset":str(offset),"total":str(total).lower(),"limit":str(limit)}
+    """
+    return "/weapi/v1/resource/comments/R_MV_5_%s" % mv_id, {
+        "rid": "R_MV_5_%s" % mv_id,
+        "offset": str(offset),
+        "total": str(total).lower(),
+        "limit": str(limit),
+    }

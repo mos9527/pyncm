@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-'''Sports FM - 跑步FM APIs'''
+"""Sports FM - 跑步FM APIs"""
 from .. import EapiCryptoRequest
 import json
 
+
 @EapiCryptoRequest
-def GetSportsFMRecommendations(limit=3,bpm:int = 50,e_r=True):
-    '''移动端 - 小程序 - 获取跑步FM歌曲推荐
+def GetSportsFMRecommendations(limit=3, bpm: int = 50, e_r=True):
+    """移动端 - 小程序 - 获取跑步FM歌曲推荐
 
     Args:
         limit (int, optional): 获取数目. Defaults to 3.
@@ -14,12 +15,19 @@ def GetSportsFMRecommendations(limit=3,bpm:int = 50,e_r=True):
 
     Returns:
         dict
-    '''
-    return '/eapi/radio/sport/get',{"limit":str(limit),"bpm":str(bpm),"e_r":str(e_r).lower()}
+    """
+    return "/eapi/radio/sport/get", {
+        "limit": str(limit),
+        "bpm": str(bpm),
+        "e_r": str(e_r).lower(),
+    }
+
 
 @EapiCryptoRequest
-def GetCalculatedSportsFMStatus(distance=0,maxbpm=0,time=0,songList=[],steps=0,bpm=0,e_r=True):
-    '''移动端 - 小程序 - 计算运动详情
+def GetCalculatedSportsFMStatus(
+    distance=0, maxbpm=0, time=0, songList=[], steps=0, bpm=0, e_r=True
+):
+    """移动端 - 小程序 - 计算运动详情
 
     Args:
         distance (int, optional): 距离 - 单位未知. Defaults to 0.
@@ -32,13 +40,13 @@ def GetCalculatedSportsFMStatus(distance=0,maxbpm=0,time=0,songList=[],steps=0,b
 
     Returns:
         dict
-    '''
-    return '/eapi/radio/sport/calculate',{
-        "distance":str(distance),
-        "maxbpm":str(maxbpm),
-        "time":str(time),
-        "songList":json.dumps(songList),
-        "steps":str(steps),
-        "bpm":str(bpm),
-        "e_r":str(e_r).lower()
+    """
+    return "/eapi/radio/sport/calculate", {
+        "distance": str(distance),
+        "maxbpm": str(maxbpm),
+        "time": str(time),
+        "songList": json.dumps(songList),
+        "steps": str(steps),
+        "bpm": str(bpm),
+        "e_r": str(e_r).lower(),
     }

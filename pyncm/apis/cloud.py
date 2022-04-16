@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-'''我的音乐云盘 - Cloud APIs'''
+"""我的音乐云盘 - Cloud APIs"""
 import json
-from . import WeapiCryptoRequest,LoginRequiredApi,EapiCryptoRequest,GetCurrentSession
+from . import WeapiCryptoRequest, LoginRequiredApi, EapiCryptoRequest, GetCurrentSession
 from ..utils.crypto import GenerateCheckToken
-BUCKET = 'jd-musicrep-privatecloud-audio-public'
+
+BUCKET = "jd-musicrep-privatecloud-audio-public"
+
 
 @WeapiCryptoRequest
 @LoginRequiredApi
-def GetCloudDriveInfo(limit=30,offset=0):
-    '''PC端 - 获取个人云盘内容
+def GetCloudDriveInfo(limit=30, offset=0):
+    """PC端 - 获取个人云盘内容
 
     Args:
         limit (int, optional): 单次获取量. Defaults to 30.
@@ -16,26 +18,37 @@ def GetCloudDriveInfo(limit=30,offset=0):
 
     Returns:
         dict
-    '''
-    return '/weapi/v1/cloud/get',{limit:str(limit),offset:str(offset)}
+    """
+    return "/weapi/v1/cloud/get", {limit: str(limit), offset: str(offset)}
+
 
 @WeapiCryptoRequest
 @LoginRequiredApi
-def GetCloudDriveItemInfo(song_ids:list):
-    '''PC端 - 获取个人云盘项目详情
+def GetCloudDriveItemInfo(song_ids: list):
+    """PC端 - 获取个人云盘项目详情
 
     Args:
         song_ids (list): 云盘项目 ID
 
     Returns:
         dict
-    '''
-    ids = song_ids if isinstance(song_ids,list) else [song_ids]
-    return '/weapi/v1/cloud/get/byids',{'songIds':ids}
+    """
+    ids = song_ids if isinstance(song_ids, list) else [song_ids]
+    return "/weapi/v1/cloud/get/byids", {"songIds": ids}
+
 
 @EapiCryptoRequest
-def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket=BUCKET,local=False):
-    '''移动端 - 云盘占位
+def GetNosToken(
+    filename,
+    md5,
+    fileSize,
+    ext,
+    type="audio",
+    nos_product=3,
+    bucket=BUCKET,
+    local=False,
+):
+    """移动端 - 云盘占位
 
     Args:
         filename (str): 文件名
@@ -49,12 +62,24 @@ def GetNosToken(filename,md5,fileSize,ext,type='audio',nos_product=3,bucket=BUCK
 
     Returns:
         dict
-    '''
-    return '/eapi/nos/token/alloc',{"type":str(type),"nos_product":str(nos_product),"md5":str(md5),"local":str(local).lower(),"filename":str(filename),"fileSize":str(fileSize),"ext":str(ext),"bucket":str(bucket),"checkToken":GenerateCheckToken()}
+    """
+    return "/eapi/nos/token/alloc", {
+        "type": str(type),
+        "nos_product": str(nos_product),
+        "md5": str(md5),
+        "local": str(local).lower(),
+        "filename": str(filename),
+        "fileSize": str(fileSize),
+        "ext": str(ext),
+        "bucket": str(bucket),
+        "checkToken": GenerateCheckToken(),
+    }
 
 
-def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True,bucket=BUCKET):
-    '''移动端 - 上传内容
+def SetUploadObject(
+    stream, md5, fileSize, objectKey, token, offset=0, compete=True, bucket=BUCKET
+):
+    """移动端 - 上传内容
 
     Args:
         stream : bytes / File 等数据体 .e.g open('file.mp3')
@@ -66,28 +91,24 @@ def SetUploadObject(stream,md5,fileSize,objectKey,token,offset=0,compete=True,bu
 
     Returns:
         dict
-    '''
+    """
     r = GetCurrentSession().post(
-        'http://45.127.129.8/%s/' % bucket + objectKey.replace('/','%2F'),
+        "http://45.127.129.8/%s/" % bucket + objectKey.replace("/", "%2F"),
         data=stream,
-        params={
-            'version':'1.0',
-            'offset':offset,
-            'complete':str(compete).lower()
-        },
+        params={"version": "1.0", "offset": offset, "complete": str(compete).lower()},
         headers={
-            'x-nos-token':token,
-            'Content-MD5':md5,
-            'Content-Type':'cloudmusic',
-            'Content-Length':str(fileSize)
-        }
+            "x-nos-token": token,
+            "Content-MD5": md5,
+            "Content-Type": "cloudmusic",
+            "Content-Length": str(fileSize),
+        },
     )
     return json.loads(r.text)
 
 
 @EapiCryptoRequest
-def GetCheckCloudUpload(md5,ext='',length=0,bitrate=0,songId=0,version=1):
-    '''移动端 - 检查云盘资源 
+def GetCheckCloudUpload(md5, ext="", length=0, bitrate=0, songId=0, version=1):
+    """移动端 - 检查云盘资源
 
     Args:
         md5 (str): 资源MD5哈希
@@ -99,18 +120,28 @@ def GetCheckCloudUpload(md5,ext='',length=0,bitrate=0,songId=0,version=1):
 
     Returns:
         dict
-    '''
-    return '/eapi/cloud/upload/check',{"songId":str(songId),"version":str(version),"md5":str(md5),"length":str(length),"ext":str(ext),"bitrate":str(bitrate),"checkToken":GenerateCheckToken()}
+    """
+    return "/eapi/cloud/upload/check", {
+        "songId": str(songId),
+        "version": str(version),
+        "md5": str(md5),
+        "length": str(length),
+        "ext": str(ext),
+        "bitrate": str(bitrate),
+        "checkToken": GenerateCheckToken(),
+    }
 
 
 @EapiCryptoRequest
-def SetUploadCloudInfo(resourceId,songid,md5,filename,song='.',artist='.',album='.',bitrate=128):
-    '''移动端 - 云盘资源提交
-    
+def SetUploadCloudInfo(
+    resourceId, songid, md5, filename, song=".", artist=".", album=".", bitrate=128
+):
+    """移动端 - 云盘资源提交
+
     注：
         - MD5 对应文件需已被 SetUploadObject 上传
         - song 项不得包含字符 .和/
-    
+
     Args:
         resourceId (str): GetNosToken 获得
         songid (str): GetCheckCloudUpload 获得
@@ -125,24 +156,38 @@ def SetUploadCloudInfo(resourceId,songid,md5,filename,song='.',artist='.',album=
 
     Returns:
         dict
-    '''
-    return '/eapi/upload/cloud/info/v2',{"resourceId":str(resourceId),"songid":str(songid),"md5":str(md5),"filename":str(filename),"song":str(song),"artist":str(artist),"album":str(album),"bitrate":bitrate}
+    """
+    return "/eapi/upload/cloud/info/v2", {
+        "resourceId": str(resourceId),
+        "songid": str(songid),
+        "md5": str(md5),
+        "filename": str(filename),
+        "song": str(song),
+        "artist": str(artist),
+        "album": str(album),
+        "bitrate": bitrate,
+    }
+
 
 @EapiCryptoRequest
 def SetPublishCloudResource(songid):
-    '''移动端 - 云盘资源发布
+    """移动端 - 云盘资源发布
 
     Args:
         songid (str): 来自 SetUploadCloudInfo
 
     Returns:
         SetUploadCloudInfo
-    '''
-    return '/eapi/cloud/pub/v2',{"songid":str(songid),"checkToken":GenerateCheckToken()}
+    """
+    return "/eapi/cloud/pub/v2", {
+        "songid": str(songid),
+        "checkToken": GenerateCheckToken(),
+    }
+
 
 @LoginRequiredApi
 def SetRectifySongId(oldSongId, newSongId):
-    '''移动端 - 歌曲纠偏
+    """移动端 - 歌曲纠偏
 
     Args:
         oldSongId : 欲纠偏的源歌曲ID
@@ -150,7 +195,12 @@ def SetRectifySongId(oldSongId, newSongId):
 
     Returns:
         dict
-    '''    
-    return GetCurrentSession().get(
-        "/api/cloud/user/song/match",params={"songId":str(oldSongId),"adjustSongId":str(newSongId)}
-    ).json()
+    """
+    return (
+        GetCurrentSession()
+        .get(
+            "/api/cloud/user/song/match",
+            params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
+        )
+        .json()
+    )

@@ -1,8 +1,8 @@
-import setuptools,pyncm
+import setuptools, pyncm
 
-requirements = ['requests']
+requirements = ["requests"]
 
-with open("README.md", "r",encoding='utf-8') as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -19,6 +19,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-    ],install_requires=requirements,
-    python_requires='>=3.6',
+    ],
+    install_requires=requirements,
+    python_requires=">=3.6",
 )
