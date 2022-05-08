@@ -252,7 +252,7 @@ def create_subroutine(sub_type) -> Subroutine:
                             song.Title,
                             song.AlbumName,
                             dAudio["br"] // 1000,
-                            dAudio["type"].upper(),
+                            str(dAudio["type"]).upper(),
                         )
                     )
                     tSong = TrackDownloadTask(
@@ -397,11 +397,14 @@ def parse_args():
     )
     group = parser.add_argument_group("登陆")
     group.add_argument("--phone", metavar="手机", default="", help="网易账户手机号")
-    group.add_argument("--pwd", metavar="密码", default="", help="网易账户密码")
+    group.add_argument("--pwd",'--password',metavar="密码", default="", help="网易账户密码")
     group.add_argument("--save", metavar="[保存到]", default="", help="写本次登录信息于文件")
     group.add_argument(
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
+    group.add_argument("--http",action='store_true',help='优先使用 HTTP，不保证不被升级')
+    group.add_argument("--log-level",help='日志等级',default='INFO')
+
     args = parser.parse_args()
     rtype, ids = parse_sharelink(args.url)
 
@@ -410,15 +413,20 @@ def parse_args():
 
 def __main__():
     ids, args, rtype = parse_args()
+    basicConfig(level=args.log_level, format="[%(levelname).4s] %(message)s")
+
+    if args.load:
+        logger.info("读取登录信息 : %s" % args.load)
+        SetCurrentSession(LoadSessionFromString(open(args.load).read()))
+    if args.http:
+        GetCurrentSession().force_http = True
+        logger.warning('优先使用 HTTP')
     if args.phone and args.pwd:
         login.LoginViaCellphone(args.phone, args.pwd)
         logger.info(
             "账号 ：%s (VIP %s)"
             % (GetCurrentSession().nickname, GetCurrentSession().vipType)
         )
-    if args.load:
-        logger.info("读取登录信息 : %s" % args.load)
-        SetCurrentSession(LoadSessionFromString(open(args.load).read()))
     if args.save:
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
@@ -463,6 +471,5 @@ def __main__():
 
 
 if __name__ == "__main__":
-    logger = getLogger()
-    basicConfig(level="DEBUG", format="[%(levelname).4s] %(message)s")
+    logger = getLogger()    
     sys.exit(__main__())

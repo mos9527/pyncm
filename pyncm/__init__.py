@@ -14,7 +14,7 @@ __version__ = "1.6.5.4"
 class Session(requests.Session):
     """Represents an API session"""
 
-    HOST = "https://music.163.com/"
+    HOST = "music.163.com"
     UA_DEFAULT = (
         "Mozilla/5.0 (linux@github.com/greats3an/pyncm) Chrome/PyNCM.%s" % __version__
     )
@@ -31,6 +31,7 @@ class Session(requests.Session):
         "resolution": "2712x1440",
         "versioncode": "240",
     }
+    force_http = False
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
@@ -88,12 +89,13 @@ class Session(requests.Session):
             requests.Response: A requests.Response object
         """
         if url[:4] != "http":
-            url = self.HOST + url
+            url = 'https://%s%s' % (self.HOST,url)         
+        if self.force_http:
+            url = url.replace('https:','http:')            
         return super().request(method, url, *a, **k)
 
-    # region auth IO
-    _AUTH_SYMBOLS = {
-        # symbols for loading/reloading authentication info
+    # region symbols for loading/reloading authentication info
+    _session_info = {        
         "login_info": (
             lambda self: getattr(self, "login_info"),
             lambda self, v: setattr(self, "login_info", v),
@@ -114,16 +116,16 @@ class Session(requests.Session):
     }
 
     def dump(self) -> dict:
-        """Dumps current authencation info as dictionary"""
+        """Dumps current session info as dictionary"""
         return {
-            name: self._AUTH_SYMBOLS[name][0](self)
-            for name in self._AUTH_SYMBOLS.keys()
+            name: self._session_info[name][0](self)
+            for name in self._session_info.keys()
         }
 
     def load(self, dumped):
-        """Loads current authencation info from dictionary"""
+        """Loads session info from dictionary"""
         for k, v in dumped.items():
-            self._AUTH_SYMBOLS[k][1](self, v)
+            self._session_info[k][1](self, v)
         return True
 
     # endregion
@@ -148,12 +150,12 @@ class SessionManager:
 
     @staticmethod
     def parse(dump: str) -> Session:
-        session = Session()  # a new session WILL be created
+        session = Session()
         dump = HexCompose(dump)
         dump = EapiDecrypt(dump).decode()
         dump = dump.split("-36cd479b6b5-")
         assert dump[0] == "pyncm"  # check magic
-        session.load(json.loads(dump[1]))  # loading config dict in
+        session.load(json.loads(dump[1]))  # loading config dict
         return session
 
     # endregion
@@ -180,7 +182,7 @@ def SetNewSession():
     sessionManager.set(Session())
 
 
-def LoadSessionFromString(dump: str) -> Session:  # TODO : use Pickle instead
+def LoadSessionFromString(dump: str) -> Session:
     """Loads a session from dumped string"""
     session = SessionManager.parse(dump)
     return session

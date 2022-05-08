@@ -178,7 +178,7 @@ def c_decrypt_abroad_message(hexstring):
         boxC = [c_signed_xor(boxB[i],boxA[i]) for i in range(0,64)]    
         boxD = [cast_to_signed(boxC[i] + cast_to_signed(-boxA[i])) for i in range(0,64)]    
         boxE = [c_signed_xor(boxD[i],WEAPI_ABROAD_IV[i]) for i in range(0,64)]                
-        boxA = source[i:i+64] # S-box operation, getting ready for next one
+        boxA = source[i:i+64]
         result += boxE    
     # last 4 bytes contains length, don't need them for now as we can just strip them away
     result = c_quote_int_as_hex(result[:-4])    
