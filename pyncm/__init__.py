@@ -8,7 +8,7 @@ from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 
-__version__ = "1.6.5.3"
+__version__ = "1.6.5.4"
 
 
 class Session(requests.Session):
@@ -21,8 +21,8 @@ class Session(requests.Session):
     UA_EAPI = "NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)"
     UA_LINUX_API = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36"
     CONFIG_EAPI = {
-        "appver": "7.2.24",
-        "buildver": "7002024",
+        "appver": "9.9.99",
+        "buildver": "9009099",
         "channel": "offical",
         "deviceId": RandomString(8),
         "mobilename": "Pixel2XL",

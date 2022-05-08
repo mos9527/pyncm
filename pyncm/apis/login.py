@@ -118,15 +118,15 @@ def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> di
     Returns:
         dict
     """
-    path = "/weapi/w/login/cellphone"
+    path = "/eapi/login/cellphone"
     sess = GetCurrentSession()
     passwordHash = HashHexDigest(password)
-    login_status = WeapiCryptoRequest(
+    login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
                 "phone": str(phone),
-                "checkToken": GenerateCheckToken(),
+                # "checkToken": GenerateCheckToken(),
                 "password": str(passwordHash),
                 "rememberLogin": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),

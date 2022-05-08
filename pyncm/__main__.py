@@ -464,5 +464,5 @@ def __main__():
 
 if __name__ == "__main__":
     logger = getLogger()
-    basicConfig(level="INFO", format="[%(levelname).4s] %(message)s")
+    basicConfig(level="DEBUG", format="[%(levelname).4s] %(message)s")
     sys.exit(__main__())
