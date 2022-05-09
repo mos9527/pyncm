@@ -128,7 +128,7 @@ def GetCheckCloudUpload(md5, ext="", length=0, bitrate=0, songId=0, version=1):
         "length": str(length),
         "ext": str(ext),
         "bitrate": str(bitrate),
-        "checkToken": Generate(),
+        "checkToken": GenerateCheckToken(),
     }
 
 
