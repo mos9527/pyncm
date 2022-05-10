@@ -15,7 +15,7 @@
                     [--load [保存的登陆信息文件]]
                     链接
 
-    PyNCM 网易云音乐下载工具 1.6.5.3
+    PyNCM 网易云音乐下载工具 1.6.5.5
 
     positional arguments:
     链接                    网易云音乐分享链接
@@ -57,7 +57,9 @@
     --pwd 密码              网易账户密码
     --save [保存到]          写本次登录信息于文件
     --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
-
+    --http                 优先使用 HTTP，不保证不被升级
+    --log-level LOG_LEVEL
+                           日志等级
 ### 使用示例
     python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
     python -m pyncm http://music.163.com/album?id=3111188&userid=315542615  ...  
