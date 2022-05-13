@@ -283,7 +283,7 @@ def create_subroutine(sub_type) -> Subroutine:
                         )
                         self.put(tSong)                        
                     else:
-                        logger.warn(
+                        logger.warning(
                             "单曲 #%d / %d - %s - %s 资源不存在"
                             % (
                                 index + 1,

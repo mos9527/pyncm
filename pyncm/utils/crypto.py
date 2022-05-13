@@ -267,7 +267,7 @@ def AESDecrypt(data:str,key:str,iv='',mode=AES.MODE_CBC):
     else:
         return PKCS7_unpad(cipher.decrypt_ecb_nopadding(data))
 
-def RSAEncrypt(data:str, e , n , reverse=True):
+def RSAEncrypt(data:str, n , e , reverse=True):
     m = data if not reverse else reversed(data)        
     m, e, N = int(''.join(m).encode('utf-8').hex(), 16), e , n        
     r = pow(m,e,N)
