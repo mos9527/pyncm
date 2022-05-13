@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-"""# 网易云音乐 APIs
-
-## 编写
-对 EAPI (非网页端所用) 请求，抓包后可将数据体 `params=` 后内容丢进 `tools/eapidumper.py` 直接生成相应 Python 函数。
-对于 Weapi (网页端，小程序所用) 请求，可在 `core.js` 内下断点后手动编写
-
-格式可参见现存 API 方法代码。欢迎 PR。
+"""网易云音乐 APIs
 
 ## 注意事项
-- (#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决:
-    
+- (#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决:    
     GetCurrentSession().headers['X-Real-IP'] = '118.88.88.88'
+
+## 新 API
+在获得相关 API 路径和参数后(可参考 Binaryify 大佬的视频 - BV1PY41147r9)
+可参考已有 API 函数格式编写相关 PyNCM API. 各API模式修饰器已在本文件注释
 """
 
 from time import time
@@ -22,7 +19,7 @@ from ..utils.crypto import (
     WeapiEncrypt,
     AbroadDecrypt,
 )
-from .. import GetCurrentSession, logger
+from .. import GetCurrentSession , logger
 import json, urllib.parse
 
 

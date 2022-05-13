@@ -2,7 +2,6 @@
 """我的音乐云盘 - Cloud APIs"""
 import json
 from . import WeapiCryptoRequest, LoginRequiredApi, EapiCryptoRequest, GetCurrentSession
-from ..utils.crypto import GenerateCheckToken
 
 BUCKET = "jd-musicrep-privatecloud-audio-public"
 
@@ -72,7 +71,6 @@ def GetNosToken(
         "fileSize": str(fileSize),
         "ext": str(ext),
         "bucket": str(bucket),
-        "checkToken": GenerateCheckToken(),
     }
 
 
@@ -127,8 +125,7 @@ def GetCheckCloudUpload(md5, ext="", length=0, bitrate=0, songId=0, version=1):
         "md5": str(md5),
         "length": str(length),
         "ext": str(ext),
-        "bitrate": str(bitrate),
-        "checkToken": GenerateCheckToken(),
+        "bitrate": str(bitrate),        
     }
 
 
@@ -180,8 +177,7 @@ def SetPublishCloudResource(songid):
         SetUploadCloudInfo
     """
     return "/eapi/cloud/pub/v2", {
-        "songid": str(songid),
-        "checkToken": GenerateCheckToken(),
+        "songid": str(songid),        
     }
 
 

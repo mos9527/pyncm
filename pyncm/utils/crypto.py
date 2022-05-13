@@ -2,8 +2,8 @@
 # Essential implementations of some of netease's security algorithms
 import base64
 from . import HexCompose,HexDigest,HashHexDigest,RandomString,security
-# region Pure AES / Rijndael algorithm implementaion. With CBC/ECB support
-# Modifed from : https://github.com/ricmoo/pyaes
+# region 'Pythonic' AES / Rijndael algorithm implementaion. With CBC/ECB support
+# Code from: https://github.com/ricmoo/pyaes
 s_box = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -229,14 +229,9 @@ class AES:
         return bytearray(b''.join(blocks))
 # endregion 
 # region secrets
-class RSAPublicKey():
-    def __init__(self, n, e):
-        '''RSA pubkey pubkey & modulus pair,values are interpeted as integers'''
-        self.n = int(n, 16)
-        self.e = int(e, 16)
-WEAPI_RSA_PUBKEY = RSAPublicKey(
-    "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",
-    "10001" # textbook rsa without padding
+WEAPI_RSA_PUBKEY = (
+    int("00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",16),
+    int("10001",16) # textbook rsa without padding
 )
 # AES keys & IVs targets AES-128 mode
 WEAPI_AES_KEY    = "0CoJUm6Qyw8W8jud" # cbc
@@ -246,44 +241,47 @@ EAPI_DIGEST_SALT = "nobody%(url)suse%(text)smd5forencrypt"
 EAPI_DATA_SALT   = "%(url)s-36cd479b6b5-%(text)s-36cd479b6b5-%(digest)s"
 EAPI_AES_KEY     = "e82ckenh8dichen8" # ecb
 # endregion
-# region dynamic parameters
-def GenerateCheckToken():
-    '''Generates `checkToken` parameter ,which is needed by a handful of Weapis'''        
-    return security.wm_generate_config_chiper_bc(security.wm_generate_OTP_b())
-# endregion
-# region NE's encryption algos
-def AESEncrypt(data:str, key:str, iv='',mode=AES.MODE_CBC):
-    '''AES encipherer'''
-    def pad(data,blocksize=AES.BLOCKSIZE): # PKCS#7
-        return data + (blocksize - len(data) % blocksize) * chr(blocksize - len(data) % blocksize)
+
+# region Cryptographic algorithims
+def PKCS7_pad(data,bs=AES.BLOCKSIZE):
+    return data + (bs - len(data) % bs) * chr(bs - len(data) % bs)
+
+def PKCS7_unpad(data,bs=AES.BLOCKSIZE):
+        pad = data[-1]
+        if not pad in range(0,bs):
+            return data # hack : data isn't padded
+        return data[:-pad]
+
+def AESEncrypt(data:str, key:str, iv='',mode=AES.MODE_CBC):    
     cipher = AES(key.encode())        
     if mode == AES.MODE_CBC:
-        return cipher.encrypt_cbc_nopadding(pad(data).encode(),iv.encode())
+        return cipher.encrypt_cbc_nopadding(PKCS7_pad(data).encode(),iv.encode())
     else:
-        return cipher.encrypt_ecb_nopadding(pad(data).encode())
-def AESDecrypt(data:str,key:str,iv='',mode=AES.MODE_CBC):
-    '''AES decipherer'''
-    def unpad(data):
-        pad = data[-1]
-        if not pad in range(0,AES.BLOCKSIZE):
-            return data # data isn't padded
-        return data[:-pad]
+        return cipher.encrypt_ecb_nopadding(PKCS7_pad(data).encode())
+
+def AESDecrypt(data:str,key:str,iv='',mode=AES.MODE_CBC):       
     cipher = AES(key.encode())
     if type(data) == str : data = data.enc
     if mode == AES.MODE_CBC:
-        return unpad(cipher.decrypt_cbc_nopadding(data,iv.encode()))
+        return PKCS7_unpad(cipher.decrypt_cbc_nopadding(data,iv.encode()))
     else:
-        return unpad(cipher.decrypt_ecb_nopadding(data))
-def RSAEncrypt(data:str, pubkey, reverse=True):
-    '''Signle-block textbook RSA encrpytion,encodes text to hexstring first'''
-    n = data if not reverse else reversed(data)        
-    n, e, N = int(''.join(n).encode('utf-8').hex(), 16), pubkey.e, pubkey.n
-    r = pow(n,e,N)
+        return PKCS7_unpad(cipher.decrypt_ecb_nopadding(data))
+
+def RSAEncrypt(data:str, e , n , reverse=True):
+    m = data if not reverse else reversed(data)        
+    m, e, N = int(''.join(m).encode('utf-8').hex(), 16), e , n        
+    r = pow(m,e,N)
     return HexCompose(hex(r)[2:].zfill(256))
 # endregion
-# region api-specific encryption routines
+
+# region api-specific crypto routines
 def WeapiEncrypt(params, aes_key2=None):
-    '''Cipherer used in web & PC client'''
+    '''Implements /weapi/ Asymmetric encryption
+    
+    * NOTE : As asymmetric encryption goes, the only practical way
+    of reverse engineer these APIs is to setting breakpoints within
+    `core.js`. Searching for `encSecKey` is helpful for finding BPs to set.
+    '''
     aes_key2 = aes_key2 or RandomString(16)
     params = str(params)
     # 1st go,encrypt the text with aes_key and aes_iv
@@ -293,34 +291,44 @@ def WeapiEncrypt(params, aes_key2=None):
     params = str(base64.encodebytes(AESEncrypt(
         data=params, key=aes_key2, iv=WEAPI_AES_IV,mode=AES.MODE_CBC)), encoding='utf-8')
     # 3rd go,generate RSA encrypted encSecKey
-    encSecKey = HexDigest(RSAEncrypt(aes_key2, WEAPI_RSA_PUBKEY))        
+    encSecKey = HexDigest(RSAEncrypt(aes_key2, *WEAPI_RSA_PUBKEY))        
     return {
         'params': params,
         'encSecKey': encSecKey
     }
+
 def AbroadDecrypt(result):
     '''Decrypts 'abroad:True' messages.'''
     return security.c_decrypt_abroad_message(result)
 
-'''the following's credit goes to:
-    - decompilation of `libpoison.so` : https://juejin.im/post/6844903586879520775
-    - Binaryify/NeteaseCloudMusicApi  : https://github.com/Binaryify/NeteaseCloudMusicApi'''
-def LinuxApiEncrypt(params):
-    '''Cipherer used in desktop linux clients, rarely any non-agnostic API uses this'''
-    params = str(params)
-    return {
-        'eparams':HexDigest(AESEncrypt(params,key=LINUXAPI_AES_KEY,mode=AES.MODE_ECB))
-    }
 def EapiEncrypt(url,params):
-    '''Cipherer used in mobile and PC clients'''
+    '''Implements EAPI request encryption
+    
+    * NOTE : EAPI is currently the most widely used variant of all. Since
+    it uses symmetric crypto, reversing it is acutally pretty straightforward.
+
+    Binaryify (author of Binaryify/NeteaseCloudMusicApi) has made an excellent video
+    describing this process - https://bilibili.com/video/BV1PY41147r9    
+    '''
     url,params = str(url),str(params)
     digest = HashHexDigest(EAPI_DIGEST_SALT % {'url':url,'text':params})
     params = EAPI_DATA_SALT % ({'url':url,'text':params,'digest':digest})
     return {
         'params':HexDigest(AESEncrypt(params,key=EAPI_AES_KEY,mode=AES.MODE_ECB))
     }
+    
 def EapiDecrypt(cipher):
-    '''Decipherer used in mobile and PC clients'''
+    '''Implements EAPI response decryption'''
     cipher = bytearray(cipher) if isinstance(cipher,str) else cipher
     return AESDecrypt(cipher,EAPI_AES_KEY,mode=AES.MODE_ECB) if cipher else cipher
+
+def LinuxApiEncrypt(params):
+    '''Implements Linux/Deepin client API encryption
+    
+    * NOTE : Besides its lack of salting, reversing of this API goes about the same
+    with the EAPI variant. Check its notes for more info.'''
+    params = str(params)
+    return {
+        'eparams':HexDigest(AESEncrypt(params,key=LINUXAPI_AES_KEY,mode=AES.MODE_ECB))
+    }
 # endregion

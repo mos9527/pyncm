@@ -7,7 +7,7 @@ from . import (
     logger,
     LoginFailedException,
 )
-from ..utils.crypto import HashHexDigest, GenerateCheckToken
+from ..utils.crypto import HashHexDigest
 import time
 
 
@@ -126,7 +126,6 @@ def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> di
             path,
             {
                 "phone": str(phone),
-                # "checkToken": GenerateCheckToken(),
                 "password": str(passwordHash),
                 "rememberLogin": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
@@ -195,8 +194,7 @@ def SetRegisterAccountViaCellphone(
         "captcha": str(captcha),
         "nickname": str(nickname),
         "password": HashHexDigest(password),
-        "phone": str(cell),
-        "checkToken": GenerateCheckToken(),
+        "phone": str(cell),        
     }
 
 

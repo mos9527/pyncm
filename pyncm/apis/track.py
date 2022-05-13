@@ -19,12 +19,14 @@ def GetTrackDetail(song_ids: list):
 
 
 @EapiCryptoRequest
-def GetTrackAudio(song_ids: list, bitrate=320000):
+def GetTrackAudio(song_ids: list, bitrate=320000,encodeType='aac'):
     """PC 端 - 获取歌曲音频详情（文件URL、MD5...）
 
     Args:
         song_ids (list): 歌曲 ID
         bitrate (int, optional): 比特率 (96k SQ 320k HQ 320k+ Lossless/SQ). Defaults to 320000
+        encodeType (str, optional) Defaults to `aac`
+
     Returns:
         dict
     """
@@ -32,10 +34,29 @@ def GetTrackAudio(song_ids: list, bitrate=320000):
     ids = song_ids if isinstance(song_ids, list) else [song_ids]
     return "/eapi/song/enhance/player/url", {
         "ids": ids,
-        "encodeType": "aac",
+        "encodeType": str(encodeType),
         "br": str(bitrate),
     }
 
+@EapiCryptoRequest
+def GetTrackDownloadURL(song_ids: list, bitrate=320000,encodeType='aac'):
+    """PC 端 - 以计费下载方式，获取资源URL
+
+    Args:
+        song_ids (list): 歌曲 ID
+        bitrate (int, optional): 比特率 (96k SQ 320k HQ 320k+ Lossless/SQ). Defaults to 320000
+        encodeType (str, optional) Defaults to `aac`
+
+    Returns:
+        dict
+    """
+
+    ids = song_ids if isinstance(song_ids, list) else [song_ids]
+    return "/eapi/song/enhance/download/url", {
+        "ids": ids,
+        "encodeType": "aac",
+        "br": str(bitrate),
+    }
 
 @WeapiCryptoRequest
 def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):

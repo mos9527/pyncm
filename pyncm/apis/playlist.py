@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """歌单 - Playlist APIs"""
 from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
-from ..utils.crypto import GenerateCheckToken
 import json
 
 
@@ -94,8 +93,7 @@ def SetCreatePlaylist(name: str, privacy=False):
     """
     return "/eapi/playlist/create", {
         "name": str(name),
-        "privacy": str(privacy * 1),
-        "checkToken": GenerateCheckToken(),
+        "privacy": str(privacy * 1),        
     }
 
 
@@ -112,6 +110,5 @@ def SetRemovePlaylist(ids: list, self=True):
     ids = ids if isinstance(ids, list) else [ids]
     return "/eapi/playlist/remove", {
         "ids": str(ids),
-        "self": str(self),
-        "checkToken": GenerateCheckToken(),
+        "self": str(self),        
     }
