@@ -7,9 +7,14 @@ on:
   release:
     types: [created]
 
+  push:
+    branches:
+      - master
+      
 jobs:
   deploy:
-
+    if: "contains(github.event.head_commit.message, 'Version')"
+    
     runs-on: ubuntu-latest
 
     steps:
