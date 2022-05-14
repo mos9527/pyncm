@@ -139,6 +139,7 @@ def EapiCryptoRequest(url, plain, method):
         **GetCurrentSession().CONFIG_EAPI,
         "requestId": f"{int(time() * 1000)}_0233",
         "__csrf": GetCurrentSession().csrf_token,
+        'os':'pc'
         # **GetCurrentSession().cookies,
     }
     payload = {**plain, "header": json.dumps(cookies)}

@@ -4,8 +4,6 @@ utils/__pycache__
 __pycache__
 .vscode
 log.txt
-.test*
-test*
 temp
 output
 notes

@@ -106,7 +106,7 @@ def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
 
 
 @EapiEncipered
-@WeapiCryptoRequest
+@EapiCryptoRequest
 @LoginRequiredApi
 def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
     """PC端 - 收藏歌曲到 `我喜欢的音乐`
@@ -119,7 +119,7 @@ def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
     Returns:
         dict
     """
-    return "/weapi/song/like", {
+    return "/eapi/song/like", {
         "trackId": str(trackId),
         "userid": str(userid),
         "like": str(like).lower(),

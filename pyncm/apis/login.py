@@ -130,8 +130,7 @@ def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> di
                 "rememberLogin": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
             },
-        ),
-        {},
+        )
     )()
     WriteLoginInfo(login_status)
     return sess.login_info
