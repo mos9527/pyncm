@@ -6,9 +6,9 @@ BASE62 = "PJArHa0dpwhvMNYqKnTbitWfEmosQ9527ZBx46IXUgOzD81VuSFyckLRljG3eC"
 BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 
-def RandomString(len, chars=BASE62):
+def RandomString(_l, chars=BASE62):
     # Generates random string of `len` chars within a selected number of chars
-    return "".join([random.choice(chars) for i in range(0, len)])
+    return "".join([random.choice(chars) for i in range(0, _l)])
 
 
 def HexDigest(data: bytearray):

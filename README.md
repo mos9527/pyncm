@@ -10,13 +10,13 @@
 - `coloredlogs` : 彩色日志输出
 
 # 使用
-    usage: __main__.py [-h] [--max-workers 最多同时下载任务数] [--template 模板]
-                    [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]]
-                    [--phone 手机] [--pwd 密码] [--save [保存到]] [--load [保存的登陆信息文件]]
-                    [--http] [--log-level LOG_LEVEL]
-                    链接
+    usage: pyncm [-h] [--max-workers 最多同时下载任务数] [--template 模板] [--quality 音质]
+                [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机]
+                [--pwd 密码] [--save [保存到]] [--load [保存的登陆信息文件]] [--http]
+                [--log-level LOG_LEVEL]
+                [链接]
 
-    PyNCM 网易云音乐下载工具 1.6.6.0
+    PyNCM 网易云音乐下载工具 1.6.6.1
 
     positional arguments:
     链接                    网易云音乐分享链接
@@ -65,9 +65,10 @@
                             日志等级
 
 ### 使用示例
-    python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
-    python -m pyncm http://music.163.com/album?id=3111188&userid=315542615  ...  
-
+## 下载单曲
+[![asciicast](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1.svg)](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1)
+## 使用 [UNM](https://github.com/UnblockNeteaseMusic/server) 下载灰色歌曲
+[![asciicast](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb.svg)](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb)
 其他功能详见 
 - [Demo](https://github.com/greats3an/pyncm/tree/master/demos)
 

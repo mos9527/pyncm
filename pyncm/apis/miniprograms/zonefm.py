@@ -28,11 +28,11 @@ def GetFmZoneInfo(limit=3, zone="CLASSICAL", e_r=True):
 
 
 @EapiCryptoRequest
-def SetSkipFmTrack(id, zone="CLASSICAL", e_r=True):
+def SetSkipFmTrack(songId, zone="CLASSICAL", e_r=True):
     """跳过电台歌曲
 
     Args:
-        id (int): 歌曲ID
+        songId (int): 歌曲ID
         zone (str, optional): 分区. Defaults to "CLASSICAL".
         e_r (bool, optional): [未知]. Defaults to True.
 
@@ -40,7 +40,7 @@ def SetSkipFmTrack(id, zone="CLASSICAL", e_r=True):
         dict
     """
     return "/eapi/zone/fm/skip", {
-        "songId": str(id),
+        "songId": str(songId),
         "zone": zone,
         "e_r": str(e_r).lower(),
         "alg": "CLSalternate",

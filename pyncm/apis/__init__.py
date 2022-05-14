@@ -19,7 +19,7 @@ from ..utils.crypto import (
     WeapiEncrypt,
     AbroadDecrypt,
 )
-from .. import GetCurrentSession , logger
+from .. import GetCurrentSession, logger
 import json, urllib.parse
 
 

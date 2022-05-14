@@ -52,7 +52,7 @@ def LoginRefreshToken():
 
 
 @WeapiCryptoRequest
-def LoginQrcodeUnikey(type=1):
+def LoginQrcodeUnikey(dtype=1):
     """网页端 - 获取二维码登录令牌
 
     - 该令牌UUID适用于以下 URL：
@@ -66,7 +66,7 @@ def LoginQrcodeUnikey(type=1):
     Returns:
         dict
     """
-    return "/weapi/login/qrcode/unikey", {"type": str(type)}
+    return "/weapi/login/qrcode/unikey", {"type": str(dtype)}
 
 
 @WeapiCryptoRequest
@@ -130,7 +130,8 @@ def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> di
                 "rememberLogin": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
             },
-        )
+        ),
+        {},
     )()
     WriteLoginInfo(login_status)
     return sess.login_info
@@ -194,7 +195,7 @@ def SetRegisterAccountViaCellphone(
         "captcha": str(captcha),
         "nickname": str(nickname),
         "password": HashHexDigest(password),
-        "phone": str(cell),        
+        "phone": str(cell),
     }
 
 

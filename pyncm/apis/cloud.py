@@ -42,7 +42,7 @@ def GetNosToken(
     md5,
     fileSize,
     ext,
-    type="audio",
+    ftype="audio",
     nos_product=3,
     bucket=BUCKET,
     local=False,
@@ -54,7 +54,7 @@ def GetNosToken(
         md5 (str): 文件 MD5
         fileSize (str): 文件大小
         ext (str): 文件拓展名
-        type (str, optional): 上传类型. Defaults to 'audio'.
+        ftype (str, optional): 上传类型. Defaults to 'audio'.
         nos_product (int, optional): APP类型. Defaults to 3.
         bucket (str, optional): 转存bucket. Defaults to 'jd-musicrep-privatecloud-audio-public'.
         local (bool, optional): 未知. Defaults to False.
@@ -63,7 +63,7 @@ def GetNosToken(
         dict
     """
     return "/eapi/nos/token/alloc", {
-        "type": str(type),
+        "type": str(ftype),
         "nos_product": str(nos_product),
         "md5": str(md5),
         "local": str(local).lower(),
@@ -125,7 +125,7 @@ def GetCheckCloudUpload(md5, ext="", length=0, bitrate=0, songId=0, version=1):
         "md5": str(md5),
         "length": str(length),
         "ext": str(ext),
-        "bitrate": str(bitrate),        
+        "bitrate": str(bitrate),
     }
 
 
@@ -177,7 +177,7 @@ def SetPublishCloudResource(songid):
         SetUploadCloudInfo
     """
     return "/eapi/cloud/pub/v2", {
-        "songid": str(songid),        
+        "songid": str(songid),
     }
 
 

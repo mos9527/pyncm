@@ -19,7 +19,7 @@ def GetTrackDetail(song_ids: list):
 
 
 @EapiCryptoRequest
-def GetTrackAudio(song_ids: list, bitrate=320000,encodeType='aac'):
+def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
     """PC 端 - 获取歌曲音频详情（文件URL、MD5...）
 
     Args:
@@ -38,8 +38,9 @@ def GetTrackAudio(song_ids: list, bitrate=320000,encodeType='aac'):
         "br": str(bitrate),
     }
 
+
 @EapiCryptoRequest
-def GetTrackDownloadURL(song_ids: list, bitrate=320000,encodeType='aac'):
+def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
     """PC 端 - 以计费下载方式，获取资源URL
 
     Args:
@@ -57,6 +58,7 @@ def GetTrackDownloadURL(song_ids: list, bitrate=320000,encodeType='aac'):
         "encodeType": "aac",
         "br": str(bitrate),
     }
+
 
 @WeapiCryptoRequest
 def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):

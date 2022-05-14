@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # PyNCM CLI interface
 
-from zeroconf import logging
 from pyncm import (
     DumpSessionAsString,
     GetCurrentSession,
@@ -25,11 +24,11 @@ from logging import getLogger, basicConfig
 import sys, argparse, re
 
 # Import checks
-OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs" : False}
+OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs": False}
 OPTIONALS_MISSING_INFO = {
     "mutagen": "无法为下载的音乐添加歌手信息，封面等资源",
     "tqdm": "将不会显示下载进度条",
-    "coloredlogs" : "日志不会以彩色输出"
+    "coloredlogs": "日志不会以彩色输出",
 }
 from importlib.util import find_spec
 
@@ -54,7 +53,7 @@ class BaseDownloadTask(BaseKeyValueClass):
     id: int
     url: str
     dest: str
-    bitrate : int
+    bitrate: int
 
 
 class LyricsDownloadTask(BaseDownloadTask):
@@ -68,9 +67,9 @@ class TrackDownloadTask(BaseKeyValueClass):
     cover: BaseDownloadTask
     lyrics: BaseDownloadTask
     audio: BaseDownloadTask
-    
-    index : int
-    total : int
+
+    index: int
+    total: int
     lyrics_exclude: set
     save_as: str
 
@@ -161,7 +160,7 @@ class TaskPoolExecutorThread(Thread):
         return False
 
     def download_by_url(self, url, dest, xfer=False):
-        # Downloads generic content        
+        # Downloads generic content
         response = GetCurrentSession().get(url, stream=True)
         length = int(response.headers.get("content-length"))
 
@@ -173,7 +172,7 @@ class TaskPoolExecutorThread(Thread):
                 f.write(chunk)  # write every 128KB read
         return dest
 
-    def __init__(self, *a, max_workers=4,**k):
+    def __init__(self, *a, max_workers=4, **k):
         super().__init__(*a, **k)
         self.finished_tasks: float = 0
         self.xfered = 0
@@ -184,23 +183,24 @@ class TaskPoolExecutorThread(Thread):
         def execute(task: TrackDownloadTask):
             try:
                 # Downloding source audio
-                dAudio = track.GetTrackAudio(task.audio.id,bitrate=task.audio.bitrate)['data'][0]
-                assert dAudio['url'] , "%s 无法下载，资源不存在" % task.song.Title
+                dAudio = track.GetTrackAudio(task.audio.id, bitrate=task.audio.bitrate)
+                dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value
+                assert dAudio["url"], "%s 无法下载，资源不存在" % task.song.Title
                 logger.info(
-                        "开始下载 #%d / %d - %s - %s - %skbps - %s"
-                        % (
-                            task.index + 1,
-                            task.total,
-                            task.song.Title,
-                            task.song.AlbumName,
-                            dAudio['br'] // 1000,
-                            dAudio['type'].upper()
-                        )
+                    "开始下载 #%d / %d - %s - %s - %skbps - %s"
+                    % (
+                        task.index + 1,
+                        task.total,
+                        task.song.Title,
+                        task.song.AlbumName,
+                        dAudio["br"] // 1000,
+                        dAudio["type"].upper(),
+                    )
                 )
                 if not exists(task.audio.dest):
                     makedirs(task.audio.dest)
                 dest_src = self.download_by_url(
-                    dAudio['url'],
+                    dAudio["url"],
                     join(
                         task.audio.dest,
                         task.save_as + "." + dAudio["type"],
@@ -226,8 +226,10 @@ class TaskPoolExecutorThread(Thread):
                 try:
                     self.tag_audio(task.song, dest_src, dest_cvr)
                 except Exception as e:
-                    logger.warning("标签无效 - %s" % (task.song.Title, e))
-                logger.info("完成下载 #%d / %d - %s" % (task.index+1,task.total,task.song.Title))
+                    logger.warning("标签失败 - %s - %s" % (task.song.Title, e))
+                logger.info(
+                    "完成下载 #%d / %d - %s" % (task.index + 1, task.total, task.song.Title)
+                )
                 # Cleaning up
                 remove(dest_cvr)
             except Exception as e:
@@ -258,11 +260,11 @@ def create_subroutine(sub_type) -> Subroutine:
 
     class Playlist(Subroutine):
         def forIds(self, ids):
-            dDetails = track.GetTrackDetail(ids)["songs"]            
-            dDetails = sorted(dDetails, key=lambda song: song["id"])            
+            dDetails = track.GetTrackDetail(ids).get("songs")
+            dDetails = sorted(dDetails, key=lambda song: song["id"])
             for index, dDetail in enumerate(dDetails):
                 try:
-                    song = TrackHelper(dDetail)                    
+                    song = TrackHelper(dDetail)
                     tSong = TrackDownloadTask(
                         index=index,
                         total=len(dDetails),
@@ -271,15 +273,15 @@ def create_subroutine(sub_type) -> Subroutine:
                             id=song.ID, url=song.AlbumCover, dest=self.args.output
                         ),
                         audio=BaseDownloadTask(
-                            id=song.ID, 
-                            bitrate=BITRATES[self.args.quality],                            
-                            dest=self.args.output
+                            id=song.ID,
+                            bitrate=BITRATES[self.args.quality],
+                            dest=self.args.output,
                         ),
                         lyrics=LyricsDownloadTask(
                             id=song.ID,
                             dest=self.args.output,
                             lrc_blacklist=set(self.args.lyric_no),
-                        ),                        
+                        ),
                         save_as=self.args.template.format(
                             **{
                                 "id": song.ID,
@@ -292,22 +294,22 @@ def create_subroutine(sub_type) -> Subroutine:
                             }
                         ),
                     )
-                    self.put(tSong)                        
+                    self.put(tSong)
 
                 except Exception as e:
                     logger.warning(
                         "单曲 #%d / %d - %s - %s 无法下载： %s"
                         % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
                     )
-            return index
+            return index + 1
 
         def __call__(self, ids):
             queued = 0
             for _id in ids:
                 dList = playlist.GetPlaylistInfo(_id)
-                logger.info("歌单 ：%s" % dList["playlist"]["name"])
+                logger.info("歌单 ：%s" % dict(dList)["playlist"]["name"])
                 queued += self.forIds(
-                    [tid["id"] for tid in dList["playlist"]["trackIds"]]
+                    [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
                 )
             return queued
 
@@ -316,8 +318,8 @@ def create_subroutine(sub_type) -> Subroutine:
             queued = 0
             for _id in ids:
                 dList = album.GetAlbumInfo(_id)
-                logger.info("专辑 ：%s" % dList["album"]["name"])
-                queued += self.forIds([tid["id"] for tid in dList["songs"]])
+                logger.info("专辑 ：%s" % dict(dList["album"]["name"]))
+                queued += self.forIds([dict(tid["id"]) for tid in dict(dList["songs"])])
             return queued
 
     class Song(Playlist):
@@ -356,17 +358,20 @@ def parse_sharelink(url):
     return rtype, ids
 
 
+PLACEHOLDER_URL = "00000"
+
+
 def parse_args():
     """Setting up __main__ argparser"""
     parser = argparse.ArgumentParser(
         description=__desc__, formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("url", metavar="链接", help="网易云音乐分享链接")
+    parser.add_argument(
+        "url", metavar="链接", help="网易云音乐分享链接", nargs="?", default=PLACEHOLDER_URL
+    )
     group = parser.add_argument_group("下载")
     group.add_argument(
-        "--max-workers","--max",
-        metavar='最多同时下载任务数',
-        default=4,type=int
+        "--max-workers", "--max", metavar="最多同时下载任务数", default=4, type=int
     )
     group.add_argument(
         "--template",
@@ -394,7 +399,7 @@ def parse_args():
         high     - 较高
         standard - 标准""",
         default="standard",
-    )    
+    )
     group.add_argument("--output", metavar="输出", default=".", help="输出文件夹")
     group = parser.add_argument_group("歌词")
     group.add_argument(
@@ -413,13 +418,13 @@ def parse_args():
     )
     group = parser.add_argument_group("登陆")
     group.add_argument("--phone", metavar="手机", default="", help="网易账户手机号")
-    group.add_argument("--pwd",'--password',metavar="密码", default="", help="网易账户密码")
+    group.add_argument("--pwd", "--password", metavar="密码", default="", help="网易账户密码")
     group.add_argument("--save", metavar="[保存到]", default="", help="写本次登录信息于文件")
     group.add_argument(
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
-    group.add_argument("--http",action='store_true',help='优先使用 HTTP，不保证不被升级')
-    group.add_argument("--log-level",help='日志等级',default='INFO')
+    group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
+    group.add_argument("--log-level", help="日志等级", default="INFO")
 
     args = parser.parse_args()
     rtype, ids = parse_sharelink(args.url)
@@ -428,30 +433,41 @@ def parse_args():
 
 
 def __main__():
+    logger = getLogger()
     ids, args, rtype = parse_args()
     log_stream = sys.stdout
     # Getting tqdm & logger to work nicely together
     if OPTIONALS["tqdm"]:
         from tqdm.std import tqdm as tqdm_c
+
         class SemaphoreStdout:
             @staticmethod
             def write(__s):
                 # Blocks tqdm's output until write on this stream is done
                 # Solves cases where progress bars gets re-rendered when logs
                 # spews out too fast
-                with tqdm_c.external_write_mode(file=sys.stdout,nolock=False):
+                with tqdm_c.external_write_mode(file=sys.stdout, nolock=False):
                     return sys.stdout.write(__s)
+
         log_stream = SemaphoreStdout
     if OPTIONALS["coloredlogs"]:
         import coloredlogs
-        coloredlogs.install(level=args.log_level,fmt="%(asctime)s %(hostname)s [%(levelname).4s] %(message)s",stream=log_stream,isatty=True)
-    basicConfig(level=args.log_level, format="[%(levelname).4s] %(message)s",stream=log_stream)
+
+        coloredlogs.install(
+            level=args.log_level,
+            fmt="%(asctime)s %(hostname)s [%(levelname).4s] %(message)s",
+            stream=log_stream,
+            isatty=True,
+        )
+    basicConfig(
+        level=args.log_level, format="[%(levelname).4s] %(message)s", stream=log_stream
+    )
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)
         SetCurrentSession(LoadSessionFromString(open(args.load).read()))
     if args.http:
         GetCurrentSession().force_http = True
-        logger.warning('优先使用 HTTP')
+        logger.warning("优先使用 HTTP")
     if args.phone and args.pwd:
         login.LoginViaCellphone(args.phone, args.pwd)
         logger.info(
@@ -461,6 +477,11 @@ def __main__():
     if args.save:
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
+        return 0
+
+    if args.url == PLACEHOLDER_URL:
+        sys.argv.append("-h")  # If using placeholder, no argument is really passed
+        return __main__()  # In which case, print help and exit
 
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
@@ -502,5 +523,4 @@ def __main__():
 
 
 if __name__ == "__main__":
-    logger = getLogger()    
     sys.exit(__main__())

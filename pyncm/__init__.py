@@ -8,7 +8,7 @@ from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 
-__version__ = "1.6.6.0"
+__version__ = "1.6.6.1"
 
 
 class Session(requests.Session):
@@ -89,13 +89,13 @@ class Session(requests.Session):
             requests.Response: A requests.Response object
         """
         if url[:4] != "http":
-            url = 'https://%s%s' % (self.HOST,url)         
+            url = "https://%s%s" % (self.HOST, url)
         if self.force_http:
-            url = url.replace('https:','http:')            
+            url = url.replace("https:", "http:")
         return super().request(method, url, *a, **k)
 
     # region symbols for loading/reloading authentication info
-    _session_info = {        
+    _session_info = {
         "login_info": (
             lambda self: getattr(self, "login_info"),
             lambda self, v: setattr(self, "login_info", v),

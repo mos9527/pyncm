@@ -58,13 +58,13 @@ SIGNIN_TYPE_WEB = 1
 
 @WeapiCryptoRequest
 @LoginRequiredApi
-def SetSignin(type=0):
+def SetSignin(dtype=0):
     """移动端、PC端 - 每日签到
 
     Args:
-        type (int, optional): 签到类型，请使用本模块内 SIGNIN_TYPE_... 之一 .Defaults to SIGNIN_TYPE_MOBILE.
+        dtype (int, optional): 签到类型，请使用本模块内 SIGNIN_TYPE_... 之一 .Defaults to SIGNIN_TYPE_MOBILE.
 
     Returns:
         dict
     """
-    return "/weapi/point/dailyTask", {"type": str(type)}
+    return "/weapi/point/dailyTask", {"type": str(dtype)}

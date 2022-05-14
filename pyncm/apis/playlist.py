@@ -93,7 +93,7 @@ def SetCreatePlaylist(name: str, privacy=False):
     """
     return "/eapi/playlist/create", {
         "name": str(name),
-        "privacy": str(privacy * 1),        
+        "privacy": str(privacy * 1),
     }
 
 
@@ -110,5 +110,5 @@ def SetRemovePlaylist(ids: list, self=True):
     ids = ids if isinstance(ids, list) else [ids]
     return "/eapi/playlist/remove", {
         "ids": str(ids),
-        "self": str(self),        
+        "self": str(self),
     }
