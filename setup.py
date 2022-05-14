@@ -1,7 +1,5 @@
 import setuptools, pyncm
 
-requirements = ["requests"]
-
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
@@ -20,6 +18,7 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    install_requires=requirements,
+    install_requires=["requests"],
+    extras_require=["tqdm","mutagen","coloredlogs"],
     python_requires=">=3.6",
 )

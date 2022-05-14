@@ -4,18 +4,19 @@
 
 # 安装
     pip install pyncm
-推荐同时安装 （若不考虑使用CLI则可忽略）
+可选 （若不考虑使用CLI则请忽略）
 - `mutagen` : 为下载的音乐打上封面等
 - `tqdm`    : 显示实时下载进度
+- `coloredlogs` : 彩色日志输出
 
 # 使用
-    python -m pyncm -h
-
-    usage: __main__.py [-h] [--template 模板] [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机] [--pwd 密码] [--save [保存到]]
-                    [--load [保存的登陆信息文件]]
+    usage: __main__.py [-h] [--max-workers 最多同时下载任务数] [--template 模板]
+                    [--quality 音质] [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]]
+                    [--phone 手机] [--pwd 密码] [--save [保存到]] [--load [保存的登陆信息文件]]
+                    [--http] [--log-level LOG_LEVEL]
                     链接
 
-    PyNCM 网易云音乐下载工具 1.6.5.5
+    PyNCM 网易云音乐下载工具 1.6.6.0
 
     positional arguments:
     链接                    网易云音乐分享链接
@@ -24,13 +25,14 @@
     -h, --help            show this help message and exit
 
     下载:
+    --max-workers 最多同时下载任务数, --max 最多同时下载任务数
     --template 模板         保存文件名模板
-                                参数：
+                                参数：    
                                     id     - 网易云音乐资源 ID
                                     year   - 出版年份
                                     no     - 专辑中编号
                                     album  - 专辑标题
-                                    track  - 单曲标题
+                                    track  - 单曲标题        
                                     title  - 完整标题
                                     artists- 艺术家名
                                 例：
@@ -54,12 +56,14 @@
 
     登陆:
     --phone 手机            网易账户手机号
-    --pwd 密码              网易账户密码
+    --pwd 密码, --password 密码
+                            网易账户密码
     --save [保存到]          写本次登录信息于文件
     --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
-    --http                 优先使用 HTTP，不保证不被升级
+    --http                优先使用 HTTP，不保证不被升级
     --log-level LOG_LEVEL
-                           日志等级
+                            日志等级
+
 ### 使用示例
     python -m pyncm http://music.163.com/song?id=31140560 --phone... --password...
     python -m pyncm http://music.163.com/album?id=3111188&userid=315542615  ...  

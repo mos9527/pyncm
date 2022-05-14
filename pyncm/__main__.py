@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # PyNCM CLI interface
 
+from zeroconf import logging
 from pyncm import (
     DumpSessionAsString,
     GetCurrentSession,
@@ -24,8 +25,12 @@ from logging import getLogger, basicConfig
 import sys, argparse, re
 
 # Import checks
-OPTIONALS = {"mutagen": False, "tqdm": False}
-OPTIONALS_MISSING_INFO = {"mutagen": "无法为下载的音乐添加歌手信息，封面等资源", "tqdm": "将不会显示下载进度条"}
+OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs" : False}
+OPTIONALS_MISSING_INFO = {
+    "mutagen": "无法为下载的音乐添加歌手信息，封面等资源",
+    "tqdm": "将不会显示下载进度条",
+    "coloredlogs" : "日志不会以彩色输出"
+}
 from importlib.util import find_spec
 
 for import_name in OPTIONALS:
@@ -36,7 +41,6 @@ for import_name in OPTIONALS:
         )
 
 __desc__ = """PyNCM 网易云音乐下载工具 %s""" % __version__
-max_workers = 4
 
 BITRATES = {"standard": 96000, "high": 320000, "lossless": 3200000}
 # Key-Value classes
@@ -50,6 +54,7 @@ class BaseDownloadTask(BaseKeyValueClass):
     id: int
     url: str
     dest: str
+    bitrate : int
 
 
 class LyricsDownloadTask(BaseDownloadTask):
@@ -62,8 +67,10 @@ class TrackDownloadTask(BaseKeyValueClass):
     song: TrackHelper
     cover: BaseDownloadTask
     lyrics: BaseDownloadTask
-    resource: BaseDownloadTask
-    resource_info: dict
+    audio: BaseDownloadTask
+    
+    index : int
+    total : int
     lyrics_exclude: set
     save_as: str
 
@@ -154,7 +161,7 @@ class TaskPoolExecutorThread(Thread):
         return False
 
     def download_by_url(self, url, dest, xfer=False):
-        # Downloads generic content
+        # Downloads generic content        
         response = GetCurrentSession().get(url, stream=True)
         length = int(response.headers.get("content-length"))
 
@@ -166,23 +173,37 @@ class TaskPoolExecutorThread(Thread):
                 f.write(chunk)  # write every 128KB read
         return dest
 
-    def __init__(self, *a, **k):
+    def __init__(self, *a, max_workers=4,**k):
         super().__init__(*a, **k)
         self.finished_tasks: float = 0
         self.xfered = 0
         self.task_queue = Queue()
+        self.max_workers = max_workers
 
     def run(self):
         def execute(task: TrackDownloadTask):
             try:
-                if not exists(task.resource.dest):
-                    makedirs(task.resource.dest)
                 # Downloding source audio
+                dAudio = track.GetTrackAudio(task.audio.id,bitrate=task.audio.bitrate)['data'][0]
+                assert dAudio['url'] , "%s 无法下载，资源不存在" % task.song.Title
+                logger.info(
+                        "开始下载 #%d / %d - %s - %s - %skbps - %s"
+                        % (
+                            task.index + 1,
+                            task.total,
+                            task.song.Title,
+                            task.song.AlbumName,
+                            dAudio['br'] // 1000,
+                            dAudio['type'].upper()
+                        )
+                )
+                if not exists(task.audio.dest):
+                    makedirs(task.audio.dest)
                 dest_src = self.download_by_url(
-                    task.resource.url,
+                    dAudio['url'],
                     join(
-                        task.resource.dest,
-                        task.save_as + "." + task.resource_info["type"],
+                        task.audio.dest,
+                        task.save_as + "." + dAudio["type"],
                     ),
                     xfer=True,
                 )
@@ -202,13 +223,17 @@ class TaskPoolExecutorThread(Thread):
                 if lrc_text:
                     open(dest_lrc, "w", encoding="utf-8").write(lrc_text)
                 # Tagging the audio
-                self.tag_audio(task.song, dest_src, dest_cvr)
+                try:
+                    self.tag_audio(task.song, dest_src, dest_cvr)
+                except Exception as e:
+                    logger.warning("标签无效 - %s" % (task.song.Title, e))
+                logger.info("完成下载 #%d / %d - %s" % (task.index+1,task.total,task.song.Title))
                 # Cleaning up
                 remove(dest_cvr)
             except Exception as e:
-                logger.warning("下载未完成 %s - %s" % (task.song.Title, e))
+                logger.warning("下载失败 %s - %s" % (task.song.Title, e))
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             while True:
                 task = self.task_queue.get()
                 future = executor.submit(execute, task)
@@ -233,65 +258,42 @@ def create_subroutine(sub_type) -> Subroutine:
 
     class Playlist(Subroutine):
         def forIds(self, ids):
-            dDetails = track.GetTrackDetail(ids)["songs"]
-            dAudios = track.GetTrackAudio(ids, bitrate=BITRATES[self.args.quality])[
-                "data"
-            ]
-
-            dDetails = sorted(dDetails, key=lambda song: song["id"])
-            dAudios = sorted(dAudios, key=lambda song: song["id"])            
-            for index, (dDetail, dAudio) in enumerate(zip(dDetails, dAudios)):
+            dDetails = track.GetTrackDetail(ids)["songs"]            
+            dDetails = sorted(dDetails, key=lambda song: song["id"])            
+            for index, dDetail in enumerate(dDetails):
                 try:
-                    song = TrackHelper(dDetail)
-                    if dAudio["type"]:
-                        logger.info(
-                            "单曲 #%d / %d - %s - %s (%dkbps) - %s"
-                            % (
-                                index + 1,
-                                len(dDetails),
-                                song.Title,
-                                song.AlbumName,
-                                dAudio["br"] // 1000,
-                                str(dAudio["type"]).upper(),
-                            )
-                        )
-                        tSong = TrackDownloadTask(
-                            song=song,
-                            cover=BaseDownloadTask(
-                                id=song.ID, url=song.AlbumCover, dest=self.args.output
-                            ),
-                            resource=BaseDownloadTask(
-                                id=song.ID, url=dAudio["url"], dest=self.args.output
-                            ),
-                            lyrics=LyricsDownloadTask(
-                                id=song.ID,
-                                dest=self.args.output,
-                                lrc_blacklist=set(self.args.lyric_no),
-                            ),
-                            resource_info=dAudio,
-                            save_as=self.args.template.format(
-                                **{
-                                    "id": song.ID,
-                                    "year": song.TrackPublishTime,
-                                    "no": song.TrackNumber,
-                                    "track": song.TrackName,
-                                    "album": song.AlbumName,
-                                    "title": song.SanitizedTitle,
-                                    "artists": " / ".join(song.Artists),
-                                }
-                            ),
-                        )
-                        self.put(tSong)                        
-                    else:
-                        logger.warning(
-                            "单曲 #%d / %d - %s - %s 资源不存在"
-                            % (
-                                index + 1,
-                                len(dDetails),
-                                song.Title,
-                                song.AlbumName,                                
-                            )
-                        )
+                    song = TrackHelper(dDetail)                    
+                    tSong = TrackDownloadTask(
+                        index=index,
+                        total=len(dDetails),
+                        song=song,
+                        cover=BaseDownloadTask(
+                            id=song.ID, url=song.AlbumCover, dest=self.args.output
+                        ),
+                        audio=BaseDownloadTask(
+                            id=song.ID, 
+                            bitrate=BITRATES[self.args.quality],                            
+                            dest=self.args.output
+                        ),
+                        lyrics=LyricsDownloadTask(
+                            id=song.ID,
+                            dest=self.args.output,
+                            lrc_blacklist=set(self.args.lyric_no),
+                        ),                        
+                        save_as=self.args.template.format(
+                            **{
+                                "id": song.ID,
+                                "year": song.TrackPublishTime,
+                                "no": song.TrackNumber,
+                                "track": song.TrackName,
+                                "album": song.AlbumName,
+                                "title": song.SanitizedTitle,
+                                "artists": " / ".join(song.Artists),
+                            }
+                        ),
+                    )
+                    self.put(tSong)                        
+
                 except Exception as e:
                     logger.warning(
                         "单曲 #%d / %d - %s - %s 无法下载： %s"
@@ -362,6 +364,11 @@ def parse_args():
     parser.add_argument("url", metavar="链接", help="网易云音乐分享链接")
     group = parser.add_argument_group("下载")
     group.add_argument(
+        "--max-workers","--max",
+        metavar='最多同时下载任务数',
+        default=4,type=int
+    )
+    group.add_argument(
         "--template",
         metavar="模板",
         help=r"""保存文件名模板
@@ -387,7 +394,7 @@ def parse_args():
         high     - 较高
         standard - 标准""",
         default="standard",
-    )
+    )    
     group.add_argument("--output", metavar="输出", default=".", help="输出文件夹")
     group = parser.add_argument_group("歌词")
     group.add_argument(
@@ -422,8 +429,23 @@ def parse_args():
 
 def __main__():
     ids, args, rtype = parse_args()
-    basicConfig(level=args.log_level, format="[%(levelname).4s] %(message)s")
-
+    log_stream = sys.stdout
+    # Getting tqdm & logger to work nicely together
+    if OPTIONALS["tqdm"]:
+        from tqdm.std import tqdm as tqdm_c
+        class SemaphoreStdout:
+            @staticmethod
+            def write(__s):
+                # Blocks tqdm's output until write on this stream is done
+                # Solves cases where progress bars gets re-rendered when logs
+                # spews out too fast
+                with tqdm_c.external_write_mode(file=sys.stdout,nolock=False):
+                    return sys.stdout.write(__s)
+        log_stream = SemaphoreStdout
+    if OPTIONALS["coloredlogs"]:
+        import coloredlogs
+        coloredlogs.install(level=args.log_level,fmt="%(asctime)s %(hostname)s [%(levelname).4s] %(message)s",stream=log_stream,isatty=True)
+    basicConfig(level=args.log_level, format="[%(levelname).4s] %(message)s",stream=log_stream)
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)
         SetCurrentSession(LoadSessionFromString(open(args.load).read()))
@@ -440,7 +462,7 @@ def __main__():
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
 
-    executor = TaskPoolExecutorThread()
+    executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
     executor.start()
 
@@ -454,7 +476,7 @@ def __main__():
         import tqdm
 
         _tqdm = tqdm.tqdm(
-            bar_format="已完成 {desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} [{elapsed}<{remaining}"
+            bar_format="{desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} {elapsed}<{remaining}"
         )
         _tqdm.total = total_queued
 
