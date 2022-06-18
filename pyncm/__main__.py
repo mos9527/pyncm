@@ -318,8 +318,8 @@ def create_subroutine(sub_type) -> Subroutine:
             queued = 0
             for _id in ids:
                 dList = album.GetAlbumInfo(_id)
-                logger.info("专辑 ：%s" % dict(dList["album"]["name"]))
-                queued += self.forIds([dict(tid["id"]) for tid in dict(dList["songs"])])
+                logger.info("专辑 ：%s" % dict(dList)["album"]["name"])
+                queued += self.forIds([tid["id"] for tid in dList["songs"]])
             return queued
 
     class Song(Playlist):
