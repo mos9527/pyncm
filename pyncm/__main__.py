@@ -262,6 +262,7 @@ def create_subroutine(sub_type) -> Subroutine:
         def forIds(self, ids):
             dDetails = track.GetTrackDetail(ids).get("songs")
             dDetails = sorted(dDetails, key=lambda song: song["id"])
+            index = 0
             for index, dDetail in enumerate(dDetails):
                 try:
                     song = TrackHelper(dDetail)
@@ -367,7 +368,7 @@ def parse_args():
         description=__desc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
-        "url", metavar="链接", help="网易云音乐分享链接", nargs="?", default=PLACEHOLDER_URL
+        "url", metavar="链接", help="网易云音乐分享链接", nargs="*", default=PLACEHOLDER_URL
     )
     group = parser.add_argument_group("下载")
     group.add_argument(
@@ -427,14 +428,13 @@ def parse_args():
     group.add_argument("--log-level", help="日志等级", default="INFO")
 
     args = parser.parse_args()
-    rtype, ids = parse_sharelink(args.url)
+    
 
-    return ids, args, rtype
-
+    return args , [parse_sharelink(url) for url in args.url]
 
 def __main__():
     logger = getLogger()
-    ids, args, rtype = parse_args()
+    args , tasks = parse_args()    
     log_stream = sys.stdout
     # Getting tqdm & logger to work nicely together
     if OPTIONALS["tqdm"]:
@@ -490,8 +490,11 @@ def __main__():
     def enqueue_task(task):
         executor.task_queue.put(task)
 
-    subroutine = create_subroutine(rtype)(args, enqueue_task)
-    total_queued = subroutine(ids)  # Enqueue tasks
+    total_queued = 0
+    for rtype,ids in tasks:
+        logger.info("处理任务 ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲'}[rtype]))
+        subroutine = create_subroutine(rtype)(args, enqueue_task)
+        total_queued += subroutine(ids)  # Enqueue tasks
 
     if OPTIONALS["tqdm"]:
         import tqdm
