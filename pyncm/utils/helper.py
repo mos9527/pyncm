@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-# Helper utilites to aid operations w/ API responses
-import logging, time
-
+'''Helper utilites to aid operations w/ API responses'''
+import time
 truncate_length = 64
-logger = logging.getLogger("NCMHelper")
-
 
 def TrackHelperProperty(default=None):
     def preWrapper(func):
@@ -13,14 +10,8 @@ def TrackHelperProperty(default=None):
             try:
                 return func(*a, **k)
             except:
-                logger.warn(
-                    "Error while getting track attribute %s,using fallback value %s"
-                    % (func.__name__, default)
-                )
                 return default
-
         return wrapper
-
     return preWrapper
 
 

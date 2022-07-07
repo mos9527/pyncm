@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""伪装，Anti-AntiCSRF 有关 APIs"""
+"""未定用途 API,暂留"""
 from . import WeapiCryptoRequest
 import json
 

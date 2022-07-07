@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# Another lrc file parser
+'''Another lrc file parser'''
 import re
 from collections import defaultdict
-
 
 def LrcProperty(tagname):
     def wrapper(func):
@@ -232,7 +231,7 @@ class LrcParser:
 
             Returns None if nothing is found
         """
-
+        # TODO : Can we make it O(loglog N)?
         def search(val, src: list, l, r):
             """Binary serach"""
             pivot = (l + r) >> 1

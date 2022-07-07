@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-# Miscellaneous implementations of some of netease's security algorithms
-# Implemented:
-# - `abroad` parameter decryption
+'''Miscellaneous implementations of some of netease's security algorithms
+Implemented:
+- `abroad` parameter decryption
+'''
 import ctypes,urllib.parse
 
 # region secrets

@@ -1,13 +1,31 @@
 # -*- coding: utf-8 -*-
-"""网易云音乐 APIs
+"""# PyNCM 网易云音乐 API 封装
 
-## 注意事项
-- (#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决:    
-    GetCurrentSession().headers['X-Real-IP'] = '118.88.88.88'
+本模块提供各种网易云音乐 API 的 Python 封装，及编写新 API 所需的加密修饰器
 
-## 新 API
-在获得相关 API 路径和参数后(可参考 Binaryify 大佬的视频 - BV1PY41147r9)
+模块使用可参考子模块说明，如::
+
+    ...
+    def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
+        PC 端 - 获取歌曲音频详情（文件URL、MD5...）
+
+        Args:
+            song_ids (list): 歌曲 ID
+            bitrate (int, optional): 比特率 (96k SQ 320k HQ 320k+ Lossless/SQ). Defaults to 320000
+            encodeType (str, optional) Defaults to `aac`
+    ...
+
+使用 `pyncm.apis.GetTrackAudio` 即可
+
+## 编写新 API
+### EAPI
+在获得相关 API 路径和参数后(可参考 [Binaryify 大佬的视频 ](https://www.bilibili.com/video/BV1PY41147r9))
+
 可参考已有 API 函数格式编写相关 PyNCM API. 各API模式修饰器已在本文件注释
+### WEAPI
+由于Weapi使用不对称加密，截取Weapi可从浏览器内断点尝试
+
+一般在 `encSecKey` 处下断点即可，具体方法不再阐述
 """
 
 from time import time
@@ -22,45 +40,49 @@ from ..utils.crypto import (
 from .. import GetCurrentSession, logger
 import json, urllib.parse
 
-
 class LoginRequiredException(Exception):
     pass
-
 
 class LoginFailedException(Exception):
     pass
 
+LOGIN_REQUIRED = LoginRequiredException("需要登录")
 
-# region Base models export
-LOGIN_REQUIRED = LoginRequiredException("Function needs you to be logged in")
-
-
-def parse(url):
-    return urllib.parse.urlparse(url)
-
-
-def BaseWrapper(requestFunc):
-    """Base wrapper for crypto requests"""
+def _BaseWrapper(requestFunc):
+    """API加密函数通用修饰器
+    
+    实际使用请参考以下其他 Wrapper::
+        
+        LoginRequiredApi
+        UserIDBasedApi
+        WeapiCryptoRequest
+        LapiCryptoRequest
+        EapiCryptoRequest
+    """
 
     def apiWrapper(apiFunc):
-        """apiFunc -> rtype : (url,plain,[method])"""
-
         def wrapper(*a, **k):
             ret = apiFunc(*a, **k)
-            url, plain = ret[:2]
+            url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
-            rsp = requestFunc(url, plain, method)
+            logger.debug('[%s] HTTP %s - url=%s payload=%s' % (requestFunc.__name__,method,url,payload))
+            rsp = requestFunc(url, payload, method)
             try:
                 payload = rsp.text if isinstance(rsp, Response) else rsp
                 payload = payload.decode() if not isinstance(payload, str) else payload
-                payload = json.loads(
-                    payload.strip("\x10")
-                )  # plaintext responses are also padded...
-                if "abroad" in payload and payload["abroad"]:  # addresses #15
+                payload = json.loads(payload.strip("\x10"))
+                if "abroad" in payload and payload["abroad"]: 
+                    # Addresses Issue #15
+                    # This however, has some unforeseen side-effects. Mainly due to its diffrences
+                    # with non-abraod responses.                    
+                    logger.warn('Detected "abroad" payload. API response might differ in format!')
                     real_payload = AbroadDecrypt(payload["result"])
                     payload = json.loads(real_payload)
+                    # We'll let the user know about it
+                    payload['abroad'] = True
                 return payload
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                logger.error('Response is not valid JSON : %s' % e)
                 return rsp
 
         return wrapper
@@ -70,7 +92,6 @@ def BaseWrapper(requestFunc):
 
 def LoginRequiredApi(func):
     """API 需要事先登录"""
-
     def wrapper(*a, **k):
         if not GetCurrentSession().login_info["success"]:
             raise LOGIN_REQUIRED
@@ -81,7 +102,6 @@ def LoginRequiredApi(func):
 
 def UserIDBasedApi(func):
     """API 第一参数为用户 ID，而该参数可留 0 而指代已登录的用户 ID"""
-
     def wrapper(user_id=0, *a, **k):
         if user_id == 0 and GetCurrentSession().login_info["success"]:
             user_id = GetCurrentSession().uid
@@ -94,7 +114,6 @@ def UserIDBasedApi(func):
 
 def EapiEncipered(func):
     """函数值有 Eapi 加密 - 解密并返回原文"""
-
     def wrapper(*a, **k):
         payload = func(*a, **k)
         try:
@@ -104,8 +123,7 @@ def EapiEncipered(func):
 
     return wrapper
 
-
-@BaseWrapper
+@_BaseWrapper
 def WeapiCryptoRequest(url, plain, method):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = json.dumps({**plain, "csrf_token": GetCurrentSession().csrf_token})
@@ -116,11 +134,10 @@ def WeapiCryptoRequest(url, plain, method):
         data={**WeapiEncrypt(payload)},
     )
 
-
-# region Port of `Binaryify/NeteaseCloudMusicApi`
-@BaseWrapper
+# 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
+@_BaseWrapper
 def LapiCryptoRequest(url, plain, method):
-    """Linux API - 适用于 Linux 客户端部分 APIs"""
+    """Linux API - 适用于Linux客户端部分APIs"""
     payload = {"method": method, "url": GetCurrentSession().HOST + url, "params": plain}
     payload = json.dumps(payload)
     return GetCurrentSession().request(
@@ -130,11 +147,11 @@ def LapiCryptoRequest(url, plain, method):
         data={**LinuxApiEncrypt(payload)},
     )
 
-
-@BaseWrapper
+# 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
+@_BaseWrapper
 @EapiEncipered
 def EapiCryptoRequest(url, plain, method):
-    """Eapi - 适用于 新版客户端绝大部分 APIs"""
+    """Eapi - 适用于新版客户端绝大部分API"""
     cookies = {
         **GetCurrentSession().CONFIG_EAPI,
         "requestId": f"{int(time() * 1000)}_0233",
@@ -150,15 +167,12 @@ def EapiCryptoRequest(url, plain, method):
         cookies=cookies,
         data={
             **EapiEncrypt(
-                parse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
+                urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
             )
         },
     )
     return request.content
 
-
-# endregion
-# endregion
 from . import (
     miniprograms,
     album,

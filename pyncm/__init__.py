@@ -1,25 +1,75 @@
 # -*- coding: utf-8 -*-
-"""# pyncm
-本模块提供`Get/Set/DumpCurrentSession`,`LoadNewSessionFromDump` 以管理请求
-API 使用请参见 `pyncm.apis` 文档 
-"""
+'''# PyNCM 网易云音乐 Python API / 下载工具
+
+PyNCM 包装的网易云音乐 API 的使用非常简单::
+    
+    >>> from pyncm import apis
+    # 登录
+    >>> apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True)
+    # 获取歌曲信息    
+    >>> apis.track.GetTrackAudio(29732235)
+    {'data': [{'id': 29732235, 'url': 'http://m701.music...
+    # 获取歌曲详情
+    >>> apis.track.GetTrackDetail(29732235)    
+    {'songs': [{'name': 'Supernova', 'id': 2...
+    # 获取歌曲评论
+    >>> apis.track.GetTrackComments(29732235)    
+    {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
+
+PyNCM 的所有 API 请求都将经过单例的 `pyncm.Session` 发出，管理此单例可以使用::
+
+    >>> session = pyncm.GetCurrentSession()
+    >>> pyncm.SetCurrentSession(session)
+    >>> pyncm.SetNewSession()
+
+PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管理::
+
+    >>> save = pyncm.DumpSessionAsString()
+    >>> pyncm.SetNewSession(
+            pyncm.LoadSessionFromString(save)
+        )
+
+# 注意事项
+    - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
+'''
 from typing import Text, Union
 from time import time
 from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
+logger = logging.getLogger("pyncm")
 
-__version__ = "1.6.6.5"
-
+__version__ = "1.6.6.6"
 
 class Session(requests.Session):
-    """Represents an API session"""
+    '''# Session
+    实现网易云音乐登录态 / API请求管理
 
+    - HTTP方面，`Session`的配置方法和 `requests.Session` 完全一致，如配置 Headers::
+
+    GetCurrentSession().headers['X-Real-IP'] = '1.1.1.1'
+
+    - 该 Session 其他参数也可被修改::
+
+    GetCurrentSession().force_http = True # 优先 HTTP
+
+    获取其他具体信息请参考该文档注释
+    '''
+    
+    force_http = False
+    '''优先使用 HTTP 作 API 请求协议'''
+    
+    # region Consts
     HOST = "music.163.com"
+    '''网易云音乐 API 服务器域名，可直接改为代理服务器之域名'''
     UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/greats3an/pyncm) Chrome/PyNCM.%s" % __version__
+        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__
+        # They used to send the browser string part as the login warnings...good times
     )
+    '''Weapi 使用的 UA'''
     UA_EAPI = "NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)"
+    '''EAPI 使用的 UA，不推荐更改'''
     UA_LINUX_API = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36"
+    '''曾经的 Linux 客户端 UA，不推荐更改'''
     CONFIG_EAPI = {
         "appver": "9.9.99",
         "buildver": "9009099",
@@ -31,7 +81,8 @@ class Session(requests.Session):
         "resolution": "2712x1440",
         "versioncode": "240",
     }
-    force_http = False
+    '''EAPI 额外请求头（在 Cookies 中）'''
+    # endregion
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
@@ -79,15 +130,18 @@ class Session(requests.Session):
     def request(
         self, method: str, url: Union[str, bytes, Text], *a, **k
     ) -> requests.Response:
-        """Initiates & fires a request
-
+        '''发起 HTTP(S) 请求
+        该函数与 `requests.Session.request` 有以下不同：
+        - 使用 SSL 与否取决于 `force_http`
+        - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
+        
         Args:
             method (str): HTTP Verb
-            url (Union[str, bytes, Text]): Full / partial API URL
+            url (Union[str, bytes, Text]): Complete/Partial HTTP URL
 
         Returns:
-            requests.Response: A requests.Response object
-        """
+            requests.Response
+        '''
         if url[:4] != "http":
             url = "https://%s%s" % (self.HOST, url)
         if self.force_http:
@@ -116,14 +170,14 @@ class Session(requests.Session):
     }
 
     def dump(self) -> dict:
-        """Dumps current session info as dictionary"""
+        """以 `dict` 导出登录态"""
         return {
             name: self._session_info[name][0](self)
             for name in self._session_info.keys()
         }
 
     def load(self, dumped):
-        """Loads session info from dictionary"""
+        """从 `dict` 加载登录态"""
         for k, v in dumped.items():
             self._session_info[k][1](self, v)
         return True
@@ -132,8 +186,7 @@ class Session(requests.Session):
 
 
 class SessionManager:
-    """Manages session switching / loading / dumping"""
-
+    '''PyNCM Session 单例储存对象'''
     def __init__(self) -> None:
         self.session = Session()
 
@@ -146,10 +199,12 @@ class SessionManager:
     # region Session serialization
     @staticmethod
     def stringify(session: Session) -> str:
+        '''序列化并加密 `Session` 为 `str`'''
         return EapiEncrypt("pyncm", json.dumps(session.dump()))["params"]
 
     @staticmethod
     def parse(dump: str) -> Session:
+        '''反序列化 `str` 并解密为 `Session`'''
         session = Session()
         dump = HexCompose(dump)
         dump = EapiDecrypt(dump).decode()
@@ -160,34 +215,29 @@ class SessionManager:
 
     # endregion
 
-
-logger = logging.getLogger("ncm")
-"""Logger to be used by local modules"""
 sessionManager = SessionManager()
-"""Manages active session"""
-
 
 def GetCurrentSession() -> Session:
-    """Retrives current active session"""
+    """获取当前正在被 PyNCM 使用的 Session / 登录态"""
     return sessionManager.get()
 
 
 def SetCurrentSession(session: Session):
-    """Sets current active session"""
+    """设置当前正在被 PyNCM 使用的 Session / 登录态"""
     sessionManager.set(session)
 
 
 def SetNewSession():
-    """Creates and sets new session"""
+    """设置新的被 PyNCM 使用的 Session / 登录态"""
     sessionManager.set(Session())
 
 
 def LoadSessionFromString(dump: str) -> Session:
-    """Loads a session from dumped string"""
+    """从 `str` 加载 Session / 登录态"""
     session = SessionManager.parse(dump)
     return session
 
 
 def DumpSessionAsString(session: Session) -> str:
-    """Dumps session as encrypted string"""
+    """从 Session / 登录态 导出 `str`"""
     return SessionManager.stringify(session)
