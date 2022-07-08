@@ -28,7 +28,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine requests
     - name: Test with unittest
-      run : python -m pyncm.tests -v
+      run : python pyncm.tests -v
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
