@@ -28,7 +28,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine requests
     - name: Test with unittest
-      run : python pyncm.tests -v
+      run : python pyncm.tests.py -v
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -36,3 +36,20 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
+
+    - name: check headcommit message
+      id: commit
+      run: |
+        str="$(jq '.head_commit.message' $GITHUB_EVENT_PATH)"    # get the head_commit message
+        echo ::set-output name=title::${str%%\\n*} | tr -d '"'         # get the title
+        echo ::set-output name=body::${str##*\\n} | tr -d '"'         # get the body
+
+    - name: release
+      uses: actions/create-release@v1
+      id: create_release
+      with:
+        draft: false
+        prerelease: false
+        tag_name: ${{ steps.commit.outputs.title}} | cut -d ' ' -f2
+        release_name: ${{ steps.commit.outputs.title}}
+        body: ${{ steps.commit.outputs.body}}
