@@ -6,8 +6,7 @@ from pyncm import (
     GetCurrentSession,
     LoadSessionFromString,
     SetCurrentSession,
-    __version__,
-    logger,
+    __version__
 )
 from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.helper import TrackHelper
@@ -22,7 +21,7 @@ from os import remove, makedirs
 
 from logging import getLogger, basicConfig
 import sys, argparse, re
-
+logger = getLogger('main')
 # Import checks
 OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs": False}
 OPTIONALS_MISSING_INFO = {
@@ -73,20 +72,40 @@ class TrackDownloadTask(BaseKeyValueClass):
     lyrics_exclude: set
     save_as: str
 
-
 class TaskPoolExecutorThread(Thread):
     @staticmethod
     def tag_audio(track: TrackHelper, file: str, cover_img: str = ""):
         if not OPTIONALS["mutagen"]:
             return
-
+        """ Available tags (for EasyMP3 / EasyID3)
+        'album', 'bpm', 'compilation', 'composer', 'copyright', 'encodedby', 'lyricist', 
+        'length', 'media', 'mood', 'title', 'version', 'artist', 'albumartist', 'conductor',
+        'arranger', 'discnumber', 'organization', 'tracknumber', 'author', 'albumartistsort', 
+        'albumsort', 'composersort', 'artistsort', 'titlesort', 'isrc', 'discsubtitle', 'language',
+        'genre', 'date', 'originaldate', 'performer:*', 'musicbrainz_trackid', 'website', 'replaygain_*_gain',
+        'replaygain_*_peak', 'musicbrainz_artistid', 'musicbrainz_albumid', 'musicbrainz_albumartistid', 
+        'musicbrainz_trmid', 'musicip_puid', 'musicip_fingerprint', 'musicbrainz_albumstatus', 'musicbrainz_albumtype',
+        'releasecountry', 'musicbrainz_discid', 'asin', 'performer', 'barcode', 'catalognumber', 'musicbrainz_releasetrackid',
+        'musicbrainz_releasegroupid', 'musicbrainz_workid', 'acoustid_fingerprint', 'acoustid_id'
+        """
         def write_keys(song):
-            # Write trackdatas
-            song["title"] = track.TrackName
-            song["artist"] = track.Artists
-            song["album"] = track.AlbumName
-            song["tracknumber"] = str(track.TrackNumber)
-            song["date"] = str(track.TrackPublishTime)
+            # Writing metadata
+            # Due to different capabilites of containers, only
+            # once that can actually be stored will be written.
+            complete_metadata = {
+                "title" : [track.TrackName,*track.TrackAliases],
+                "artist" : [*track.Artists],
+                "albumartist" : [*track.Album.AlbumArtists],
+                "album" : [track.AlbumName],
+                "tracknumber" :  ["%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount)],
+                "date" : [str(track.TrackPublishTime)],
+                "copyright": [track.Album.AlbumCompany],
+            }
+            for k,v in complete_metadata.items():
+                try:
+                    song[k] = v
+                except:
+                    pass
             song.save()
 
         def mp4():
@@ -432,8 +451,7 @@ def parse_args():
 
     return args , [parse_sharelink(url) for url in args.url]
 
-def __main__():
-    logger = getLogger()
+def __main__():    
     args , tasks = parse_args()    
     log_stream = sys.stdout
     # Getting tqdm & logger to work nicely together
@@ -455,12 +473,12 @@ def __main__():
 
         coloredlogs.install(
             level=args.log_level,
-            fmt="%(asctime)s %(hostname)s [%(levelname).4s] %(message)s",
+            fmt="%(asctime)s %(name)s [%(levelname).5s] %(message)s",
             stream=log_stream,
             isatty=True,
         )
     basicConfig(
-        level=args.log_level, format="[%(levelname).4s] %(message)s", stream=log_stream
+        level=args.log_level, format="[%(levelname).5s] %(name)s %(message)s", stream=log_stream
     )
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)

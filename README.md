@@ -16,7 +16,7 @@
                 [--log-level LOG_LEVEL]
                 [链接]
 
-    PyNCM 网易云音乐下载工具 1.6.6.1
+    PyNCM 网易云音乐下载工具 1.6.6.6
 
     positional arguments:
     链接                    网易云音乐分享链接
@@ -70,7 +70,7 @@
 ## 使用 [UNM](https://github.com/UnblockNeteaseMusic/server) 下载灰色歌曲
 [![asciicast](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb.svg)](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb)
 其他功能详见 
-- [Demo](https://github.com/greats3an/pyncm/tree/master/demos)
+- [Demo](https://github.com/mos9527/pyncm/tree/master/demos)
 
 # API 使用示例
 ```python
@@ -87,7 +87,7 @@
 ```
 
 ## API 说明
-大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/greats3an/pyncm/tree/master/pyncm/apis) 获得支持
+大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
 
 # 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
@@ -95,4 +95,4 @@
 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
 
 ### 衍生项目
-[PyNCMd](https://github.com/greats3an/pyncmd)
+[PyNCMd](https://github.com/mos9527/pyncmd)

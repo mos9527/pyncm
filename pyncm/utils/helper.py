@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''Helper utilites to aid operations w/ API responses'''
+"""Helper utilites to aid operations w/ API responses"""
 import time
 truncate_length = 64
 
-def TrackHelperProperty(default=None):
+def Default(default=None):
     def preWrapper(func):
         @property
         def wrapper(*a, **k):
@@ -14,78 +14,160 @@ def TrackHelperProperty(default=None):
         return wrapper
     return preWrapper
 
+class IDCahceHelper:
+    """Generic cache for pesudo-static ID-based dicts"""
+    _cache = dict()
+    def __new__(cls,item_id,*args):
+        if not item_id in IDCahceHelper._cache:            
+            IDCahceHelper._cache[item_id] = super().__new__(cls)
+        return IDCahceHelper._cache[item_id]
+    def __init__(self,item_id,factory_func) -> None:
+        # __init__ is always called after __new__
+        if hasattr(self,'_item_id'):
+            return
+        # We only want to initialze once
+        self._item_id = item_id
+        self._factory_func = factory_func
+        # Automatically update the dict once we finished loading
+        return self.refresh()
+    def refresh(self):
+        self.__dict__.update({"data":self._factory_func(self._item_id)})
 
+class AlbumHelper(IDCahceHelper):
+    def __init__(self, item_id):        
+        from pyncm.apis.album import GetAlbumInfo
+        super().__init__(item_id, GetAlbumInfo)
+    
+    def refresh(self):
+        from pyncm import logger
+        logger.debug('Caching album info %s' % self._item_id)
+        return super().refresh()
+
+    @Default()
+    def AlbumName(self):
+        """专辑名"""
+        return self.data["album"]["name"]
+
+    @Default()
+    def AlbumAliases(self):
+        """专辑别名"""
+        return self.data["album"]["alias"]
+
+    @Default()
+    def AlbumCompany(self):
+        """专辑发行"""
+        return self.data["album"]["company"]
+
+    @Default()
+    def AlbumBreifDescription(self):
+        """专辑概述"""
+        return self.data["album"]["breifDesc"]
+
+    @Default()
+    def AlbumDescription(self):
+        """专辑说明"""
+        return self.data["album"]["description"]
+
+    @Default()
+    def AlbumPublishTime(self):
+        """专辑发布年份"""
+        epoch = (
+            self.data["album"]["publishTime"] / 1000
+        )
+        return time.gmtime(epoch).tm_year
+
+    @Default()
+    def AlbumSongCount(self):
+        """专辑歌曲数"""
+        return self.data["album"]["size"]
+
+    @Default()
+    def AlbumArtists(self):
+        """专辑艺术家"""
+        return [_ar["name"] for _ar in self.data["album"]["artists"]]
+    
 class TrackHelper:
     """Helper class for handling generic track objects"""
 
     def __init__(self, track_dict) -> None:
-        self.track = track_dict
+        self.__dict__.update({"data":track_dict})
 
-    @TrackHelperProperty()
+    @property
+    def Album(self) -> AlbumHelper:
+        """专辑对象，会有更多歌曲元数据"""
+        return AlbumHelper(self.data["al"]["id"])
+    
+    @Default()
     def ID(self):
-        """Track ID"""
-        return self.track["id"]
+        """网易云音乐 ID"""
+        return self.data["id"]
 
-    @TrackHelperProperty()
+    @Default()
     def TrackPublishTime(self):
-        """The publish year of the track"""
+        """歌曲发布年份"""
         epoch = (
-            self.track["publishTime"] / 1000
+            self.data["publishTime"] / 1000
         )  # stored as unix timestamp though only the year was ever useful
         return time.gmtime(epoch).tm_year
 
-    @TrackHelperProperty()
+    @Default()
     def TrackNumber(self):
-        """The # of the track"""
-        return self.track["no"]
+        """歌曲编号 （于专辑）"""
+        return self.data["no"]
 
-    @TrackHelperProperty(default="Unknown")
+    @Default(default="Unknown")
     def TrackName(self):
-        """The name of the track"""
-        assert self.track["name"] != None
-        return self.track["name"]
+        """歌曲名"""
+        assert self.data["name"] != None
+        return self.data["name"]
 
-    @TrackHelperProperty(default="Unknown")
+    @Default(default=[])
+    def TrackAliases(self):
+        """歌曲别名"""
+        return self.data["alia"]
+
+    @Default(default="Unknown")
     def AlbumName(self):
-        """The name of the album"""
-        if self.track["al"]["id"]:
-            return self.track["al"]["name"]
+        """专辑名"""
+        if self.data["al"]["id"]:
+            return self.data["al"]["name"]
         else:
-            return self.track["pc"]["alb"]
+            return self.data["pc"]["alb"]
 
-    @TrackHelperProperty(
+    @Default(
         default="https://p1.music.126.net/UeTuwE7pvjBpypWLudqukA==/3132508627578625.jpg"
     )
     def AlbumCover(self):
-        """The cover URL of the track's album"""
-        al = self.track["al"] if "al" in self.track.keys() else self.track["album"]
+        """专辑封面"""
+        al = self.data["al"] if "al" in self.data else self.data["album"]
         if al["id"]:
             return al["picUrl"]
         else:
-            return "https://music.163.com/api/img/blur/" + self.track["pc"]["cid"]
+            return "https://music.163.com/api/img/blur/" + self.data["pc"]["cid"]
             # source:PC version's core.js
 
-    @TrackHelperProperty(default=["Various Artists"])
+    @Default(default=["Various Artists"])
     def Artists(self):
-        """All the artists' names as a list"""
-        ar = self.track["ar"] if "ar" in self.track.keys() else self.track["artists"]
+        """艺术家名 List"""
+        ar = self.data["ar"] if "ar" in self.data else self.data["artists"]
         ret = [_ar["name"] for _ar in ar]
         if not ret.count(None):
             return ret
         else:
-            return [self.track["pc"]["ar"]]  # for NCM cloud-drive stored audio
+            return [self.data["pc"]["ar"]]  # for NCM cloud-drive stored audio
 
-    @TrackHelperProperty()
+    @Default()
     def Title(self):
-        """A formatted title for this song : {TrackName} - {ArtistsName}"""
+        """保存名 [曲名] - [艺术家名 1,2...,n]"""
         return f'{self.TrackName} - {",".join(self.Artists)}'
 
-    _illegal_chars = set('\x00\\/:*?"<>|')
-
-    @TrackHelperProperty()
+    _illegal_chars = set('\x00\\/:<>|?*')
+    @Default()
     def SanitizedTitle(self):
-        """Sanitized title for FS compatibility; Limits max length to 200 chars,
-        and substitutes illegal chars with their full-width counterparts"""
+        """兼容文件系统的保存名，
+        文件名中若有 Windows 非法字符的存在，这些字符将会被替换为全角版本。
+        其次，文件名长度也被限制在 200 字符以内
+        """
 
         def _T(s, l=100):
             return "".join(

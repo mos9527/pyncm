@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Another lrc file parser'''
+"""Another lrc file parser"""
 import re
 from collections import defaultdict
 

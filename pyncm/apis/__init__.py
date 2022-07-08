@@ -29,6 +29,7 @@
 """
 
 from time import time
+from functools import wraps
 from requests.models import Response
 from ..utils.crypto import (
     EapiDecrypt,
@@ -59,13 +60,16 @@ def _BaseWrapper(requestFunc):
         LapiCryptoRequest
         EapiCryptoRequest
     """
-
+    @wraps(requestFunc)
     def apiWrapper(apiFunc):
+        @wraps(apiFunc)
         def wrapper(*a, **k):
             ret = apiFunc(*a, **k)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
-            logger.debug('[%s] HTTP %s - url=%s payload=%s' % (requestFunc.__name__,method,url,payload))
+            logger.debug('API=%s %s url=%s payload=%s' % (
+                requestFunc.__name__.split('Crypto')[0].upper(),method,url,payload)
+            )
             rsp = requestFunc(url, payload, method)
             try:
                 payload = rsp.text if isinstance(rsp, Response) else rsp
@@ -92,6 +96,7 @@ def _BaseWrapper(requestFunc):
 
 def LoginRequiredApi(func):
     """API 需要事先登录"""
+    @wraps(func)
     def wrapper(*a, **k):
         if not GetCurrentSession().login_info["success"]:
             raise LOGIN_REQUIRED
@@ -102,6 +107,7 @@ def LoginRequiredApi(func):
 
 def UserIDBasedApi(func):
     """API 第一参数为用户 ID，而该参数可留 0 而指代已登录的用户 ID"""
+    @wraps(func)
     def wrapper(user_id=0, *a, **k):
         if user_id == 0 and GetCurrentSession().login_info["success"]:
             user_id = GetCurrentSession().uid
@@ -114,6 +120,7 @@ def UserIDBasedApi(func):
 
 def EapiEncipered(func):
     """函数值有 Eapi 加密 - 解密并返回原文"""
+    @wraps(func)
     def wrapper(*a, **k):
         payload = func(*a, **k)
         try:

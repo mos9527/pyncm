@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Essential implementations of some of netease's security algorithms'''
+"""Essential implementations of some of netease's security algorithms"""
 import base64
 from . import HexCompose,HexDigest,HashHexDigest,RandomString,security
 from .aes import AES
@@ -51,7 +51,7 @@ def RSAEncrypt(data:str, n , e , reverse=True):
 
 # region api-specific crypto routines
 def WeapiEncrypt(params, aes_key2=None):
-    '''Implements /weapi/ Asymmetric encryption'''
+    """Implements /weapi/ Asymmetric encryption"""
     aes_key2 = aes_key2 or RandomString(16)
     params = str(params)
     # 1st go,encrypt the text with aes_key and aes_iv
@@ -68,11 +68,11 @@ def WeapiEncrypt(params, aes_key2=None):
     }
 
 def AbroadDecrypt(result):
-    '''Decrypts 'abroad:True' messages'''
+    """Decrypts 'abroad:True' messages"""
     return security.c_decrypt_abroad_message(result)
 
 def EapiEncrypt(url,params):
-    '''Implements EAPI request encryption'''
+    """Implements EAPI request encryption"""
     url,params = str(url),str(params)
     digest = HashHexDigest(EAPI_DIGEST_SALT % {'url':url,'text':params})
     params = EAPI_DATA_SALT % ({'url':url,'text':params,'digest':digest})
@@ -81,12 +81,12 @@ def EapiEncrypt(url,params):
     }
     
 def EapiDecrypt(cipher):
-    '''Implements EAPI response decryption'''
+    """Implements EAPI response decryption"""
     cipher = bytearray(cipher) if isinstance(cipher,str) else cipher
     return AESDecrypt(cipher,EAPI_AES_KEY,mode=AES.MODE_ECB) if cipher else cipher
 
 def LinuxApiEncrypt(params):
-    '''Implements Linux/Deepin client API encryption'''
+    """Implements Linux/Deepin client API encryption"""
     params = str(params)
     return {
         'eparams':HexDigest(AESEncrypt(params,key=LINUXAPI_AES_KEY,mode=AES.MODE_ECB))
