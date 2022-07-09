@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""登录、Anti - AntiCSRF 有关 APIs"""
+"""登录、CSRF 有关 APIs"""
 from . import (
     EapiCryptoRequest,
     WeapiCryptoRequest,

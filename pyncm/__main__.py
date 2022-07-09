@@ -77,21 +77,10 @@ class TaskPoolExecutorThread(Thread):
     def tag_audio(track: TrackHelper, file: str, cover_img: str = ""):
         if not OPTIONALS["mutagen"]:
             return
-        """ Available tags (for EasyMP3 / EasyID3)
-        'album', 'bpm', 'compilation', 'composer', 'copyright', 'encodedby', 'lyricist', 
-        'length', 'media', 'mood', 'title', 'version', 'artist', 'albumartist', 'conductor',
-        'arranger', 'discnumber', 'organization', 'tracknumber', 'author', 'albumartistsort', 
-        'albumsort', 'composersort', 'artistsort', 'titlesort', 'isrc', 'discsubtitle', 'language',
-        'genre', 'date', 'originaldate', 'performer:*', 'musicbrainz_trackid', 'website', 'replaygain_*_gain',
-        'replaygain_*_peak', 'musicbrainz_artistid', 'musicbrainz_albumid', 'musicbrainz_albumartistid', 
-        'musicbrainz_trmid', 'musicip_puid', 'musicip_fingerprint', 'musicbrainz_albumstatus', 'musicbrainz_albumtype',
-        'releasecountry', 'musicbrainz_discid', 'asin', 'performer', 'barcode', 'catalognumber', 'musicbrainz_releasetrackid',
-        'musicbrainz_releasegroupid', 'musicbrainz_workid', 'acoustid_fingerprint', 'acoustid_id'
-        """
         def write_keys(song):
             # Writing metadata
             # Due to different capabilites of containers, only
-            # once that can actually be stored will be written.
+            # ones that can actually be stored will be written.
             complete_metadata = {
                 "title" : [track.TrackName,*track.TrackAliases],
                 "artist" : [*track.Artists],

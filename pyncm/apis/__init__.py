@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""# PyNCM 网易云音乐 API 封装
+"""PyNCM 网易云音乐 API 封装
 
 本模块提供各种网易云音乐 API 的 Python 封装，及编写新 API 所需的加密修饰器
 
@@ -17,15 +17,15 @@
 
 使用 `pyncm.apis.GetTrackAudio` 即可
 
-## 编写新 API
-### EAPI
-在获得相关 API 路径和参数后(可参考 [Binaryify 大佬的视频 ](https://www.bilibili.com/video/BV1PY41147r9))
+编写新 API
+- EAPI
+    在获得相关 API 路径和参数后(可参考 [Binaryify 大佬的视频 ](https://www.bilibili.com/video/BV1PY41147r9))
 
-可参考已有 API 函数格式编写相关 PyNCM API. 各API模式修饰器已在本文件注释
-### WEAPI
-由于Weapi使用不对称加密，截取Weapi可从浏览器内断点尝试
+    可参考已有 API 函数格式编写相关 PyNCM API. 各API模式修饰器已在本文件注释
+- WEAPI
+    由于Weapi使用不对称加密，截取Weapi可从浏览器内断点尝试
 
-一般在 `encSecKey` 处下断点即可，具体方法不再阐述
+    一般在 `encSecKey` 处下断点即可，具体方法不再阐述
 """
 
 from time import time

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""# PyNCM 网易云音乐 Python API / 下载工具
+"""PyNCM 网易云音乐 Python API / 下载工具
 
 PyNCM 包装的网易云音乐 API 的使用非常简单::
     
