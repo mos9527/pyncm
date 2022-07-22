@@ -28,6 +28,7 @@
     一般在 `encSecKey` 处下断点即可，具体方法不再阐述
 """
 
+from random import randrange
 from time import time
 from functools import wraps
 from requests.models import Response
@@ -81,7 +82,7 @@ def _BaseWrapper(requestFunc):
                     # with non-abraod responses.                    
                     logger.warn('Detected "abroad" payload. API response might differ in format!')
                     real_payload = AbroadDecrypt(payload["result"])
-                    payload = json.loads(real_payload)
+                    payload = {"result":json.loads(real_payload)}
                     # We'll let the user know about it
                     payload['abroad'] = True
                 return payload
@@ -158,24 +159,21 @@ def LapiCryptoRequest(url, plain, method):
 @_BaseWrapper
 @EapiEncipered
 def EapiCryptoRequest(url, plain, method):
-    """Eapi - 适用于新版客户端绝大部分API"""
-    cookies = {
+    """Eapi - 适用于新版客户端绝大部分API"""    
+    payload = {**plain, "header": json.dumps({
         **GetCurrentSession().CONFIG_EAPI,
-        "requestId": f"{int(time() * 1000)}_0233",
-        "__csrf": GetCurrentSession().csrf_token,
-        'os':'pc'
-        # **GetCurrentSession().cookies,
-    }
-    payload = {**plain, "header": json.dumps(cookies)}
+        "requestId": str(randrange(20000000,30000000))
+    })}
+    digest = EapiEncrypt(urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload))    
     request = GetCurrentSession().request(
         method,
         url,
         headers={"User-Agent": GetCurrentSession().UA_EAPI, "Referer": None},
-        cookies=cookies,
+        cookies={
+            **GetCurrentSession().CONFIG_EAPI
+        },
         data={
-            **EapiEncrypt(
-                urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
-            )
+            **digest
         },
     )
     return request.content

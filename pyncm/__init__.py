@@ -62,24 +62,18 @@ class Session(requests.Session):
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
     UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__
-        # They used to send the browser string part as the login warnings...good times
+        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__        
     )
     """Weapi 使用的 UA"""
-    UA_EAPI = "NeteaseMusic/7.2.24.1597753235(7002024);Dalvik/2.1.0 (Linux; U; Android 11; Pixel 2 XL Build/RP1A.200720.009)"
+    UA_EAPI = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154"
     """EAPI 使用的 UA，不推荐更改"""
     UA_LINUX_API = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36"
     """曾经的 Linux 客户端 UA，不推荐更改"""
     CONFIG_EAPI = {
-        "appver": "9.9.99",
-        "buildver": "9009099",
-        "channel": "offical",
-        "deviceId": RandomString(8),
-        "mobilename": "Pixel2XL",
-        "os": "android",
-        "osver": "10.1",
-        "resolution": "2712x1440",
-        "versioncode": "240",
+        "os": "pc",
+        "appver": "",
+        "osver": "",
+        "deviceId": '',
     }
     """EAPI 额外请求头（在 Cookies 中）"""
     # endregion

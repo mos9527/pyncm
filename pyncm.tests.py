@@ -1,6 +1,6 @@
-import unittest
+import unittest,logging
 import pyncm, pyncm.apis
-
+logging.basicConfig(level=0)
 # Account from https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/test/login.test.js
 pyncm.SetCurrentSession(
     pyncm.LoadSessionFromString(
