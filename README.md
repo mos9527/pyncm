@@ -16,7 +16,7 @@
                 [--log-level LOG_LEVEL]
                 [链接]
 
-    PyNCM 网易云音乐下载工具 1.6.6.6
+    PyNCM 网易云音乐下载工具 1.6.6.7
 
     positional arguments:
     链接                    网易云音乐分享链接

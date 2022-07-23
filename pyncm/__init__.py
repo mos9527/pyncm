@@ -38,7 +38,7 @@ from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm")
 
-__version__ = "1.6.6.6"
+__version__ = "1.6.6.7"
 
 class Session(requests.Session):
     """# Session
@@ -192,13 +192,13 @@ class SessionManager:
 
     # region Session serialization
     @staticmethod
-    def stringify(session: Session) -> str:
-        """序列化并加密 `Session` 为 `str`"""
+    def stringify_legacy(session: Session) -> str:
+        """（旧）序列化 `Session` 为 `str`"""
         return EapiEncrypt("pyncm", json.dumps(session.dump()))["params"]
 
     @staticmethod
-    def parse(dump: str) -> Session:
-        """反序列化 `str` 并解密为 `Session`"""
+    def parse_legacy(dump: str) -> Session:
+        """（旧）反序列化 `str` 为 `Session`"""
         session = Session()
         dump = HexCompose(dump)
         dump = EapiDecrypt(dump).decode()
@@ -206,6 +206,26 @@ class SessionManager:
         assert dump[0] == "pyncm"  # check magic
         session.load(json.loads(dump[1]))  # loading config dict
         return session
+
+    @staticmethod
+    def stringify(session: Session) -> str:
+        """序列化 `Session` 为 `str`"""
+        from json import dumps
+        from zlib import compress
+        from base64 import b64encode
+        return 'PYNCM' + b64encode(compress(dumps(session.dump()).encode())).decode()
+
+    @staticmethod
+    def parse(dump : str) -> Session:
+        """反序列化 `str` 为 `Session`"""
+        if dump[:5] == 'PYNCM': # New marshaler (compressed,base64 encoded) has magic header
+            from json import loads
+            from zlib import decompress
+            from base64 import b64decode
+            session_obj = Session()
+            session_obj.load(loads(decompress(b64decode(dump[5:])).decode()))
+        else:
+            return SessionManager.parse_legacy(dump)
 
     # endregion
 

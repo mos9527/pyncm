@@ -103,14 +103,20 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> dict:
+def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
     """网页端 - 手机号登陆
+
+    * 若同时指定 password 和 passwordHash, 优先使用 password
+    * 若同时指定 captcha 与 password, 优先使用 captcha
 
     Args:
         phone (str, optional): 手机号. Defaults to ''.
-        password (str, optional): 明文密码. Defaults to ''.
         countrycode (int, optional): 国家代码. Defaults to 86.
         remeberLogin (bool, optional): 是否‘自动登录’，设置 `False` 可能导致权限问题. Defaults to True.
+        * 以下验证方式有 1 个含参即可
+        password (str, optional): 明文密码. Defaults to ''.
+        passwordHash (str, optional): 密码md5哈希. Defaults to ''.        
+        captcha (str, optional): 手机验证码. 需要已在同一 Session 中发送过 SetSendRegisterVerifcationCodeViaCellphone. Defaults to ''.        
 
     Raises:
         LoginFailedException: 登陆失败时发生
@@ -120,20 +126,28 @@ def LoginViaCellphone(phone="", password="", ctcode=86, remeberLogin=True) -> di
     """
     path = "/eapi/w/login/cellphone"
     sess = GetCurrentSession()
-    passwordHash = HashHexDigest(password)
+    if password:
+        passwordHash = HashHexDigest(password)        
+    
+    if not (passwordHash or captcha):
+        raise LoginFailedException("未提供密码或验证码")
+
+    auth_token = {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
+
     login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
                 "type": '1',
-                "phone": str(phone),
-                "password": str(passwordHash),
+                "phone": str(phone),                
                 "remember": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
-                "checkToken" : ""
+                "checkToken" : "",
+                **auth_token
             },
         )
     )()
+    
     WriteLoginInfo(login_status)
     return {'code':200,'result':sess.login_info}
 

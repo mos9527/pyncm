@@ -7,7 +7,7 @@ def assert_dep(name):
 
 def login():
     import inquirer
-    import 手机登录, 二维码登录
+    import demos.手机登录 as 手机登录, 二维码登录
 
     methods = {"手机登录": 手机登录, "二维码登录": 二维码登录}
     assert methods[
