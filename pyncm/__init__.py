@@ -34,11 +34,11 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 """
 from typing import Text, Union
 from time import time
-from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
+from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm")
 
-__version__ = "1.6.6.7.hotfix"
+__version__ = "1.6.6.71"
 
 class Session(requests.Session):
     """# Session
