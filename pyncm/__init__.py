@@ -38,7 +38,7 @@ from .utils.crypto import RandomString, EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm")
 
-__version__ = "1.6.6.7"
+__version__ = "1.6.6.7.hotfix"
 
 class Session(requests.Session):
     """# Session
@@ -222,8 +222,9 @@ class SessionManager:
             from json import loads
             from zlib import decompress
             from base64 import b64decode
-            session_obj = Session()
-            session_obj.load(loads(decompress(b64decode(dump[5:])).decode()))
+            session = Session()
+            session.load(loads(decompress(b64decode(dump[5:])).decode()))
+            return session
         else:
             return SessionManager.parse_legacy(dump)
 
