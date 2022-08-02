@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper utilites to aid operations w/ API responses"""
+from asyncio.log import logger
+from threading import Lock
 import time
 truncate_length = 64
 
@@ -9,7 +11,8 @@ def Default(default=None):
         def wrapper(*a, **k):
             try:
                 return func(*a, **k)
-            except:
+            except Exception as e:
+                logger.warn("Failed to get attribute %s : %s" % (func.__name__,e))
                 return default
         return wrapper
     return preWrapper
@@ -19,8 +22,9 @@ class IDCahceHelper:
     _cache = dict()
     def __new__(cls,item_id,*args):
         if not item_id in IDCahceHelper._cache:            
-            IDCahceHelper._cache[item_id] = super().__new__(cls)
+            IDCahceHelper._cache[item_id] = super().__new__(cls)            
         return IDCahceHelper._cache[item_id]
+
     def __init__(self,item_id,factory_func) -> None:
         # __init__ is always called after __new__
         if hasattr(self,'_item_id'):
@@ -29,9 +33,12 @@ class IDCahceHelper:
         self._item_id = item_id
         self._factory_func = factory_func
         # Automatically update the dict once we finished loading
+        self._lock = Lock()                
+        # In case of race conditions when our info is still updating...
         return self.refresh()
     def refresh(self):
-        self.__dict__.update({"data":self._factory_func(self._item_id)})
+        with self._lock:
+            self.data = self._factory_func(self._item_id)
 
 class AlbumHelper(IDCahceHelper):
     def __init__(self, item_id):        
@@ -45,7 +52,7 @@ class AlbumHelper(IDCahceHelper):
 
     @Default()
     def AlbumName(self):
-        """专辑名"""
+        """专辑名"""        
         return self.data["album"]["name"]
 
     @Default()
@@ -95,7 +102,9 @@ class TrackHelper:
     @property
     def Album(self) -> AlbumHelper:
         """专辑对象，会有更多歌曲元数据"""
-        return AlbumHelper(self.data["al"]["id"])
+        helper = AlbumHelper(self.data["al"]["id"])
+        with helper._lock:
+            return helper
     
     @Default()
     def ID(self):

@@ -82,14 +82,14 @@ class TaskPoolExecutorThread(Thread):
             # Due to different capabilites of containers, only
             # ones that can actually be stored will be written.
             complete_metadata = {
-                "title" : [track.TrackName,*track.TrackAliases],
-                "artist" : [*track.Artists],
-                "albumartist" : [*track.Album.AlbumArtists],
+                "title" : [track.TrackName,*(track.TrackAliases or [])],
+                "artist" : [*(track.Artists or [])],
+                "albumartist" : [*(track.Album.AlbumArtists or [])],
                 "album" : [track.AlbumName],
-                "tracknumber" :  ["%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount)],
+                "tracknumber" :  "%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount),
                 "date" : [str(track.TrackPublishTime)],
                 "copyright": [track.Album.AlbumCompany],
-            }
+            }        
             for k,v in complete_metadata.items():
                 try:
                     song[k] = v
@@ -182,6 +182,7 @@ class TaskPoolExecutorThread(Thread):
 
     def __init__(self, *a, max_workers=4, **k):
         super().__init__(*a, **k)
+        self.daemon = True
         self.finished_tasks: float = 0
         self.xfered = 0
         self.task_queue = Queue()
@@ -462,12 +463,12 @@ def __main__():
 
         coloredlogs.install(
             level=args.log_level,
-            fmt="%(asctime)s %(name)s [%(levelname).5s] %(message)s",
+            fmt="%(asctime)s %(name)s [%(levelname).4s] %(message)s",
             stream=log_stream,
             isatty=True,
         )
     basicConfig(
-        level=args.log_level, format="[%(levelname).5s] %(name)s %(message)s", stream=log_stream
+        level=args.log_level, format="[%(levelname).4s] %(name)s %(message)s", stream=log_stream
     )
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)
@@ -525,8 +526,11 @@ def __main__():
             return True
 
     while executor.task_queue.unfinished_tasks >= 0:
-        report() and sleep(0.5)
-        if executor.task_queue.unfinished_tasks == 0:
+        try:
+            report() and sleep(0.5)
+            if executor.task_queue.unfinished_tasks == 0:
+                break
+        except KeyboardInterrupt:
             break
 
     return 0

@@ -38,7 +38,7 @@ from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm")
 
-__version__ = "1.6.6.71"
+__version__ = "1.6.7.0"
 
 class Session(requests.Session):
     """# Session
