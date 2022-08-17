@@ -36,9 +36,9 @@ from typing import Text, Union
 from time import time
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
-logger = logging.getLogger("pyncm")
+logger = logging.getLogger("pyncm.api")
 
-__version__ = "1.6.7.0"
+__version__ = "1.6.7.1"
 
 class Session(requests.Session):
     """# Session

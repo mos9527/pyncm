@@ -21,7 +21,7 @@ from os import remove, makedirs
 
 from logging import getLogger, basicConfig
 import sys, argparse, re
-logger = getLogger('main')
+logger = getLogger('pyncm.main')
 # Import checks
 OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs": False}
 OPTIONALS_MISSING_INFO = {
@@ -438,8 +438,11 @@ def parse_args():
 
     args = parser.parse_args()
     
-
-    return args , [parse_sharelink(url) for url in args.url]
+    try:
+        return args , [parse_sharelink(url) for url in args.url]
+    except AssertionError:        
+        assert args.save, "无效分享链接 %s" % ' '.join(args.url) # Allow invalid links for this one            
+        return args , []
 
 def __main__():    
     args , tasks = parse_args()    

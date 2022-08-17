@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Helper utilites to aid operations w/ API responses"""
-from asyncio.log import logger
 from threading import Lock
-import time
+import time,logging
 truncate_length = 64
-
+logger = logging.getLogger("pyncm.helper")
 def Default(default=None):
     def preWrapper(func):
         @property
@@ -27,8 +26,9 @@ class IDCahceHelper:
 
     def __init__(self,item_id,factory_func) -> None:
         # __init__ is always called after __new__
-        if hasattr(self,'_item_id'):
-            return
+        if hasattr(self,'_lock'):
+            with self._lock: # Ensure update's finished
+                return
         # We only want to initialze once
         self._item_id = item_id
         self._factory_func = factory_func
@@ -45,8 +45,7 @@ class AlbumHelper(IDCahceHelper):
         from pyncm.apis.album import GetAlbumInfo
         super().__init__(item_id, GetAlbumInfo)
     
-    def refresh(self):
-        from pyncm import logger
+    def refresh(self):        
         logger.debug('Caching album info %s' % self._item_id)
         return super().refresh()
 
@@ -102,9 +101,7 @@ class TrackHelper:
     @property
     def Album(self) -> AlbumHelper:
         """专辑对象，会有更多歌曲元数据"""
-        helper = AlbumHelper(self.data["al"]["id"])
-        with helper._lock:
-            return helper
+        return AlbumHelper(self.data["al"]["id"])        
     
     @Default()
     def ID(self):
