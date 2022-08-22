@@ -4,6 +4,10 @@ from threading import Lock
 import time,logging
 truncate_length = 64
 logger = logging.getLogger("pyncm.helper")
+
+def SubstituteWithFullwidth(string,sub=set('\x00\\/:<>|?*')):
+    return "".join([c if not c in sub else chr(ord(c) + 0xFEE0) for c in string])
+
 def Default(default=None):
     def preWrapper(func):
         @property
@@ -167,17 +171,10 @@ class TrackHelper:
         """保存名 [曲名] - [艺术家名 1,2...,n]"""
         return f'{self.TrackName} - {",".join(self.Artists)}'
 
-    _illegal_chars = set('\x00\\/:<>|?*')
     @Default()
     def SanitizedTitle(self):
-        """兼容文件系统的保存名，
+        """保证兼容大多数文件系统的保存名，
         文件名中若有 Windows 非法字符的存在，这些字符将会被替换为全角版本。
-        其次，文件名长度也被限制在 200 字符以内
         """
 
-        def _T(s, l=100):
-            return "".join(
-                [c if not c in self._illegal_chars else chr(ord(c) + 0xFEE0) for c in s]
-            )[:l]
-
-        return f'{_T(self.TrackName,100)} - {_T(",".join(self.Artists),100)}'
+        return f'{SubstituteWithFullwidth(self.TrackName)} - {SubstituteWithFullwidth(",".join(self.Artists))}'
