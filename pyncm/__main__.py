@@ -9,7 +9,7 @@ from pyncm import (
     __version__
 )
 from pyncm.utils.lrcparser import LrcParser
-from pyncm.utils.helper import TrackHelper
+from pyncm.utils.helper import TrackHelper, SubstituteWithFullwidth
 from pyncm.apis import login, track, playlist, album
 
 from queue import Queue
@@ -299,11 +299,13 @@ def create_subroutine(sub_type) -> Subroutine:
                                 "no": song.TrackNumber,
                                 "track": song.TrackName,
                                 "album": song.AlbumName,
-                                "title": song.SanitizedTitle,
+                                "title": song.Title,
                                 "artists": " / ".join(song.Artists),
                             }
                         ),
                     )
+                    tSong.save_as = SubstituteWithFullwidth(tSong.save_as)
+
                     self.put(tSong)
 
                 except Exception as e:
