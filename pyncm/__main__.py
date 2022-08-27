@@ -269,7 +269,8 @@ def create_subroutine(sub_type) -> Subroutine:
 
     class Playlist(Subroutine):
         def forIds(self, ids):
-            dDetails = track.GetTrackDetail(ids).get("songs")
+            dDetails = [track.GetTrackDetail(ids[index:min(len(ids),index+1000)]).get("songs") for index in range(0,len(ids),1000)]
+            dDetails = [song for stripe in dDetails for song in stripe]           
             dDetails = sorted(dDetails, key=lambda song: song["id"])
             index = 0
             for index, dDetail in enumerate(dDetails):

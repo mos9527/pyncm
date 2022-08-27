@@ -88,6 +88,7 @@ def _BaseWrapper(requestFunc):
                 return payload
             except json.JSONDecodeError as e:
                 logger.error('Response is not valid JSON : %s' % e)
+                logger.error('Response : %s',rsp.text)
                 return rsp
 
         return wrapper

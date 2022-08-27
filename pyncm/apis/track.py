@@ -11,6 +11,9 @@ def GetTrackDetail(song_ids: list):
     Args:
         song_ids (list): 歌曲 ID
 
+    Notes:
+        song_ids 项目数应 <= 1000
+
     Returns:
         dict
     """
@@ -25,7 +28,10 @@ def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
     Args:
         song_ids (list): 歌曲 ID
         bitrate (int, optional): 比特率 (96k SQ 320k HQ 320k+ Lossless/SQ). Defaults to 320000
-        encodeType (str, optional) Defaults to `aac`
+        encodeType (str, optional) Defaults to `aac`. 使用高 bitrate 值时无视该选项
+
+    Notes:
+        song_ids 项目数应 <= 1000
 
     Returns:
         dict
@@ -46,7 +52,10 @@ def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
     Args:
         song_ids (list): 歌曲 ID
         bitrate (int, optional): 比特率 (96k SQ 320k HQ 320k+ Lossless/SQ). Defaults to 320000
-        encodeType (str, optional) Defaults to `aac`
+        encodeType (str, optional) Defaults to `aac`. 使用高 bitrate 值时无视该选项
+
+    Notes:
+        song_ids 项目数应 <= 1000
 
     Returns:
         dict
