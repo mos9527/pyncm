@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """歌曲 - Track APIs"""
 from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest, LoginRequiredApi
+from ..utils import RandomString
 import json
 
 
@@ -133,4 +134,24 @@ def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
         "userid": str(userid),
         "like": str(like).lower(),
         "e_r": str(e_r).lower(),
+    }
+
+DEFAULT_AUDIO_MATCHER_SESSION_ID = RandomString(16)
+@WeapiCryptoRequest
+def GetMatchTrackByFP(audioFP: str, duration: float, sessionId=DEFAULT_AUDIO_MATCHER_SESSION_ID):
+    """移动端（Chrome 插件） - 听歌识曲
+    
+    Args:
+        audioFP (str): Base64 编码的 AFP. 可参考 https://github.com/mos9527/ncm-afp
+        duration (float): FP 时长
+        sessionId (str, optional): 未知作用. Defaults to DEFAULT_AUDIO_MATCHER_SESSION_ID.
+    """    
+    return "/weapi/music/audio/match", {
+        'algorithmCode': 'shazam_v2', # 貌似有三种？
+        'sessionId': sessionId,
+        'duration' : float(duration),   
+        'from': 'recognize-song',
+        'times':'1',
+        'decrypt':'1',
+        'rawdata': audioFP
     }
