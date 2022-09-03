@@ -8,8 +8,8 @@ r = HexCompose(r)
 r = EapiDecrypt(r).decode()
 url, payload, _ = r.split("-36cd479b6b5-")
 payload = json.loads(payload)
-payload['header'] = json.loads(payload['header'])
-
+if type(payload['header']) == str:
+    payload['header'] = json.loads(payload['header'])
 def comp(s1, s2):
     if ("id" in s1.lower()) or s1 > s2:
         return -1

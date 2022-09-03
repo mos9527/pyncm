@@ -1,0 +1,98 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+  push:
+    branches:
+      - main
+      
+jobs:
+  pypi:
+    if: "contains(github.event.head_commit.message, 'Version')"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+        python setup.py install
+    - name: Build wheel and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
+
+
+  build_windows:    
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+          python-version: '3.7'
+          architecture: 'x86'
+    - name: Install Requirements
+      run: |          
+          python -m pip install --upgrade pip setuptools wheel twine
+          python -m pip install Pyinstaller
+          python setup.py install
+    - name: Build Windows executables
+      run: |          
+          pyinstaller -F -i NONE pyncm/__main__.py --name pyncm
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: pyncm.exe
+        path: dist/pyncm.exe
+
+  release:
+    if: "contains(github.event.head_commit.message, 'Version')"
+    needs: ["build_windows"]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name : Get Version
+      id   : get_version
+      run  : |        
+        version=$(echo "${{ github.event.head_commit.message }}" | awk 'NR==1' | awk '{print $2}')
+        echo "::set-output name=version::$version"
+
+    - uses: actions/checkout@v3    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        release_name: Version ${{ steps.get_version.outputs.version }}
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: pyncm.exe
+
+    - uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./pyncm.exe
+        asset_name: pyncm.exe
+        asset_content_type: application/application/vnd.microsoft.portable-executable
+
+    - uses: eregon/publish-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ steps.create_release.outputs.id }}

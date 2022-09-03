@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """登录、CSRF 有关 APIs"""
+from base64 import b64encode
+
+from pyncm.utils import HashDigest
 from . import (
     EapiCryptoRequest,
     WeapiCryptoRequest,
@@ -85,12 +88,12 @@ def LoginQrcodeCheck(unikey, type=1):
 
 @WeapiCryptoRequest
 def LoginTypeSwitch():
-    """网页端 - 切换登录方式 - reserved
+    """网页端 - 用户登出
 
     Returns:
         dict
     """
-    return "/weapi/w/user/login/type/switch", {}
+    return "/weapi/logout", {}
 
 
 @WeapiCryptoRequest
@@ -104,7 +107,7 @@ def GetCurrentLoginStatus():
 
 
 def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
-    """网页端 - 手机号登陆
+    """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
     * 若同时指定 captcha 与 password, 优先使用 captcha
@@ -143,6 +146,50 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
                 "remember": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
                 "checkToken" : "",
+                **auth_token
+            },
+        )
+    )()
+    
+    WriteLoginInfo(login_status)
+    return {'code':200,'result':sess.login_info}
+
+
+def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
+    """网页端 - 邮箱登陆
+
+    * 若同时指定 password 和 passwordHash, 优先使用 password
+    
+    Args:
+        email (str, optional): 邮箱地址. Defaults to ''.
+        remeberLogin (bool, optional): 是否‘自动登录’，设置 `False` 可能导致权限问题. Defaults to True.
+        * 以下验证方式有 1 个含参即可
+        password (str, optional): 明文密码. Defaults to ''.
+        passwordHash (str, optional): 密码md5哈希. Defaults to ''.        
+        
+    Raises:
+        LoginFailedException: 登陆失败时发生
+
+    Returns:
+        dict
+    """
+    path = "/eapi/w/login"
+    sess = GetCurrentSession()
+    if password:
+        passwordHash = HashHexDigest(password)        
+    
+    if not passwordHash:
+        assert LoginFailedException("未提供密码")
+
+    auth_token = {"password": str(passwordHash)}
+
+    login_status = WeapiCryptoRequest(
+        lambda: (
+            path,
+            {
+                "type": '1',
+                "username": str(email),                
+                "remember": str(remeberLogin).lower(),                
                 **auth_token
             },
         )
@@ -213,6 +260,22 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
+
+@WeapiCryptoRequest
+def _LoginViaAnonymousAccount():
+    """网页端 - 游客登录 (POC)
+
+    Returns:
+        dict
+    """
+    # https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/module/register_anonimous.js
+    return "/api/register/anonimous", {
+        "username" : b64encode(
+            ('310270bf4cf4870354d1dfb12c30f219 %s' % ( # deviceId
+                'VPZjs06kkoPX0lNW5T1Bwg==' # TODO : Figure out what this 16 byte digest really means
+            )).encode()
+        ).decode()    
+    }
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell: str, prefix=86):
