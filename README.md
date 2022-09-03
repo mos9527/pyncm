@@ -9,6 +9,7 @@
 - `tqdm`    : 显示实时下载进度
 - `coloredlogs` : 彩色日志输出
 
+**Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本
 # 使用
     usage: pyncm [-h] [--max-workers 最多同时下载任务数] [--template 模板] [--quality 音质]
                 [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机]
