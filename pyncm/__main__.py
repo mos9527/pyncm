@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # PyNCM CLI interface
 
+import logging
 from pyncm import (
     DumpSessionAsString,
     GetCurrentSession,
@@ -87,9 +88,9 @@ class TaskPoolExecutorThread(Thread):
                 "albumartist" : [*(track.Album.AlbumArtists or [])],
                 "album" : [track.AlbumName],
                 "tracknumber" :  "%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount),
-                "date" : [str(track.TrackPublishTime)],
+                "date" : [str(track.Album.AlbumPublishTime)], # TrackPublishTime is not very reliable!
                 "copyright": [track.Album.AlbumCompany],
-            }        
+            }                    
             for k,v in complete_metadata.items():
                 try:
                     song[k] = v
@@ -112,7 +113,11 @@ class TaskPoolExecutorThread(Thread):
             from mutagen.mp3 import EasyMP3
             from mutagen.id3 import ID3, APIC
 
-            song = EasyMP3(file)
+            song = EasyMP3()
+            song.filename = file
+            # This will let mutagen NOT load the file on init.            
+            # Avoid issues where 'cannot sync to MPEG frames' are caused by
+            # non-existent ID3 tags.            
             write_keys(song)
             if exists(cover_img):
                 song = ID3(file)
@@ -130,14 +135,14 @@ class TaskPoolExecutorThread(Thread):
 
         def flac():
             from mutagen.flac import FLAC, Picture
-
-            song = FLAC(file)
+            from mutagen.mp3 import EasyMP3
+            song = FLAC(file)            
             write_keys(song)
             if exists(cover_img):
                 pic = Picture()
                 pic.data = open(cover_img, "rb").read()
                 pic.mime = "image/jpeg"
-                song.add_picture(pic)
+                song.add_picture(pic)   
                 song.save()
 
         def ogg():
@@ -145,7 +150,7 @@ class TaskPoolExecutorThread(Thread):
             from mutagen.flac import Picture
             from mutagen.oggvorbis import OggVorbis
 
-            song = OggVorbis(file)
+            song = OggVorbis(file)            
             write_keys(song)
             if exists(cover_img):
                 pic = Picture()
