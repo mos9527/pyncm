@@ -90,6 +90,10 @@ class TaskPoolExecutorThread(Thread):
                 "tracknumber" :  "%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount),
                 "date" : [str(track.Album.AlbumPublishTime)], # TrackPublishTime is not very reliable!
                 "copyright": [track.Album.AlbumCompany],
+                "discnumber" : [track.CD],
+                # These only applies to vorbis tags (e.g. FLAC)                
+                "totaltracks" : [str(track.Album.AlbumSongCount)],
+                "ncm-id":[str(track.ID)]
             }                    
             for k,v in complete_metadata.items():
                 try:
@@ -110,14 +114,15 @@ class TaskPoolExecutorThread(Thread):
                 song.save()
 
         def mp3():
-            from mutagen.mp3 import EasyMP3
+            from mutagen.mp3 import EasyMP3,HeaderNotFoundError
             from mutagen.id3 import ID3, APIC
-
-            song = EasyMP3()
-            song.filename = file
-            # This will let mutagen NOT load the file on init.            
-            # Avoid issues where 'cannot sync to MPEG frames' are caused by
-            # non-existent ID3 tags.            
+            try:
+                song = EasyMP3(file)            
+            except HeaderNotFoundError:
+                song = EasyMP3()
+                song.filename = file
+                song.save()
+                song = EasyMP3(file)            
             write_keys(song)
             if exists(cover_img):
                 song = ID3(file)

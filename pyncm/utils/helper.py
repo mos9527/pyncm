@@ -166,6 +166,11 @@ class TrackHelper:
         else:
             return [self.data["pc"]["ar"]]  # for NCM cloud-drive stored audio
 
+    @Default(default="null")
+    def CD(self):
+        """专辑 CD"""
+        return self.data["cd"]
+
     @Default()
     def Title(self):
         """保存名 [曲名] - [艺术家名 1,2...,n]"""
