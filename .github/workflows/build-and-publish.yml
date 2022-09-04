@@ -46,6 +46,7 @@ jobs:
       run: |          
           python -m pip install --upgrade pip setuptools wheel twine
           python -m pip install Pyinstaller
+          python -m pip install mutagen tqdm coloredlogs
           python setup.py install
     - name: Build Windows executables
       run: |          
