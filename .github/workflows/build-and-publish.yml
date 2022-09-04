@@ -51,12 +51,12 @@ jobs:
       run: |          
           pyinstaller -F -i NONE pyncm/__main__.py --name pyncm --hidden-import mutagen --hidden-import tqdm --hidden-import coloredlogs
     - name: Run UPX
-        uses: crazy-max/ghaction-upx@v2
-        with:
-          version: latest
-          files: |
-            dist/pyncm.exe
-          args: -fq
+      uses: crazy-max/ghaction-upx@v2
+      with:
+        version: latest
+        files: |
+          dist/pyncm.exe
+        args: -fq
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
