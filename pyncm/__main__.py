@@ -453,7 +453,10 @@ def parse_args():
     
     try:
         return args , [parse_sharelink(url) for url in args.url]
-    except AssertionError:        
+    except AssertionError:
+        if args.url == PLACEHOLDER_URL:
+            sys.argv.append("-h")  # If using placeholder, no argument is really passed
+            return __main__()  # In which case, print help and exit
         assert args.save, "无效分享链接 %s" % ' '.join(args.url) # Allow invalid links for this one            
         return args , []
 
@@ -502,10 +505,6 @@ def __main__():
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
-
-    if args.url == PLACEHOLDER_URL:
-        sys.argv.append("-h")  # If using placeholder, no argument is really passed
-        return __main__()  # In which case, print help and exit
 
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
