@@ -50,7 +50,7 @@ jobs:
           python setup.py install
     - name: Build Windows executables
       run: |          
-          pyinstaller -F -i NONE pyncm/__main__.py --name pyncm --hidden-import mutagen --hidden-import tqdm --hidden-import coloredlogs
+          pyinstaller -F -i NONE pyncm/__main__.py --name pyncm --collect-submodules mutagen
     - name: Run UPX
       uses: crazy-max/ghaction-upx@v2
       with:
