@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """登录、CSRF 有关 APIs"""
 from base64 import b64encode
-
-from pyncm.utils import HashDigest
 from . import (
     EapiCryptoRequest,
     WeapiCryptoRequest,
@@ -11,6 +9,7 @@ from . import (
     LoginFailedException,
 )
 from ..utils.crypto import HashHexDigest
+from ..utils.security import cloudmusic_dll_encode_id
 import time
 
 
@@ -179,7 +178,7 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
         passwordHash = HashHexDigest(password)        
     
     if not passwordHash:
-        assert LoginFailedException("未提供密码")
+        raise LoginFailedException("未提供密码")
 
     auth_token = {"password": str(passwordHash)}
 
@@ -260,22 +259,36 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
-
-@WeapiCryptoRequest
-def _LoginViaAnonymousAccount():
-    """网页端 - 游客登录 (POC)
+def LoginViaAnonymousAccount():
+    """网页端 - 游客登录
 
     Returns:
         dict
-    """
-    # https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/module/register_anonimous.js
-    return "/api/register/anonimous", {
+    """    
+    deviceId = GetCurrentSession().deviceId
+    login_status = WeapiCryptoRequest(
+        lambda: ("/api/register/anonimous" , {
         "username" : b64encode(
-            ('310270bf4cf4870354d1dfb12c30f219 %s' % ( # deviceId
-                'VPZjs06kkoPX0lNW5T1Bwg==' # TODO : Figure out what this 16 byte digest really means
-            )).encode()
-        ).decode()    
-    }
+            ('%s %s' % (
+                deviceId,
+                cloudmusic_dll_encode_id(deviceId))).encode()
+        ).decode()
+        }
+        )
+    )()
+    assert login_status['code'] == 200,"匿名登陆失败"
+    WriteLoginInfo({
+        **login_status,
+        'profile':{
+            'nickname' : 'Anonymous',
+            **login_status
+        },
+        'account':{
+            'id' : login_status['userId'],
+            **login_status
+        }
+    })
+    return GetCurrentSession().login_info
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell: str, prefix=86):

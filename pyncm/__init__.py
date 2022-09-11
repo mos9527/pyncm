@@ -38,7 +38,13 @@ from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm.api")
 
-__version__ = "1.6.7.8"
+__version__ = "1.6.7.9"
+
+DEVICE_ID_DEFAULT = "pyncm!"
+# This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
+# Though with this, all pyncm users would then be sharing the same device Id.
+# Don't think that would be of any issue though...
+"""默认 deviceID"""
 
 class Session(requests.Session):
     """# Session
@@ -53,31 +59,17 @@ class Session(requests.Session):
     GetCurrentSession().force_http = True # 优先 HTTP
 
     获取其他具体信息请参考该文档注释
-    """
-    
-    force_http = False
-    """优先使用 HTTP 作 API 请求协议"""
-    
-    # region Consts
+    """    
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
-    UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__        
-    )
+    UA_DEFAULT = "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__        
     """Weapi 使用的 UA"""
     UA_EAPI = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154"
     """EAPI 使用的 UA，不推荐更改"""
     UA_LINUX_API = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36"
     """曾经的 Linux 客户端 UA，不推荐更改"""
-    CONFIG_EAPI = {
-        "os": "pc",
-        "appver": "",
-        "osver": "",
-        "deviceId": '',
-    }
-    """EAPI 额外请求头（在 Cookies 中）"""
-    # endregion
-
+    force_http = False
+    """优先使用 HTTP 作 API 请求协议"""
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
         self.headers = {
@@ -86,9 +78,23 @@ class Session(requests.Session):
             "Referer": self.HOST,
         }
         self.login_info = {"success": False, "tick": time(), "content": None}
+        self.eapi_config = {
+            "os": "pc",
+            "appver": "",
+            "osver": "",
+            "deviceId": DEVICE_ID_DEFAULT,
+        }        
         self.csrf_token = ""
 
     # region Shorthands
+    @property
+    def deviceId(self):
+        """设备 ID"""
+        return self.eapi_config["deviceId"]
+    @deviceId.setter
+    def deviceId(self,v):
+        self.eapi_config["deviceId"] = str(v)       
+ 
     @property
     def uid(self):
         """用户 ID"""
@@ -144,6 +150,10 @@ class Session(requests.Session):
 
     # region symbols for loading/reloading authentication info
     _session_info = {
+        "eapi_config":(
+            lambda self: getattr(self, "eapi_config"),
+            lambda self, v: setattr(self, "eapi_config", v),
+        ),
         "login_info": (
             lambda self: getattr(self, "login_info"),
             lambda self, v: setattr(self, "login_info", v),

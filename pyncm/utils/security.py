@@ -4,7 +4,8 @@ Implemented:
 - `abroad` parameter decryption
 """
 import ctypes,urllib.parse
-
+from hashlib import md5
+from base64 import b64encode
 # region secrets
 WEAPI_ABROAD_SBOX = (
     82   ,9    ,106  ,-43  ,48   ,54   ,-91  ,56   ,
@@ -43,6 +44,7 @@ WEAPI_ABROAD_SBOX = (
 WEAPI_ABROAD_KEY = 'fuck~#$%^&*(458' # ookay...,
 WEAPI_ABROAD_IV = ([ord(s) for s in WEAPI_ABROAD_KEY] * 5)[:64]
 # 'abroad' parameter key & CBC IV
+ID_XOR_KEY_1 = b'3go8&$8*3*3h0k(2)2'
 # endregion
 
 # region functions to mimic the defficiencies of JS bit operations
@@ -114,4 +116,13 @@ def c_decrypt_abroad_message(hexstring):
     result = c_quote_int_as_hex(result[:-4])    
     result = urllib.parse.unquote(result).strip('\x00')  
     return result
+# endregion
+
+# region cloudmisc.dll (Windows) security
+def cloudmusic_dll_encode_id(some_id):
+    # XORs bytes then returns its base64 MD5 hash. Used in encodeAnonymousId
+    # Searching for ID_XOR_KEY_1 in cloudmusic.dll will get you to their implementation
+    xored = bytearray([c ^ ID_XOR_KEY_1[idx % len(ID_XOR_KEY_1)] for idx, c in enumerate(some_id.encode())])
+    digest = md5(xored).digest()
+    return b64encode(digest).decode()
 # endregion

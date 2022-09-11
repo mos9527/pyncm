@@ -67,9 +67,13 @@ def _BaseWrapper(requestFunc):
         def wrapper(*a, **k):
             ret = apiFunc(*a, **k)
             url, payload = ret[:2]
-            method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
-            logger.debug('API=%s %s url=%s payload=%s' % (
-                requestFunc.__name__.split('Crypto')[0].upper(),method,url,payload)
+            method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"            
+            logger.debug('API=%s %s url=%s deviceId=%s payload=%s' % (
+                requestFunc.__name__.split('Crypto')[0].upper(),
+                method,
+                url,
+                GetCurrentSession().deviceId,
+                payload)
             )
             rsp = requestFunc(url, payload, method)
             try:
@@ -162,7 +166,7 @@ def LapiCryptoRequest(url, plain, method):
 def EapiCryptoRequest(url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""    
     payload = {**plain, "header": json.dumps({
-        **GetCurrentSession().CONFIG_EAPI,
+        **GetCurrentSession().eapi_config,
         "requestId": str(randrange(20000000,30000000))
     })}
     digest = EapiEncrypt(urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload))    
@@ -171,7 +175,7 @@ def EapiCryptoRequest(url, plain, method):
         url,
         headers={"User-Agent": GetCurrentSession().UA_EAPI, "Referer": None},
         cookies={
-            **GetCurrentSession().CONFIG_EAPI
+            **GetCurrentSession().eapi_config
         },
         data={
             **digest
