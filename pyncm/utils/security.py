@@ -118,7 +118,7 @@ def c_decrypt_abroad_message(hexstring):
     return result
 # endregion
 
-# region cloudmisc.dll (Windows) security
+# region cloudmusic.dll (Windows) security
 def cloudmusic_dll_encode_id(some_id):
     # XORs bytes then returns its base64 MD5 hash. Used in encodeAnonymousId
     # Searching for ID_XOR_KEY_1 in cloudmusic.dll will get you to their implementation

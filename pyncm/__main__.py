@@ -505,7 +505,9 @@ def __main__():
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
-
+    if not GetCurrentSession().logged_in:
+        login.LoginViaAnonymousAccount()
+        logger.info("以匿名身份登陆成功，UID: %s" % GetCurrentSession().uid)
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
     executor.start()

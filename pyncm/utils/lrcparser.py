@@ -230,8 +230,7 @@ class LrcParser:
             Returns `(timestamp_seconds,lyrics[(timestamp_tag,lyrics)],indexof)`
 
             Returns None if nothing is found
-        """
-        # TODO : Can we make it O(loglog N)?
+        """        
         def search(val, src: list, l, r):
             """Binary serach"""
             pivot = (l + r) >> 1

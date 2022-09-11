@@ -259,12 +259,20 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
-def LoginViaAnonymousAccount():
-    """网页端 - 游客登录
+def LoginViaAnonymousAccount(deviceId=None):
+    '''PC 端 - 游客登陆
+
+    Args:
+        deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
+    
+    Notes:
+        Session 默认使用 `pyncm!` 作为设备 ID
 
     Returns:
         dict
-    """    
+    '''
+    if deviceId:
+        GetCurrentSession().deviceId = deviceId
     deviceId = GetCurrentSession().deviceId
     login_status = WeapiCryptoRequest(
         lambda: ("/api/register/anonimous" , {

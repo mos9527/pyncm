@@ -90,6 +90,19 @@
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
 
+## FAQ
+- 为什么 `GetTrackAudio` 几乎拿不到音频 URL？
+
+你需要[进行登陆](https://github.com/mos9527/pyncm/blob/master/pyncm/apis/login.py)。若身边没有合适的账号，也可选择匿名登陆：
+```python
+>>> from pyncm.apis.login import LoginViaAnonymousAccount
+>>> LoginViaAnonymousAccount()
+{'tick': 1662870122.1159196,
+ 'content': {'code': 200,
+  'userId': 8023914528,
+  'createTime': 1662868134354,
+  'profile': {'nickname': 'Ano...
+```
 # 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
