@@ -286,6 +286,30 @@ def create_subroutine(sub_type) -> Subroutine:
             for index, dDetail in enumerate(dDetails):
                 try:
                     song = TrackHelper(dDetail)
+                    save_as=self.args.template.format(
+                            **{
+                                "id": song.ID,
+                                "year": song.TrackPublishTime,
+                                "no": song.TrackNumber,
+                                "track": song.TrackName,
+                                "album": song.AlbumName,
+                                "title": song.Title,
+                                "artists": " / ".join(song.Artists),
+                            }
+                        )
+                    # get file extension
+                    ext = track.GetTrackAudio(song.ID, bitrate=BITRATES[self.args.quality]).get("data", [{"url": ""}])[0]["type"]
+                    # audio file path
+                    dest = join(
+                        self.args.output,
+                        SubstituteWithFullwidth(save_as) + "." + ext
+                    )
+                    # if file exist and no-overwrite set, skip
+                    if exists(dest) and self.args.no_overwrite:
+                        logger.warning("单曲 #%d / %d - %s - %s 已存在，跳过" 
+                        % (index + 1, len(dDetails), song.Title, song.AlbumName))
+                        continue
+                    
                     tSong = TrackDownloadTask(
                         index=index,
                         total=len(dDetails),
@@ -303,17 +327,7 @@ def create_subroutine(sub_type) -> Subroutine:
                             dest=self.args.output,
                             lrc_blacklist=set(self.args.lyric_no),
                         ),
-                        save_as=self.args.template.format(
-                            **{
-                                "id": song.ID,
-                                "year": song.TrackPublishTime,
-                                "no": song.TrackNumber,
-                                "track": song.TrackName,
-                                "album": song.AlbumName,
-                                "title": song.Title,
-                                "artists": " / ".join(song.Artists),
-                            }
-                        ),
+                        save_as=save_as,
                     )
                     tSong.save_as = SubstituteWithFullwidth(tSong.save_as)
 
@@ -424,6 +438,7 @@ def parse_args():
         default="standard",
     )
     group.add_argument("--output", metavar="输出", default=".", help="输出文件夹")
+    group.add_argument("--no-overwrite", action="store_true", help="不重复下载已经存在的音频文件")
     group = parser.add_argument_group("歌词")
     group.add_argument(
         "--lyric-no",
