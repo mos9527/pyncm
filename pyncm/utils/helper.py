@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Helper utilites to aid operations w/ API responses"""
 from threading import Lock
+from os import listdir,path
 import time,logging
+
 truncate_length = 64
 logger = logging.getLogger("pyncm.helper")
 
@@ -28,14 +30,15 @@ class IDCahceHelper:
             IDCahceHelper._cache[item_id] = super().__new__(cls)            
         return IDCahceHelper._cache[item_id]
 
-    def __init__(self,item_id,factory_func) -> None:
+    def __init__(self,item_id,factory_func=None) -> None:
         # __init__ is always called after __new__
         if hasattr(self,'_lock'):
             with self._lock: # Ensure update's finished
                 return
         # We only want to initialze once
         self._item_id = item_id
-        self._factory_func = factory_func
+        if factory_func:
+            self._factory_func = factory_func
         # Automatically update the dict once we finished loading
         self._lock = Lock()                
         # In case of race conditions when our info is still updating...
@@ -183,3 +186,39 @@ class TrackHelper:
         """
 
         return f'{SubstituteWithFullwidth(self.TrackName)} - {SubstituteWithFullwidth(",".join(self.Artists))}'
+
+class FuzzyPathHelper(IDCahceHelper):    
+    tbl_basenames = None
+    tbl_basenames_noext = None
+
+    @property
+    def base_path(self):
+        return self._item_id
+
+    def __init__(self, basepath, limit_exts={'.flac','.mp3','.m4a'}) -> None:
+        self.limit_exts = limit_exts
+        super().__init__(basepath)
+    def _factory_func(self,_item_id):        
+        # Make some hashtables w/ directory's file listing
+        files = filter(lambda file:path.isfile(path.join(self.base_path,file)),listdir(self.base_path))
+        # 1. Table of basename
+        self.tbl_basenames = {path.basename(file) for file in files}
+        # 2. Table of basename w/o extension, but with the premise that the files themselves contain the extensions we want    
+        split = lambda file:path.splitext(path.basename(file))
+        self.tbl_basenames_noext = {(split(file)[0] if (split(file)[1].lower() in self.limit_exts) else None) for file in self.tbl_basenames}
+        
+    def exists(self,name,partial_extension_check=True):
+        """Chcek if a file exists in O(1) time
+
+        Args:
+            name : File basename inside the FuzzyPathHelper's basepath
+            partial_extension_check (bool, optional): Only check if the basename (w/o exts) matches.  Defaults to True.
+
+        Notes:
+            If limit_exts in the class constructor is set, this will limit the basename matching canidates to
+            those with the selected exts only.    
+        """
+        if partial_extension_check:
+            return name in self.tbl_basenames_noext
+        else:
+            return name in self.tbl_basenames

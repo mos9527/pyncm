@@ -10,7 +10,7 @@ from pyncm import (
     __version__
 )
 from pyncm.utils.lrcparser import LrcParser
-from pyncm.utils.helper import TrackHelper, SubstituteWithFullwidth
+from pyncm.utils.helper import TrackHelper, FuzzyPathHelper, SubstituteWithFullwidth
 from pyncm.apis import login, track, playlist, album
 
 from queue import Queue
@@ -20,7 +20,7 @@ from time import sleep
 from os.path import join, exists
 from os import remove, makedirs
 
-from logging import getLogger, basicConfig
+from logging import exception, getLogger, basicConfig
 import sys, argparse, re
 logger = getLogger('pyncm.main')
 # Import checks
@@ -45,33 +45,9 @@ BITRATES = {"standard": 96000, "high": 320000, "lossless": 3200000}
 # Key-Value classes
 class BaseKeyValueClass:
     def __init__(self, **kw) -> None:
-        for k, v in kw.items():
+      for k, v in kw.items():
             self.__setattr__(k, v)
 
-
-class BaseDownloadTask(BaseKeyValueClass):
-    id: int
-    url: str
-    dest: str
-    bitrate: int
-
-
-class LyricsDownloadTask(BaseDownloadTask):
-    id: int
-    dest: str
-    lrc_blacklist: set
-
-
-class TrackDownloadTask(BaseKeyValueClass):
-    song: TrackHelper
-    cover: BaseDownloadTask
-    lyrics: BaseDownloadTask
-    audio: BaseDownloadTask
-
-    index: int
-    total: int
-    lyrics_exclude: set
-    save_as: str
 
 class TaskPoolExecutorThread(Thread):
     @staticmethod
@@ -199,60 +175,66 @@ class TaskPoolExecutorThread(Thread):
         self.max_workers = max_workers
 
     def run(self):
-        def execute(task: TrackDownloadTask):
-            try:
-                # Downloding source audio
-                dAudio = track.GetTrackAudio(task.audio.id, bitrate=task.audio.bitrate)
-                dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value
-                assert dAudio["url"], "%s 无法下载，资源不存在" % task.song.Title
-                logger.info(
-                    "开始下载 #%d / %d - %s - %s - %skbps - %s"
-                    % (
-                        task.index + 1,
-                        task.total,
-                        task.song.Title,
-                        task.song.AlbumName,
-                        dAudio["br"] // 1000,
-                        dAudio["type"].upper(),
-                    )
-                )
-                if not exists(task.audio.dest):
-                    makedirs(task.audio.dest)
-                dest_src = self.download_by_url(
-                    dAudio["url"],
-                    join(
-                        task.audio.dest,
-                        task.save_as + "." + dAudio["type"],
-                    ),
-                    xfer=True,
-                )
-                # Downloading cover
-                dest_cvr = self.download_by_url(
-                    task.cover.url, join(task.cover.dest, "%s.jpg" % task.cover.id)
-                )
-                # Downloading & Parsing lyrics
-                dest_lrc = join(task.lyrics.dest, task.save_as + ".lrc")
-                lrc = LrcParser()
-                dLyrics = track.GetTrackLyrics(task.lyrics.id)
-                for k in set(dLyrics.keys()) & (
-                    {"lrc", "tlyric", "romalrc"} - task.lyrics.lrc_blacklist
-                ):  # Filtering LRCs
-                    lrc.LoadLrc(dLyrics[k]["lyric"])
-                lrc_text = lrc.DumpLyrics()
-                if lrc_text:
-                    open(dest_lrc, "w", encoding="utf-8").write(lrc_text)
-                # Tagging the audio
+        def execute(task: BaseKeyValueClass):
+            if type(task) == MarkerTask:
+                # Mark a finished task w/o execution                
+                self.finished_tasks += 1
+                return
+            if type(task) == TrackDownloadTask:
                 try:
-                    self.tag_audio(task.song, dest_src, dest_cvr)
+                    # Downloding source audio
+                    dAudio = track.GetTrackAudio(task.audio.id, bitrate=task.audio.bitrate)
+                    dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value                
+                    assert dAudio["url"], "%s 无法下载，资源不存在" % task.song.Title                
+                    logger.info(
+                        "开始下载 #%d / %d - %s - %s - %skbps - %s"
+                        % (
+                            task.index + 1,
+                            task.total,
+                            task.song.Title,
+                            task.song.AlbumName,
+                            dAudio["br"] // 1000,
+                            dAudio["type"].upper(),
+                        )
+                    )
+                    if not exists(task.audio.dest):
+                        makedirs(task.audio.dest)
+                    dest_src = self.download_by_url(
+                        dAudio["url"],
+                        join(
+                            task.audio.dest,
+                            task.save_as + "." + dAudio["type"],
+                        ),
+                        xfer=True,
+                    )
+                    # Downloading cover
+                    dest_cvr = self.download_by_url(
+                        task.cover.url, join(task.cover.dest, "%s.jpg" % task.audio.dest)
+                    )
+                    # Downloading & Parsing lyrics
+                    dest_lrc = join(task.lyrics.dest, task.save_as + ".lrc")
+                    lrc = LrcParser()
+                    dLyrics = track.GetTrackLyrics(task.lyrics.id)
+                    for k in set(dLyrics.keys()) & (
+                        {"lrc", "tlyric", "romalrc"} - task.lyrics.lrc_blacklist
+                    ):  # Filtering LRCs
+                        lrc.LoadLrc(dLyrics[k]["lyric"])
+                    lrc_text = lrc.DumpLyrics()
+                    if lrc_text:
+                        open(dest_lrc, "w", encoding="utf-8").write(lrc_text)
+                    # Tagging the audio
+                    try:
+                        self.tag_audio(task.song, dest_src, dest_cvr)
+                    except Exception as e:
+                        logger.warning("标签失败 - %s - %s" % (task.song.Title, e))
+                    logger.info(
+                        "完成下载 #%d / %d - %s" % (task.index + 1, task.total, task.song.Title)
+                    )                
                 except Exception as e:
-                    logger.warning("标签失败 - %s - %s" % (task.song.Title, e))
-                logger.info(
-                    "完成下载 #%d / %d - %s" % (task.index + 1, task.total, task.song.Title)
-                )
+                    logger.warning("下载失败 %s - %s" % (task.song.Title, e))
+                    task.routine.result_exception(task.song.ID,e,task.song.Title)
                 # Cleaning up
                 remove(dest_cvr)
-            except Exception as e:
-                logger.warning("下载失败 %s - %s" % (task.song.Title, e))
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             while True:
@@ -268,12 +250,49 @@ class Subroutine:
     Subroutines are `callable`,upon called with `ids`,one
     queues tasks with all given arguments via `put_func` callback
     """
-
+    exceptions = None
     def __init__(self, args, put_func) -> None:
         self.args = args
         self.put = put_func
+        self.exceptions = dict()
+
+    def result_exception(self,result_id,exception : Exception,desc=None):
+        self.exceptions.setdefault(result_id,list())
+        self.exceptions[result_id].append((exception,desc))
+
+    @property
+    def has_exceptions(self):
+        return len(self.exceptions) > 0
+    
+class BaseDownloadTask(BaseKeyValueClass):
+    id: int
+    url: str
+    dest: str
+    bitrate: int
 
 
+class LyricsDownloadTask(BaseDownloadTask):
+    id: int
+    dest: str
+    lrc_blacklist: set
+
+
+class TrackDownloadTask(BaseKeyValueClass):
+    song: TrackHelper
+    cover: BaseDownloadTask
+    lyrics: BaseDownloadTask
+    audio: BaseDownloadTask
+
+    index: int
+    total: int
+    lyrics_exclude: set
+    save_as: str
+
+    routine : Subroutine
+
+class MarkerTask(BaseKeyValueClass):
+    pass
+    
 def create_subroutine(sub_type) -> Subroutine:
     """Dynamically creates subroutine callable by string specified"""
 
@@ -297,19 +316,17 @@ def create_subroutine(sub_type) -> Subroutine:
                                 "artists": " / ".join(song.Artists),
                             }
                         )
-                    # get file extension
-                    ext = track.GetTrackAudio(song.ID, bitrate=BITRATES[self.args.quality]).get("data", [{"url": ""}])[0]["type"]
-                    # audio file path
-                    dest = join(
-                        self.args.output,
-                        SubstituteWithFullwidth(save_as) + "." + ext
-                    )
-                    # if file exist and no-overwrite set, skip
-                    if exists(dest) and self.args.no_overwrite:
-                        logger.warning("单曲 #%d / %d - %s - %s 已存在，跳过" 
-                        % (index + 1, len(dDetails), song.Title, song.AlbumName))
-                        continue
-                    
+                    # If audio file already exsists
+                    # Skip the entire download if `--no_overwrite` is explicitly set                            
+                    if self.args.no_overwrite:
+                        if FuzzyPathHelper(self.args.output).exists(
+                            SubstituteWithFullwidth(save_as),partial_extension_check=True
+                        ):
+                            logger.warning(
+                                "单曲 #%d / %d - %s - %s 已存在，跳过"
+                                % (index + 1, len(dDetails), song.Title, song.AlbumName))
+                            self.put(MarkerTask())
+                            continue                    
                     tSong = TrackDownloadTask(
                         index=index,
                         total=len(dDetails),
@@ -328,16 +345,18 @@ def create_subroutine(sub_type) -> Subroutine:
                             lrc_blacklist=set(self.args.lyric_no),
                         ),
                         save_as=save_as,
+                        routine=self
                     )
                     tSong.save_as = SubstituteWithFullwidth(tSong.save_as)
 
                     self.put(tSong)
 
-                except Exception as e:
+                except Exception as e:                    
                     logger.warning(
                         "单曲 #%d / %d - %s - %s 无法下载： %s"
                         % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
                     )
+                    self.result_exception(song.ID,e,song.Title)
             return index + 1
 
         def __call__(self, ids):
@@ -531,10 +550,13 @@ def __main__():
         executor.task_queue.put(task)
 
     total_queued = 0
+    subroutines = []
     for rtype,ids in tasks:
-        logger.info("处理任务 ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲'}[rtype]))
+        task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲'}[rtype])
+        logger.info("处理任务 %s" % task_desc) 
         subroutine = create_subroutine(rtype)(args, enqueue_task)
         total_queued += subroutine(ids)  # Enqueue tasks
+        subroutines.append((subroutine,task_desc))
 
     if OPTIONALS["tqdm"]:
         import tqdm
@@ -564,7 +586,24 @@ def __main__():
                 break
         except KeyboardInterrupt:
             break
-
+    
+    # Check final results
+    # Thought: Maybe we should automatically retry these afterwards?
+    failed_ids = dict()
+    for routine,desc in subroutines:
+        routine : Subroutine
+        if routine.has_exceptions:
+            logger.error('%s - 下载未完成' % desc)
+            for exception_id , exceptions in routine.exceptions.items():
+                failed_ids[exception_id] = True
+                for exception in exceptions:
+                    exception_obj, desc = exception
+                    logger.warning('下载出错 ID: %s - %s%s' % (exception_id,exception_obj,' (%s)' % desc if desc else ''))
+    if failed_ids:
+        logger.error('你可以将下载失败的 ID 作为参数以再次下载')
+        logger.error('所有失败的任务 ID: %s' % ' '.join([str(i) for i in failed_ids.keys()]))
+    report()
+    logger.info(f'任务完成率 {(executor.finished_tasks * 100 / total_queued):.1f}%')
     return 0
 
 

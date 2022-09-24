@@ -11,14 +11,6 @@
 
 **Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本
 # 使用
-    usage: pyncm [-h] [--max-workers 最多同时下载任务数] [--template 模板] [--quality 音质]
-                [--output 输出] [--lyric-no 跳过歌词 [跳过歌词 ...]] [--phone 手机]
-                [--pwd 密码] [--save [保存到]] [--load [保存的登陆信息文件]] [--http]
-                [--log-level LOG_LEVEL]
-                [链接]
-
-    PyNCM 网易云音乐下载工具 1.6.6.7
-
     positional arguments:
     链接                    网易云音乐分享链接
 
@@ -44,7 +36,7 @@
                                     high     - 较高
                                     standard - 标准
     --output 输出           输出文件夹
-    --no-overwrite        不重复下载已经存在的音频文件
+    --no-overwrite         不重复下载已经存在的音频文件
 
     歌词:
     --lyric-no 跳过歌词 [跳过歌词 ...]
