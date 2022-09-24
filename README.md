@@ -44,6 +44,7 @@
                                     high     - 较高
                                     standard - 标准
     --output 输出           输出文件夹
+    --no-overwrite        不重复下载已经存在的音频文件
 
     歌词:
     --lyric-no 跳过歌词 [跳过歌词 ...]
