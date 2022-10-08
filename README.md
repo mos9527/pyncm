@@ -11,53 +11,56 @@
 
 **Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本
 # 使用
-    positional arguments:
-    链接                    网易云音乐分享链接
+        positional arguments:
+        链接                    网易云音乐分享链接
 
-    optional arguments:
-    -h, --help            show this help message and exit
+        optional arguments:
+        -h, --help            show this help message and exit
 
-    下载:
-    --max-workers 最多同时下载任务数, --max 最多同时下载任务数
-    --template 模板         保存文件名模板
-                                参数：    
-                                    id     - 网易云音乐资源 ID
-                                    year   - 出版年份
-                                    no     - 专辑中编号
-                                    album  - 专辑标题
-                                    track  - 单曲标题        
-                                    title  - 完整标题
-                                    artists- 艺术家名
-                                例：
-                                    {track} - {artists} 等效于 {title}
-    --quality 音质          音频音质（高音质需要 CVIP）
-                                参数：
-                                    lossless - “无损”
-                                    high     - 较高
-                                    standard - 标准
-    --output 输出           输出文件夹
-    --no-overwrite         不重复下载已经存在的音频文件
+        下载:
+        --max-workers 最多同时下载任务数, -m 最多同时下载任务数
+        --output-name 保存文件名模板, --template 保存文件名模板, -t 保存文件名模板
+                                保存文件名模板
+                                    参数：    
+                                        id     - 网易云音乐资源 ID
+                                        year   - 出版年份
+                                        no     - 专辑中编号
+                                        album  - 专辑标题
+                                        track  - 单曲标题        
+                                        title  - 完整标题
+                                        artists- 艺术家名
+                                    例：
+                                        {track} - {artists} 等效于 {title}
+        -o 输出, --output 输出    输出文件夹
+                                    注：该参数也可使用模板，格式同 保存文件名模板
+        --quality 音质          音频音质（高音质需要 CVIP）
+                                    参数：
+                                        hi-res  - Hi-Res
+                                        lossless- “无损”
+                                        exhigh  - 较高
+                                        standard- 标准
+        --no-overwrite        不重复下载已经存在的音频文件
 
-    歌词:
-    --lyric-no 跳过歌词 [跳过歌词 ...]
-                            跳过某些歌词类型的合并
-                                参数：
-                                    lrc    - 源语言歌词
-                                    tlyric - 翻译后歌词
-                                    romalrc- 罗马音歌词
-                                例：
-                                    --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词
+        歌词:
+        --lyric-no 跳过歌词 [跳过歌词 ...]
+                                跳过某些歌词类型的合并
+                                    参数：
+                                        lrc    - 源语言歌词
+                                        tlyric - 翻译后歌词
+                                        romalrc- 罗马音歌词
+                                    例：
+                                        --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词
 
-    登陆:
-    --phone 手机            网易账户手机号
-    --pwd 密码, --password 密码
-                            网易账户密码
-    --save [保存到]          写本次登录信息于文件
-    --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
-    --http                优先使用 HTTP，不保证不被升级
-    --log-level LOG_LEVEL
-                            日志等级
-
+        登陆:
+        --phone 手机            网易账户手机号
+        --pwd 密码, --password 密码
+                                网易账户密码
+        --save [保存到]          写本次登录信息于文件
+        --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
+        --http                优先使用 HTTP，不保证不被升级
+        --log-level LOG_LEVEL
+                                日志等级
+                                
 ### 使用示例
 ## 下载单曲
 [![asciicast](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1.svg)](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1)

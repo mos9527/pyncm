@@ -29,7 +29,6 @@
 """
 
 from random import randrange
-from time import time
 from functools import wraps
 from requests.models import Response
 from ..utils.crypto import (
@@ -92,7 +91,7 @@ def _BaseWrapper(requestFunc):
                 return payload
             except json.JSONDecodeError as e:
                 logger.error('Response is not valid JSON : %s' % e)
-                logger.error('Response : %s',rsp.text)
+                logger.error('Response : %s',rsp)
                 return rsp
 
         return wrapper

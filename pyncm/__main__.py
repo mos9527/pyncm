@@ -41,7 +41,6 @@ for import_name in OPTIONALS:
 
 __desc__ = """PyNCM 网易云音乐下载工具 %s""" % __version__
 
-BITRATES = {"standard": 96000, "high": 320000, "lossless": 3200000}
 # Key-Value classes
 class BaseKeyValueClass:
     def __init__(self, **kw) -> None:
@@ -183,7 +182,7 @@ class TaskPoolExecutorThread(Thread):
             if type(task) == TrackDownloadTask:
                 try:
                     # Downloding source audio
-                    dAudio = track.GetTrackAudio(task.audio.id, bitrate=task.audio.bitrate)
+                    dAudio = track.GetTrackAudioV1(task.audio.id, level=task.audio.level)
                     dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value                
                     assert dAudio["url"], "%s 无法下载，资源不存在" % task.song.Title                
                     logger.info(
@@ -200,19 +199,16 @@ class TaskPoolExecutorThread(Thread):
                     if not exists(task.audio.dest):
                         makedirs(task.audio.dest)
                     dest_src = self.download_by_url(
-                        dAudio["url"],
-                        join(
-                            task.audio.dest,
-                            task.save_as + "." + dAudio["type"],
-                        ),
+                        dAudio["url"],                        
+                        task.save_as + "." + dAudio["type"],                    
                         xfer=True,
                     )
                     # Downloading cover
                     dest_cvr = self.download_by_url(
-                        task.cover.url, join(task.cover.dest, "%s.jpg" % task.audio.dest)
+                        task.cover.url, "%s.jpg" % task.save_as
                     )
                     # Downloading & Parsing lyrics
-                    dest_lrc = join(task.lyrics.dest, task.save_as + ".lrc")
+                    dest_lrc = task.save_as
                     lrc = LrcParser()
                     dLyrics = track.GetTrackLyrics(task.lyrics.id)
                     for k in set(dLyrics.keys()) & (
@@ -268,7 +264,7 @@ class BaseDownloadTask(BaseKeyValueClass):
     id: int
     url: str
     dest: str
-    bitrate: int
+    level : str
 
 
 class LyricsDownloadTask(BaseDownloadTask):
@@ -292,96 +288,90 @@ class TrackDownloadTask(BaseKeyValueClass):
 
 class MarkerTask(BaseKeyValueClass):
     pass
+
+class Playlist(Subroutine):
+    """Base routine for ID-based tasks"""
+    def forIds(self, ids):
+        dDetails = [track.GetTrackDetail(ids[index:min(len(ids),index+1000)]).get("songs") for index in range(0,len(ids),1000)]
+        dDetails = [song for stripe in dDetails for song in stripe]           
+        dDetails = sorted(dDetails, key=lambda song: song["id"])
+        index = 0
+        for index, dDetail in enumerate(dDetails):
+            try:
+                song = TrackHelper(dDetail)
+                output_name=SubstituteWithFullwidth(
+                    self.args.output_name.format(**song.template)
+                )
+                output_folder=self.args.output.format(**{
+                    k:SubstituteWithFullwidth(v) for k,v in song.template.items()
+                })
+                # If audio file already exsists
+                # Skip the entire download if `--no_overwrite` is explicitly set                            
+                if self.args.no_overwrite:
+                    if FuzzyPathHelper(output_folder).exists(
+                        output_name,partial_extension_check=True
+                    ):
+                        logger.warning(
+                            "单曲 #%d / %d - %s - %s 已存在，跳过"
+                            % (index + 1, len(dDetails), song.Title, song.AlbumName))
+                        self.put(MarkerTask())
+                        continue                    
+                tSong = TrackDownloadTask(
+                    index=index,
+                    total=len(dDetails),
+                    song=song,
+                    cover=BaseDownloadTask(
+                        id=song.ID, url=song.AlbumCover, dest=output_folder
+                    ),
+                    audio=BaseDownloadTask(
+                        id=song.ID,
+                        level=self.args.quality,
+                        dest=output_folder,
+                    ),
+                    lyrics=LyricsDownloadTask(
+                        id=song.ID,
+                        dest=output_folder,
+                        lrc_blacklist=set(self.args.lyric_no),
+                    ),
+                    save_as=join(output_folder,output_name),
+                    routine=self
+                )                
+
+                self.put(tSong)
+
+            except Exception as e:                    
+                logger.warning(
+                    "单曲 #%d / %d - %s - %s 无法下载： %s"
+                    % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
+                )                
+                self.result_exception(song.ID,e,song.Title)
+        return index + 1
+
+    def __call__(self, ids):
+        queued = 0
+        for _id in ids:
+            dList = playlist.GetPlaylistInfo(_id)
+            logger.info("歌单 ：%s" % dict(dList)["playlist"]["name"])
+            queued += self.forIds(
+                [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
+            )
+        return queued
+
+class Album(Playlist):
+    def __call__(self, ids):
+        queued = 0
+        for _id in ids:
+            dList = album.GetAlbumInfo(_id)
+            logger.info("专辑 ：%s" % dict(dList)["album"]["name"])
+            queued += self.forIds([tid["id"] for tid in dList["songs"]])
+        return queued
+
+class Song(Playlist):
+    def __call__(self, ids):
+        return self.forIds(ids)
     
 def create_subroutine(sub_type) -> Subroutine:
     """Dynamically creates subroutine callable by string specified"""
-
-    class Playlist(Subroutine):
-        def forIds(self, ids):
-            dDetails = [track.GetTrackDetail(ids[index:min(len(ids),index+1000)]).get("songs") for index in range(0,len(ids),1000)]
-            dDetails = [song for stripe in dDetails for song in stripe]           
-            dDetails = sorted(dDetails, key=lambda song: song["id"])
-            index = 0
-            for index, dDetail in enumerate(dDetails):
-                try:
-                    song = TrackHelper(dDetail)
-                    save_as=self.args.template.format(
-                            **{
-                                "id": song.ID,
-                                "year": song.TrackPublishTime,
-                                "no": song.TrackNumber,
-                                "track": song.TrackName,
-                                "album": song.AlbumName,
-                                "title": song.Title,
-                                "artists": " / ".join(song.Artists),
-                            }
-                        )
-                    # If audio file already exsists
-                    # Skip the entire download if `--no_overwrite` is explicitly set                            
-                    if self.args.no_overwrite:
-                        if FuzzyPathHelper(self.args.output).exists(
-                            SubstituteWithFullwidth(save_as),partial_extension_check=True
-                        ):
-                            logger.warning(
-                                "单曲 #%d / %d - %s - %s 已存在，跳过"
-                                % (index + 1, len(dDetails), song.Title, song.AlbumName))
-                            self.put(MarkerTask())
-                            continue                    
-                    tSong = TrackDownloadTask(
-                        index=index,
-                        total=len(dDetails),
-                        song=song,
-                        cover=BaseDownloadTask(
-                            id=song.ID, url=song.AlbumCover, dest=self.args.output
-                        ),
-                        audio=BaseDownloadTask(
-                            id=song.ID,
-                            bitrate=BITRATES[self.args.quality],
-                            dest=self.args.output,
-                        ),
-                        lyrics=LyricsDownloadTask(
-                            id=song.ID,
-                            dest=self.args.output,
-                            lrc_blacklist=set(self.args.lyric_no),
-                        ),
-                        save_as=save_as,
-                        routine=self
-                    )
-                    tSong.save_as = SubstituteWithFullwidth(tSong.save_as)
-
-                    self.put(tSong)
-
-                except Exception as e:                    
-                    logger.warning(
-                        "单曲 #%d / %d - %s - %s 无法下载： %s"
-                        % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
-                    )
-                    self.result_exception(song.ID,e,song.Title)
-            return index + 1
-
-        def __call__(self, ids):
-            queued = 0
-            for _id in ids:
-                dList = playlist.GetPlaylistInfo(_id)
-                logger.info("歌单 ：%s" % dict(dList)["playlist"]["name"])
-                queued += self.forIds(
-                    [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
-                )
-            return queued
-
-    class Album(Playlist):
-        def __call__(self, ids):
-            queued = 0
-            for _id in ids:
-                dList = album.GetAlbumInfo(_id)
-                logger.info("专辑 ：%s" % dict(dList)["album"]["name"])
-                queued += self.forIds([tid["id"] for tid in dList["songs"]])
-            return queued
-
-    class Song(Playlist):
-        def __call__(self, ids):
-            return self.forIds(ids)
-
     return {"song": Song, "playlist": Playlist, "album": Album}[sub_type]
 
 
@@ -427,11 +417,13 @@ def parse_args():
     )
     group = parser.add_argument_group("下载")
     group.add_argument(
-        "--max-workers", "--max", metavar="最多同时下载任务数", default=4, type=int
+        "--max-workers", "-m", metavar="最多同时下载任务数", default=4, type=int
     )
     group.add_argument(
+        "--output-name",
         "--template",
-        metavar="模板",
+        "-t",
+        metavar="保存文件名模板",
         help=r"""保存文件名模板
     参数：    
         id     - 网易云音乐资源 ID
@@ -445,18 +437,21 @@ def parse_args():
         {track} - {artists} 等效于 {title}""",
         default=r"{title}",
     )
+    group.add_argument("-o","--output", metavar="输出", default=".", help=r"""输出文件夹
+    注：该参数也可使用模板，格式同 保存文件名模板"""
+    )
     group.add_argument(
         "--quality",
         metavar="音质",
-        choices=list(BITRATES.keys()),
+        choices=['standard','exhigh','lossless','hi-res'],
         help=r"""音频音质（高音质需要 CVIP）
     参数：
-        lossless - “无损”
-        high     - 较高
-        standard - 标准""",
+        hi-res  - Hi-Res
+        lossless- “无损”
+        exhigh  - 较高
+        standard- 标准""",
         default="standard",
     )
-    group.add_argument("--output", metavar="输出", default=".", help="输出文件夹")
     group.add_argument("--no-overwrite", action="store_true", help="不重复下载已经存在的音频文件")
     group = parser.add_argument_group("歌词")
     group.add_argument(

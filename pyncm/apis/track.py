@@ -45,6 +45,28 @@ def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
         "br": str(bitrate),
     }
 
+@EapiCryptoRequest
+def GetTrackAudioV1(song_ids: list, level='standard', encodeType="flac"):
+    """PC 端 - 获取歌曲音频详情（文件URL、MD5...） V1
+
+    Args:
+        song_ids (list): 歌曲 ID
+        level (str, optional): 音质 standard / exhigh / lossless / hires
+        encodeType (str, optional) Defaults to `flac`. 使用高 level 值时无视该选项
+
+    Notes:
+        song_ids 项目数应 <= 1000
+
+    Returns:
+        dict
+    """
+
+    ids = song_ids if isinstance(song_ids, list) else [song_ids]
+    return "/eapi/song/enhance/player/url/v1", {
+        "ids": ids,
+        "encodeType": str(encodeType),
+        "level": str(level),
+    }
 
 @EapiCryptoRequest
 def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):

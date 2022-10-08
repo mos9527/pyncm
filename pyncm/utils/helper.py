@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper utilites to aid operations w/ API responses"""
 from threading import Lock
+from functools import wraps
 from os import listdir,path
 import time,logging
 
@@ -10,9 +11,10 @@ logger = logging.getLogger("pyncm.helper")
 def SubstituteWithFullwidth(string,sub=set('\x00\\/:<>|?*')):
     return "".join([c if not c in sub else chr(ord(c) + 0xFEE0) for c in string])
 
-def Default(default=None):
+def Default(default=None):    
     def preWrapper(func):
         @property
+        @wraps(func)
         def wrapper(*a, **k):
             try:
                 return func(*a, **k)
@@ -178,15 +180,19 @@ class TrackHelper:
     def Title(self):
         """保存名 [曲名] - [艺术家名 1,2...,n]"""
         return f'{self.TrackName} - {",".join(self.Artists)}'
-
-    @Default()
-    def SanitizedTitle(self):
-        """保证兼容大多数文件系统的保存名，
-        文件名中若有 Windows 非法字符的存在，这些字符将会被替换为全角版本。
-        """
-
-        return f'{SubstituteWithFullwidth(self.TrackName)} - {SubstituteWithFullwidth(",".join(self.Artists))}'
-
+    
+    @property
+    def template(self):
+        """保存模板参数"""
+        return {
+            "id": str(self.ID),
+            "year": str(self.TrackPublishTime),
+            "no": str(self.TrackNumber),
+            "track": self.TrackName,
+            "album": self.AlbumName,
+            "title": self.Title,
+            "artists": " / ".join(self.Artists),
+        }
 class FuzzyPathHelper(IDCahceHelper):    
     tbl_basenames = None
     tbl_basenames_noext = None
