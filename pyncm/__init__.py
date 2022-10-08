@@ -38,7 +38,7 @@ from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm.api")
 
-__version__ = "1.6.8.2.1"
+__version__ = "1.6.8.2.2"
 
 DEVICE_ID_DEFAULT = "pyncm!"
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?

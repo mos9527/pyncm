@@ -200,15 +200,15 @@ class TaskPoolExecutorThread(Thread):
                         makedirs(task.audio.dest)
                     dest_src = self.download_by_url(
                         dAudio["url"],                        
-                        task.save_as + "." + dAudio["type"],                    
+                        task.save_as + "." + dAudio["type"].lower(),                    
                         xfer=True,
                     )
                     # Downloading cover
                     dest_cvr = self.download_by_url(
-                        task.cover.url, "%s.jpg" % task.save_as
+                        task.cover.url, task.save_as + '.jpg'
                     )
                     # Downloading & Parsing lyrics
-                    dest_lrc = task.save_as
+                    dest_lrc = task.save_as + '.lrc'
                     lrc = LrcParser()
                     dLyrics = track.GetTrackLyrics(task.lyrics.id)
                     for k in set(dLyrics.keys()) & (
