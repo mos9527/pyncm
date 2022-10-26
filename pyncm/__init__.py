@@ -32,33 +32,48 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 # 注意事项
     - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
 """
+from threading import current_thread
 from typing import Text, Union
 from time import time
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json
 logger = logging.getLogger("pyncm.api")
 
-__version__ = "1.6.8.2.2"
+__version__ = "1.6.8.3"
 
 DEVICE_ID_DEFAULT = "pyncm!"
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
 # Though with this, all pyncm users would then be sharing the same device Id.
 # Don't think that would be of any issue though...
 """默认 deviceID"""
+SESSION_STACK = dict()
 
 class Session(requests.Session):
     """# Session
-    实现网易云音乐登录态 / API请求管理
+    实现网易云音乐登录态 / API 请求管理
 
-    - HTTP方面，`Session`的配置方法和 `requests.Session` 完全一致，如配置 Headers::
+    - HTTP方面，`Session`的配置方法和 `requests.Session` 完全一致，如配置 Headers:
 
     GetCurrentSession().headers['X-Real-IP'] = '1.1.1.1'
 
-    - 该 Session 其他参数也可被修改::
+    - 该 Session 其他参数也可被修改:
 
     GetCurrentSession().force_http = True # 优先 HTTP
 
-    获取其他具体信息请参考该文档注释
+    - Session 对象本身可作为 Context Manager 使用:
+
+
+```python
+# 利用全局 Session 完成该 API Call
+LoginViaEmail(...) 
+session = CreateNewSession() # 建立新的 Session
+with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完成
+    LoginViaCellPhone(...)
+# 离开 Session. 此后 API 将继续由全局 Session 管理
+```
+注：Session 各*线程*独立，各线程利用 `with` 设置的 Sesison 不互相影响
+
+获取其他具体信息请参考该文档注释
     """    
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
@@ -70,6 +85,16 @@ class Session(requests.Session):
     """曾经的 Linux 客户端 UA，不推荐更改"""
     force_http = False
     """优先使用 HTTP 作 API 请求协议"""
+    
+    def __enter__(self):                
+        SESSION_STACK.setdefault(current_thread(),list())
+        SESSION_STACK[current_thread()].append(self)
+        return super().__enter__()
+    
+    def __exit__(self, *args) -> None:        
+        SESSION_STACK[current_thread()].pop()
+        return super().__exit__(*args)
+
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
         self.headers = {
@@ -185,9 +210,7 @@ class Session(requests.Session):
         for k, v in dumped.items():
             self._session_info[k][1](self, v)
         return True
-
-    # endregion
-
+# endregion
 
 class SessionManager:
     """PyNCM Session 单例储存对象"""
@@ -195,9 +218,13 @@ class SessionManager:
         self.session = Session()
 
     def get(self):
+        if SESSION_STACK.get(current_thread(),None):
+            return SESSION_STACK[current_thread()][-1]
         return self.session
 
     def set(self, session):
+        if SESSION_STACK.get(current_thread(),None):
+            raise Exception("Current Session is in `with` block, which cannot be reassigned.")
         self.session = session
 
     # region Session serialization
@@ -237,8 +264,7 @@ class SessionManager:
             return session
         else:
             return SessionManager.parse_legacy(dump)
-
-    # endregion
+# endregion
 
 sessionManager = SessionManager()
 
@@ -255,6 +281,11 @@ def SetCurrentSession(session: Session):
 def SetNewSession():
     """设置新的被 PyNCM 使用的 Session / 登录态"""
     sessionManager.set(Session())
+
+
+def CreateNewSession() -> Session:
+    """创建新 Session 实例"""
+    return Session()
 
 
 def LoadSessionFromString(dump: str) -> Session:

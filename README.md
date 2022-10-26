@@ -82,7 +82,18 @@
 >>> apis.track.GetTrackComments(29732235)    
 {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 ```
-
+- 多 Session 示例
+```python
+LoginViaEmail(...) 
+# 利用全局 Session 完成该 API Call
+session = CreateNewSession() # 建立新的 Session
+with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完成
+    LoginViaCellPhone(...)
+    result = GetTrackAudio(...)
+# 离开 Session. 此后 API 将继续由全局 Session 管理
+GetTrackComments(...)
+```
+详见 [Session 说明](https://github.com/mos9527/pyncm/blob/master/pyncm/__init__.py#L52)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
 
