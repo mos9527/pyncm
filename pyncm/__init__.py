@@ -36,10 +36,11 @@ from threading import current_thread
 from typing import Text, Union
 from time import time
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
-import requests, logging, json
+import requests, logging, json, os
 logger = logging.getLogger("pyncm.api")
-
-__version__ = "1.6.8.3"
+if 'PYNCM_DEBUG' in os.environ:
+    logging.basicConfig(level='DEBUG', format="[%(levelname).4s] %(name)s %(message)s")
+__version__ = "1.6.8.4"
 
 DEVICE_ID_DEFAULT = "pyncm!"
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?

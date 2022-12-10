@@ -30,6 +30,9 @@ def login():
 
 assert_dep("pyncm")
 assert_dep("inquirer")
-from pyncm import __version__
+# Find pyncm from working directories first
+import sys
+sys.path.insert(0,'.')
 
-print("PyNCM %s" % __version__)
+from pyncm import __version__,__file__
+print("PyNCM %s" % __version__,__file__)
