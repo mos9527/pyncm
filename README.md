@@ -10,7 +10,7 @@
 - `coloredlogs` : 彩色日志输出
 
 **Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本
-# 使用
+# 命令行使用
         positional arguments:
         链接                    网易云音乐分享链接
 
@@ -60,7 +60,11 @@
         --http                优先使用 HTTP，不保证不被升级
         --log-level LOG_LEVEL
                                 日志等级
-                                
+
+## 环境变量
+|变量名|说明|
+|-|-|
+|`PYNCM_DEBUG`|调试日志输出等级,`'CRITICAL', 'DEBUG', 'ERROR','FATAL','INFO','WARNING'` 之一|
 ### 使用示例
 ## 下载单曲
 [![asciicast](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1.svg)](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1)

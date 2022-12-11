@@ -1,4 +1,3 @@
-"""二维码登录 Demo"""
 from __init__ import assert_dep
 
 assert_dep("qrcode")

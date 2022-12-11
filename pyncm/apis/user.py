@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """用户 - User APIs"""
 from . import WeapiCryptoRequest, UserIDBasedApi, LoginRequiredApi
-
+from json import dumps
 
 @WeapiCryptoRequest
 @UserIDBasedApi
@@ -62,9 +62,22 @@ def SetSignin(dtype=0):
     """移动端、PC端 - 每日签到
 
     Args:
-        dtype (int, optional): 签到类型，请使用本模块内 SIGNIN_TYPE_... 之一 .Defaults to SIGNIN_TYPE_MOBILE.
+        dtype (int, optional): 签到类型，(user.SIGNIN_TYPE_MOBILE/user.SIGNIN_TYPE_WEB). Defaults to SIGNIN_TYPE_MOBILE
 
     Returns:
         dict
     """
     return "/weapi/point/dailyTask", {"type": str(dtype)}
+
+
+@WeapiCryptoRequest
+@LoginRequiredApi
+def SetWeblog(logs):
+    '''移动端、PC端 - 用户足迹
+
+    网易云跟踪用户行为 API，可记录内容繁多。这里暂不描述
+
+    Args:
+        logs (dict): 操作记录
+    '''
+    return "/weapi/feedback/weblog" , {"logs" : dumps(logs)}

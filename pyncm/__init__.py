@@ -39,7 +39,10 @@ from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json, os
 logger = logging.getLogger("pyncm.api")
 if 'PYNCM_DEBUG' in os.environ:
-    logging.basicConfig(level='DEBUG', format="[%(levelname).4s] %(name)s %(message)s")
+    debug_level = os.environ['PYNCM_DEBUG'].upper()    
+    if not debug_level in {'CRITICAL', 'DEBUG', 'ERROR','FATAL','INFO','WARNING'}:
+        debug_level = 'DEBUG'
+    logging.basicConfig(level=debug_level, format="[%(levelname).4s] %(name)s %(message)s")
 __version__ = "1.6.8.4"
 
 DEVICE_ID_DEFAULT = "pyncm!"

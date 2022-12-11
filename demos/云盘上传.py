@@ -1,5 +1,5 @@
 import hashlib, os
-
+from __init__ import login
 
 def md5sum(file):
     md5sum = hashlib.md5()
@@ -60,9 +60,7 @@ def upload_one(path):
     print("发布结果", publish_result)
 
 
-if __name__ == "__main__":
-    from __init__ import login
-
+if __name__ == "__main__":    
     assert login(), "登录失败"
     # login via phone,may change as you like
     upload_one(input("文件路径："))

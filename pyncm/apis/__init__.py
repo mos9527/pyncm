@@ -67,8 +67,10 @@ def _BaseWrapper(requestFunc):
             ret = apiFunc(*a, **k)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"            
-            logger.debug('API=%s %s url=%s deviceId=%s payload=%s' % (
+            logger.debug('TYPE=%s API=%s.%s %s url=%s deviceId=%s payload=%s' % (
                 requestFunc.__name__.split('Crypto')[0].upper(),
+                apiFunc.__module__,
+                apiFunc,
                 method,
                 url,
                 GetCurrentSession().deviceId,

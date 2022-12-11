@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # PyNCM CLI interface
 
-import logging
 from pyncm import (
     DumpSessionAsString,
     GetCurrentSession,
@@ -21,7 +20,7 @@ from os.path import join, exists
 from os import remove, makedirs
 
 from logging import exception, getLogger, basicConfig
-import sys, argparse, re
+import sys, argparse, re , os
 logger = getLogger('pyncm.main')
 # Import checks
 OPTIONALS = {"mutagen": False, "tqdm": False, "coloredlogs": False}
@@ -476,7 +475,7 @@ def parse_args():
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
-    group.add_argument("--log-level", help="日志等级", default="INFO")
+    group.add_argument("--log-level", help="日志等级", default="NOTSET")
 
     args = parser.parse_args()
     
@@ -506,6 +505,8 @@ def __main__():
                     return sys.stdout.write(__s)
 
         log_stream = SemaphoreStdout
+    if args.log_level == 'NOTSET':
+        args.log_level = os.environ.get('PYNCM_DEBUG','INFO')
     if OPTIONALS["coloredlogs"]:
         import coloredlogs
 
