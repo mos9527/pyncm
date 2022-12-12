@@ -20,7 +20,7 @@ from pyncm.apis.user import SetWeblog
 from pprint import pprint
 print(__desc__)
 pprint(SetWeblog(
-    {
+    [{
         'action': 'play',
         'json': {
             'download': 0,
@@ -32,5 +32,5 @@ pprint(SetWeblog(
             'wifi': 0,
             'source' : 'list',
         }
-    }
+    }]
 ))
