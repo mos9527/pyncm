@@ -39,6 +39,19 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
 
 @WeapiCryptoRequest
 @LoginRequiredApi
+def GetUserAlbumSubs(limit=30):
+    """网页端 - 获取收藏专辑内容
+    Args:
+        limit (int, optional): 单次获取量. Defaults to 30.
+
+    Returns:
+        dict
+    """
+    return "/weapi/album/sublist", {"limit": str(limit)}
+
+
+@WeapiCryptoRequest
+@LoginRequiredApi
 def GetUserArtistSubs(limit=30):
     """网页端 - 获取收藏歌手内容
     Args:
