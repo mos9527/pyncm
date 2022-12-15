@@ -18,7 +18,7 @@ def GetCloudDriveInfo(limit=30, offset=0):
     Returns:
         dict
     """
-    return "/weapi/v1/cloud/get", {limit: str(limit), offset: str(offset)}
+    return "/weapi/v1/cloud/get", {"limit": str(limit), "offset": str(offset)}
 
 
 @WeapiCryptoRequest
