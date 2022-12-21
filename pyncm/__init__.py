@@ -43,7 +43,7 @@ if 'PYNCM_DEBUG' in os.environ:
     if not debug_level in {'CRITICAL', 'DEBUG', 'ERROR','FATAL','INFO','WARNING'}:
         debug_level = 'DEBUG'
     logging.basicConfig(level=debug_level, format="[%(levelname).4s] %(name)s %(message)s")
-__version__ = "1.6.8.4"
+__version__ = "1.6.8.4.1"
 
 DEVICE_ID_DEFAULT = "pyncm!"
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
