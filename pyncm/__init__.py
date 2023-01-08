@@ -32,6 +32,8 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 # 注意事项
     - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
 """
+__version__ = "1.6.8.4.3"
+
 from threading import current_thread
 from typing import Text, Union
 from time import time
@@ -43,7 +45,6 @@ if 'PYNCM_DEBUG' in os.environ:
     if not debug_level in {'CRITICAL', 'DEBUG', 'ERROR','FATAL','INFO','WARNING'}:
         debug_level = 'DEBUG'
     logging.basicConfig(level=debug_level, format="[%(levelname).4s] %(name)s %(message)s")
-__version__ = "1.6.8.4.2"
 
 DEVICE_ID_DEFAULT = "pyncm!"
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
