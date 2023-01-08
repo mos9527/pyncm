@@ -30,7 +30,6 @@ def WriteLoginInfo(response):
     sess.login_info["success"] = True
     cookie = sess.cookies.get_dict()
     sess.csrf_token = cookie["__csrf"]
-    logger.debug("Updated login info for user %s" % sess.nickname)
 
 
 @WeapiCryptoRequest
