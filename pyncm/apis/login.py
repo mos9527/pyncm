@@ -172,7 +172,7 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
     Returns:
         dict
     """
-    path = "/eapi/w/login"
+    path = "/eapi/login"
     sess = GetCurrentSession()
     if password:
         passwordHash = HashHexDigest(password)        
@@ -182,7 +182,7 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
 
     auth_token = {"password": str(passwordHash)}
 
-    login_status = WeapiCryptoRequest(
+    login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
