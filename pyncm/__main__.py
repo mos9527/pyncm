@@ -12,7 +12,6 @@ from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.helper import TrackHelper, FuzzyPathHelper, SubstituteWithFullwidth
 from pyncm.apis import login, track, playlist, album
 
-from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from time import sleep

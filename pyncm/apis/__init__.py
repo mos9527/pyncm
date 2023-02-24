@@ -187,11 +187,12 @@ def EapiCryptoRequest(url, plain, method):
 from . import (
     miniprograms,
     album,
+    artists,
     cloud,
     cloudsearch,
     login,
     playlist,
     track,
     user,
-    video,
+    video,    
 )
