@@ -14,19 +14,19 @@
         positional arguments:
         链接                    网易云音乐分享链接
 
-        optional arguments:
+        options:
         -h, --help            show this help message and exit
 
         下载:
         --max-workers 最多同时下载任务数, -m 最多同时下载任务数
         --output-name 保存文件名模板, --template 保存文件名模板, -t 保存文件名模板
                                 保存文件名模板
-                                    参数：    
+                                    参数：
                                         id     - 网易云音乐资源 ID
                                         year   - 出版年份
                                         no     - 专辑中编号
                                         album  - 专辑标题
-                                        track  - 单曲标题        
+                                        track  - 单曲标题
                                         title  - 完整标题
                                         artists- 艺术家名
                                     例：
@@ -35,7 +35,7 @@
                                     注：该参数也可使用模板，格式同 保存文件名模板
         --quality 音质          音频音质（高音质需要 CVIP）
                                     参数：
-                                        hi-res  - Hi-Res
+                                        hires  - Hi-Res
                                         lossless- “无损”
                                         exhigh  - 较高
                                         standard- 标准
@@ -60,6 +60,12 @@
         --http                优先使用 HTTP，不保证不被升级
         --log-level LOG_LEVEL
                                 日志等级
+
+        限量及过滤（注：只适用于*每单个*链接 / ID:
+        -n 下载总量, --count 下载总量
+                                限制下载歌曲总量，n=0即不限制
+        --sort-by 歌曲排序        【限制总量时】歌曲排序方式 (hot: 热度高在前 time:发行时间新在前)
+        --reverse-sort        【限制总量时】倒序排序歌曲
 
 ## 环境变量
 |变量名|说明|

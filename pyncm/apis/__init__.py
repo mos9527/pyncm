@@ -185,9 +185,9 @@ def EapiCryptoRequest(url, plain, method):
     return request.content
 
 from . import (
+    artist,
     miniprograms,
     album,
-    artists,
     cloud,
     cloudsearch,
     login,

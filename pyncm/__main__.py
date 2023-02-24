@@ -9,9 +9,9 @@ from pyncm import (
     __version__
 )
 from pyncm.utils.lrcparser import LrcParser
-from pyncm.utils.helper import TrackHelper, FuzzyPathHelper, SubstituteWithFullwidth
-from pyncm.apis import login, track, playlist, album
-
+from pyncm.utils.helper import TrackHelper,ArtistHelper, FuzzyPathHelper, SubstituteWithFullwidth
+from pyncm.apis import artist, login, track, playlist, album
+from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from time import sleep
@@ -247,7 +247,7 @@ class Subroutine:
     exceptions = None
     def __init__(self, args, put_func) -> None:
         self.args = args
-        self.put = put_func
+        self.put = put_func        
         self.exceptions = dict()
 
     def result_exception(self,result_id,exception : Exception,desc=None):
@@ -289,10 +289,22 @@ class MarkerTask(BaseKeyValueClass):
 
 class Playlist(Subroutine):
     """Base routine for ID-based tasks"""
+    def filter(self, song_list):
+        # This is only meant to faciliate sorting w/ APIs that doesn't implement them
+        # The observed behaviors remains more or less the same with the offical ones
+        if self.args.count >= 0:            
+            sorting = {        
+                'hot': lambda song : float(song['pop']), # [0,100.0]
+                'time' : lambda song: TrackHelper(song).Album.AlbumPublishTime # in Years
+            }[self.args.sort_by]
+            song_list = sorted(song_list,key=sorting,reverse=not self.args.reverse_sort)
+        return song_list    
+
     def forIds(self, ids):
         dDetails = [track.GetTrackDetail(ids[index:min(len(ids),index+1000)]).get("songs") for index in range(0,len(ids),1000)]
-        dDetails = [song for stripe in dDetails for song in stripe]           
+        dDetails = [song for stripe in dDetails for song in stripe]
         dDetails = sorted(dDetails, key=lambda song: song["id"])
+        dDetails = self.filter(dDetails)
         index = 0
         for index, dDetail in enumerate(dDetails):
             try:
@@ -364,13 +376,22 @@ class Album(Playlist):
             queued += self.forIds([tid["id"] for tid in dList["songs"]])
         return queued
 
+class Artist(Playlist):    
+    def __call__(self, ids):
+        queued = 0
+        for _id in ids:
+            dList = artist.GetArtistTracks(_id,limit=self.args.count,order=self.args.sort_by)
+            logger.info("艺术家 ：%s" % ArtistHelper(_id).ArtistName)
+            queued += self.forIds([tid["id"] for tid in dList["songs"]])
+        return queued
+
 class Song(Playlist):
     def __call__(self, ids):
         return self.forIds(ids)
     
 def create_subroutine(sub_type) -> Subroutine:
     """Dynamically creates subroutine callable by string specified"""
-    return {"song": Song, "playlist": Playlist, "album": Album}[sub_type]
+    return {"song": Song, "playlist": Playlist, "album": Album, "artist": Artist}[sub_type]
 
 
 def parse_sharelink(url):
@@ -378,7 +399,7 @@ def parse_sharelink(url):
 
     e.g.
         31140560 (plain song id)
-        https://greats3an.github.io/pyncmd/?trackId=1818064296 (pyncmd)
+        https://mos9527.github.io/pyncmd/?trackId=1818064296 (pyncmd)
         分享Ali Edwards的单曲《Devil Trigger》: http://music.163.com/song/1353163404/?userid=6483697162 (来自@网易云音乐) (mobile app)
         "分享mos9527创建的歌单「東方 PC」: http://music.163.com/playlist?id=72897851187" (desktop app)
     """
@@ -391,7 +412,8 @@ def parse_sharelink(url):
     table = {
         "song": ["trackId", "song"],
         "playlist": ["playlist"],
-        "album": ["album"],
+        "artist": ["artist"],
+        "album": ["album"]
     }
     rtype = "song"  # Defaults to songs (tracks)
     for rtype_, rkeyword in table.items():
@@ -475,7 +497,16 @@ def parse_args():
     )
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
     group.add_argument("--log-level", help="日志等级", default="NOTSET")
-
+    group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID")
+    group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制",type=int)
+    group.add_argument(
+        "--sort-by",
+        metavar="歌曲排序",
+        default="hot",
+        help="【限制总量时】歌曲排序方式 (hot: 热度高在前 time:发行时间新在前)",
+        choices=["hot","time"]
+    )
+    group.add_argument("--reverse-sort",action="store_true",default=False,help="【限制总量时】倒序排序歌曲")
     args = parser.parse_args()
     
     try:
@@ -547,7 +578,7 @@ def __main__():
     total_queued = 0
     subroutines = []
     for rtype,ids in tasks:
-        task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲'}[rtype])
+        task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲','artist':'艺术家'}[rtype])
         logger.info("处理任务 %s" % task_desc) 
         subroutine = create_subroutine(rtype)(args, enqueue_task)
         total_queued += subroutine(ids)  # Enqueue tasks

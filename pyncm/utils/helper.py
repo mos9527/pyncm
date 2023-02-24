@@ -100,6 +100,35 @@ class AlbumHelper(IDCahceHelper):
     def AlbumArtists(self):
         """专辑艺术家"""
         return [_ar["name"] for _ar in self.data["album"]["artists"]]
+
+class ArtistHelper(IDCahceHelper):
+    def __init__(self, item_id):        
+        from pyncm.apis.artist import GetArtistDetails
+        super().__init__(item_id, GetArtistDetails)
+    
+    def refresh(self):        
+        logger.debug('Caching artist info %s' % self._item_id)
+        return super().refresh()
+
+    @Default()
+    def ID(self):
+        """艺术家 ID"""
+        return self.data["data"]["artist"]["id"]
+
+    @Default()
+    def ArtistName(self):
+        """艺术家名"""
+        return self.data["data"]["artist"]["name"]
+
+    @Default()
+    def ArtistTranslatedName(self):
+        """艺术家翻译名"""
+        return self.data["data"]["artist"]["transNames"]
+
+    @Default()
+    def ArtistBrief(self):
+        """艺术家简述"""
+        return self.data["data"]["artist"]["briefDesc"]    
     
 class TrackHelper:
     """Helper class for handling generic track objects"""

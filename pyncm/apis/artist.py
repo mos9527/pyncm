@@ -31,7 +31,7 @@ def GetArtistTracks(artist_id: str,offset=0, total=True, limit=1000,order='hot')
         offset (int, optional): 获取偏移数. Defaults to 0.
         total (bool, optional): 是否获取全部内容. Defaults to True.
         limit (int, optional): 单次获取量. Defaults to 30.
-        order (str, optional): 歌曲排序方式 (hot/time). Defaults to 'hot'.
+        order (str, optional): 歌曲排序方式 (hot：热度最高在前/time：时间最新在前). Defaults to 'hot'.
     Returns:
         dict
     """
@@ -42,3 +42,19 @@ def GetArtistTracks(artist_id: str,offset=0, total=True, limit=1000,order='hot')
         "limit": str(limit),
         "order": str(order),        
     }
+
+
+@WeapiCryptoRequest
+def GetArtistDetails(artist_id: str):
+    """网页端 - 获取艺术家详情
+
+    Args:
+        artist_id (str): 艺术家ID    
+    Returns:
+        dict
+    """
+    return "/weapi/artist/head/info/get", {
+        "id" : str(artist_id)
+    }
+
+
