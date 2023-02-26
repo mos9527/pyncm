@@ -3,7 +3,7 @@
 from threading import Lock
 from functools import wraps
 from os import listdir,path
-import time,logging
+import datetime,logging
 
 truncate_length = 64
 logger = logging.getLogger("pyncm.helper")
@@ -86,10 +86,9 @@ class AlbumHelper(IDCahceHelper):
     @Default()
     def AlbumPublishTime(self):
         """专辑发布年份"""
-        epoch = (
-            self.data["album"]["publishTime"] / 1000
-        )
-        return time.gmtime(epoch).tm_year
+        return (
+            datetime.datetime(1970, 1, 1) + datetime.timedelta(milliseconds=self.data["album"]["publishTime"])
+        ).year
 
     @Default()
     def AlbumSongCount(self):
@@ -149,10 +148,9 @@ class TrackHelper:
     @Default()
     def TrackPublishTime(self):
         """歌曲发布年份"""
-        epoch = (
-            self.data["publishTime"] / 1000
-        )  # stored as unix timestamp though only the year was ever useful
-        return time.gmtime(epoch).tm_year
+        return (
+            datetime.datetime(1970, 1, 1) + datetime.timedelta(milliseconds=self.data["publishTime"] )
+        ).year
 
     @Default()
     def TrackNumber(self):

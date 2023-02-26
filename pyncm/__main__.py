@@ -56,7 +56,7 @@ class TaskPoolExecutorThread(Thread):
             # Due to different capabilites of containers, only
             # ones that can actually be stored will be written.
             complete_metadata = {
-                "title" : [track.TrackName,*(track.TrackAliases or [])],
+                "title" : [track.TrackName],
                 "artist" : [*(track.Artists or [])],
                 "albumartist" : [*(track.Album.AlbumArtists or [])],
                 "album" : [track.AlbumName],
@@ -194,6 +194,7 @@ class TaskPoolExecutorThread(Thread):
                             dAudio["type"].upper(),
                         )
                     )
+                    task.extension = dAudio["type"].lower()
                     if not exists(task.audio.dest):
                         makedirs(task.audio.dest)
                     dest_src = self.download_by_url(
@@ -281,6 +282,7 @@ class TrackDownloadTask(BaseKeyValueClass):
     total: int
     lyrics_exclude: set
     save_as: str
+    extension: str
 
     routine : Subroutine
 
@@ -292,19 +294,19 @@ class Playlist(Subroutine):
     def filter(self, song_list):
         # This is only meant to faciliate sorting w/ APIs that doesn't implement them
         # The observed behaviors remains more or less the same with the offical ones
-        if self.args.count >= 0:            
+        if self.args.count > 0 and self.args.sort_by != 'default':
             sorting = {        
                 'hot': lambda song : float(song['pop']), # [0,100.0]
                 'time' : lambda song: TrackHelper(song).Album.AlbumPublishTime # in Years
             }[self.args.sort_by]
             song_list = sorted(song_list,key=sorting,reverse=not self.args.reverse_sort)
-        return song_list    
+        return song_list[:self.args.count if self.args.count > 0 else len(song_list)]
 
     def forIds(self, ids):
         dDetails = [track.GetTrackDetail(ids[index:min(len(ids),index+1000)]).get("songs") for index in range(0,len(ids),1000)]
-        dDetails = [song for stripe in dDetails for song in stripe]
-        dDetails = sorted(dDetails, key=lambda song: song["id"])
+        dDetails = [song for stripe in dDetails for song in stripe]        
         dDetails = self.filter(dDetails)
+        downloadTasks = []
         index = 0
         for index, dDetail in enumerate(dDetails):
             try:
@@ -315,17 +317,7 @@ class Playlist(Subroutine):
                 output_folder=self.args.output.format(**{
                     k:SubstituteWithFullwidth(v) for k,v in song.template.items()
                 })
-                # If audio file already exsists
-                # Skip the entire download if `--no_overwrite` is explicitly set                            
-                if self.args.no_overwrite:
-                    if FuzzyPathHelper(output_folder).exists(
-                        output_name,partial_extension_check=True
-                    ):
-                        logger.warning(
-                            "单曲 #%d / %d - %s - %s 已存在，跳过"
-                            % (index + 1, len(dDetails), song.Title, song.AlbumName))
-                        self.put(MarkerTask())
-                        continue                    
+                    
                 tSong = TrackDownloadTask(
                     index=index,
                     total=len(dDetails),
@@ -345,8 +337,19 @@ class Playlist(Subroutine):
                     ),
                     save_as=join(output_folder,output_name),
                     routine=self
-                )                
-
+                )                                
+                downloadTasks.append(tSong)
+                # If audio file already exsists
+                # Skip its download if `--no_overwrite` is explicitly set             
+                if self.args.no_overwrite:
+                    if FuzzyPathHelper(output_folder).exists(
+                        output_name,partial_extension_check=True
+                    ):
+                        logger.warning(
+                            "单曲 #%d / %d - %s - %s 已存在，跳过"
+                            % (index + 1, len(dDetails), song.Title, song.AlbumName))
+                        self.put(MarkerTask())
+                        continue
                 self.put(tSong)
 
             except Exception as e:                    
@@ -355,39 +358,43 @@ class Playlist(Subroutine):
                     % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
                 )                
                 self.result_exception(song.ID,e,song.Title)
-        return index + 1
+        return downloadTasks
 
     def __call__(self, ids):
-        queued = 0
+        queued = []
         for _id in ids:
             dList = playlist.GetPlaylistInfo(_id)
             logger.info("歌单 ：%s" % dict(dList)["playlist"]["name"])
-            queued += self.forIds(
-                [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
-            )
+            queuedTasks = self.forIds([tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]])
+            queued += queuedTasks
         return queued
 
 class Album(Playlist):
     def __call__(self, ids):
-        queued = 0
+        queued = []
         for _id in ids:
             dList = album.GetAlbumInfo(_id)
             logger.info("专辑 ：%s" % dict(dList)["album"]["name"])
-            queued += self.forIds([tid["id"] for tid in dList["songs"]])
+            queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
+            queued += queuedTasks
         return queued
 
 class Artist(Playlist):    
     def __call__(self, ids):
-        queued = 0
+        queued = []
         for _id in ids:
             dList = artist.GetArtistTracks(_id,limit=self.args.count,order=self.args.sort_by)
             logger.info("艺术家 ：%s" % ArtistHelper(_id).ArtistName)
-            queued += self.forIds([tid["id"] for tid in dList["songs"]])
+            queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
+            queued += queuedTasks
         return queued
 
 class Song(Playlist):
     def __call__(self, ids):
-        return self.forIds(ids)
+        queuedTasks = self.forIds(ids)
+        if self.args.save_m3u:
+            logger.warning("不能为单曲保存 m3u 文件")
+        return queuedTasks
     
 def create_subroutine(sub_type) -> Subroutine:
     """Dynamically creates subroutine callable by string specified"""
@@ -497,16 +504,25 @@ def parse_args():
     )
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
     group.add_argument("--log-level", help="日志等级", default="NOTSET")
-    group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID")
+    group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID）")
     group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制",type=int)
     group.add_argument(
         "--sort-by",
         metavar="歌曲排序",
-        default="hot",
-        help="【限制总量时】歌曲排序方式 (hot: 热度高在前 time:发行时间新在前)",
-        choices=["hot","time"]
+        default="default",
+        help="【限制总量时】歌曲排序方式 (default: 默认排序 hot: 热度高（相对于其所在专辑）在前 time: 发行时间新在前)",
+        choices=["default", "hot","time"]
     )
     group.add_argument("--reverse-sort",action="store_true",default=False,help="【限制总量时】倒序排序歌曲")
+    group = parser.add_argument_group("工具")
+    group.add_argument(
+        "--save-m3u",
+        metavar="保存M3U播放列表文件名",
+        default="",
+        help=r"""将本次下载的歌曲文件名依一定顺序保存在M3U文件中；写入的文件目录相对于该M3U文件
+        文件编码为 UTF-8
+        顺序为：链接先后优先——每个连接的所有歌曲依照歌曲排序设定 （--sort-by）排序"""
+    )
     args = parser.parse_args()
     
     try:
@@ -574,14 +590,14 @@ def __main__():
 
     def enqueue_task(task):
         executor.task_queue.put(task)
-
-    total_queued = 0
+    
     subroutines = []
+    queuedTasks = []
     for rtype,ids in tasks:
         task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲','artist':'艺术家'}[rtype])
         logger.info("处理任务 %s" % task_desc) 
         subroutine = create_subroutine(rtype)(args, enqueue_task)
-        total_queued += subroutine(ids)  # Enqueue tasks
+        queuedTasks += subroutine(ids)  # Enqueue tasks
         subroutines.append((subroutine,task_desc))
 
     if OPTIONALS["tqdm"]:
@@ -590,18 +606,18 @@ def __main__():
         _tqdm = tqdm.tqdm(
             bar_format="{desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} {elapsed}<{remaining}"
         )
-        _tqdm.total = total_queued
+        _tqdm.total = len(queuedTasks)
 
         def report():
             _tqdm.desc = _tqdm.format_sizeof(executor.xfered, suffix="B", divisor=1024)
-            _tqdm.update(min(executor.finished_tasks, total_queued) - _tqdm.n)
+            _tqdm.update(min(executor.finished_tasks, len(queuedTasks)) - _tqdm.n)
             return True
 
     else:
 
         def report():
             sys.stderr.write(
-                f"下载中 : {executor.finished_tasks:.1f} / {total_queued} ({(executor.finished_tasks * 100 / total_queued):.1f} %,{executor.xfered >> 20} MB)               \r"
+                f"下载中 : {executor.finished_tasks:.1f} / {len(queuedTasks)} ({(executor.finished_tasks * 100 / len(queuedTasks)):.1f} %,{executor.xfered >> 20} MB)               \r"
             )
             return True
 
@@ -625,11 +641,27 @@ def __main__():
                 for exception in exceptions:
                     exception_obj, desc = exception
                     logger.warning('下载出错 ID: %s - %s%s' % (exception_id,exception_obj,' (%s)' % desc if desc else ''))
+
+    if args.save_m3u:    
+        output_name = args.save_m3u
+        output_folder = os.path.dirname(output_name)
+
+        with open(output_name,'w',encoding='utf-8') as f:
+            f.write('#EXTM3U\n')
+            for task in queuedTasks:
+                task : TrackDownloadTask
+                filePath = task.save_as + '.' + task.extension
+                relPath = os.path.relpath(filePath,output_folder)
+                f.write('#EXTINF:,\n')
+                f.write(relPath)
+                f.write('\n')
+        logger.info('已保存播放列表至：%s' % output_name)
+
     if failed_ids:
         logger.error('你可以将下载失败的 ID 作为参数以再次下载')
         logger.error('所有失败的任务 ID: %s' % ' '.join([str(i) for i in failed_ids.keys()]))
     report()
-    logger.info(f'任务完成率 {(executor.finished_tasks * 100 / total_queued):.1f}%')
+    logger.info(f'任务完成率 {(executor.finished_tasks * 100 / len(queuedTasks)):.1f}%')
     return 0
 
 
