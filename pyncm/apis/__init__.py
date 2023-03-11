@@ -30,7 +30,7 @@
 
 from random import randrange
 from functools import wraps
-from requests.models import Response
+from httpx import Response
 from ..utils.crypto import (
     EapiDecrypt,
     EapiEncrypt,
@@ -63,7 +63,7 @@ def _BaseWrapper(requestFunc):
     @wraps(requestFunc)
     def apiWrapper(apiFunc):
         @wraps(apiFunc)
-        def wrapper(*a, **k):
+        async def wrapper(*a, **k):
             ret = apiFunc(*a, **k)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"            
@@ -76,7 +76,7 @@ def _BaseWrapper(requestFunc):
                 GetCurrentSession().deviceId,
                 payload)
             )
-            rsp = requestFunc(url, payload, method)
+            rsp = await requestFunc(url, payload, method)
             try:
                 payload = rsp.text if isinstance(rsp, Response) else rsp
                 payload = payload.decode() if not isinstance(payload, str) else payload
@@ -140,13 +140,17 @@ def EapiEncipered(func):
 @_BaseWrapper
 def WeapiCryptoRequest(url, plain, method):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
-    payload = json.dumps({**plain, "csrf_token": GetCurrentSession().csrf_token})
-    return GetCurrentSession().request(
-        method,
-        url.replace("/api/", "/weapi/"),
-        params={"csrf_token": GetCurrentSession().csrf_token},
-        data={**WeapiEncrypt(payload)},
-    )
+    async def wrapper():
+        sess = GetCurrentSession()
+        payload = json.dumps({**plain, "csrf_token": sess.csrf_token})
+        return await sess.request(
+            method,
+            url.replace("/api/", "/weapi/"),
+            params={"csrf_token": sess.csrf_token},
+            data={**WeapiEncrypt(payload)},
+        )
+    
+    return wrapper()
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper

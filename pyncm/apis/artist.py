@@ -4,7 +4,7 @@ from . import WeapiCryptoRequest
 
 
 @WeapiCryptoRequest
-def GetArtistAlbums(artist_id: str,offset=0, total=True, limit=1000):
+async def GetArtistAlbums(artist_id: str, offset=0, total=True, limit=1000):
     """网页端 - 获取艺术家所有专辑
 
     Args:
@@ -22,8 +22,9 @@ def GetArtistAlbums(artist_id: str,offset=0, total=True, limit=1000):
         "limit": str(limit)
     }
 
+
 @WeapiCryptoRequest
-def GetArtistTracks(artist_id: str,offset=0, total=True, limit=1000,order='hot'):
+def GetArtistTracks(artist_id: str, offset=0, total=True, limit=1000, order='hot'):
     """网页端 - 以某排序方式获取艺术家所有歌曲
 
     Args:
@@ -36,11 +37,11 @@ def GetArtistTracks(artist_id: str,offset=0, total=True, limit=1000,order='hot')
         dict
     """
     return "/weapi/v1/artist/songs", {
-        "id" : str(artist_id),
+        "id": str(artist_id),
         "offset": str(offset),
         "total": str(total).lower(),
         "limit": str(limit),
-        "order": str(order),        
+        "order": str(order),
     }
 
 
@@ -54,7 +55,5 @@ def GetArtistDetails(artist_id: str):
         dict
     """
     return "/weapi/artist/head/info/get", {
-        "id" : str(artist_id)
+        "id": str(artist_id)
     }
-
-
