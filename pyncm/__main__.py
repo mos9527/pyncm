@@ -244,11 +244,15 @@ class Subroutine:
 
     Subroutines are `callable`,upon called with `ids`,one
     queues tasks with all given arguments via `put_func` callback
+
+    `prefix` is used to identify subroutines,especially when one is a child
+    of another subroutine.
     """
     exceptions = None
-    def __init__(self, args, put_func) -> None:
+    def __init__(self, args, put_func, prefix=None) -> None:
         self.args = args
         self.put = put_func        
+        self.prefix = prefix or self.prefix
         self.exceptions = dict()
 
     def result_exception(self,result_id,exception : Exception,desc=None):
@@ -290,6 +294,7 @@ class MarkerTask(BaseKeyValueClass):
     pass
 
 class Playlist(Subroutine):
+    prefix = '歌单'
     """Base routine for ID-based tasks"""
     def filter(self, song_list):
         # This is only meant to faciliate sorting w/ APIs that doesn't implement them
@@ -364,29 +369,37 @@ class Playlist(Subroutine):
         queued = []
         for _id in ids:
             dList = playlist.GetPlaylistInfo(_id)
-            logger.info("歌单 ：%s" % dict(dList)["playlist"]["name"])
+            logger.info(self.prefix + "：%s" % dict(dList)["playlist"]["name"])
             queuedTasks = self.forIds([tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]])
             queued += queuedTasks
         return queued
 
 class Album(Playlist):
+    prefix = '专辑'
     def __call__(self, ids):
         queued = []
         for _id in ids:
             dList = album.GetAlbumInfo(_id)
-            logger.info("专辑 ：%s" % dict(dList)["album"]["name"])
+            logger.info(self.prefix + "：%s" % dict(dList)["album"]["name"])
             queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
             queued += queuedTasks
         return queued
 
-class Artist(Playlist):    
+class Artist(Playlist):
+    prefix = '艺术家'
     def __call__(self, ids):
         queued = []
-        for _id in ids:
-            dList = artist.GetArtistTracks(_id,limit=self.args.count,order=self.args.sort_by)
-            logger.info("艺术家 ：%s" % ArtistHelper(_id).ArtistName)
-            queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
-            queued += queuedTasks
+        for _id in ids:        
+            logger.info(self.prefix + "：%s" % ArtistHelper(_id).ArtistName)
+            # dList = artist.GetArtisTracks(_id,limit=self.args.count,order=self.args.sort_by)
+            # This API is rather inconsistent for some reason. Sometimes 'songs' list
+            # would be straight out empty
+            # TODO: Fix GetArtistTracks
+            # We iterate all Albums instead as this would provide a superset of what `GetArtistsTracks` gives us   
+            album_ids = [album['id'] for album in artist.GetArtistAlbums(_id,limit=self.args.count)['hotAlbums']]
+            album_task = Album(self.args,self.put,prefix='艺术家专辑')
+            queued += album_task(album_ids)            
+            self.exceptions = {**self.exceptions,**album_task.exceptions}
         return queued
 
 class Song(Playlist):
@@ -462,7 +475,7 @@ def parse_args():
         artists- 艺术家名
     例：
         {track} - {artists} 等效于 {title}""",
-        default=r"{title}",
+        default=r"{title}"
     )
     group.add_argument("-o","--output", metavar="输出", default=".", help=r"""输出文件夹
     注：该参数也可使用模板，格式同 保存文件名模板"""
