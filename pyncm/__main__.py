@@ -62,7 +62,7 @@ class TaskPoolExecutorThread(Thread):
                 "album" : [track.AlbumName],
                 "tracknumber" :  "%s/%s" % (track.TrackNumber,track.Album.AlbumSongCount),
                 "date" : [str(track.Album.AlbumPublishTime)], # TrackPublishTime is not very reliable!
-                "copyright": [track.Album.AlbumCompany],
+                "copyright": [track.Album.AlbumCompany or ""],
                 "discnumber" : [track.CD],
                 # These only applies to vorbis tags (e.g. FLAC)                
                 "totaltracks" : [str(track.Album.AlbumSongCount)],
@@ -398,8 +398,10 @@ class Artist(Playlist):
             # We iterate all Albums instead as this would provide a superset of what `GetArtistsTracks` gives us   
             album_ids = [album['id'] for album in artist.GetArtistAlbums(_id,limit=self.args.count)['hotAlbums']]
             album_task = Album(self.args,self.put,prefix='艺术家专辑')
-            queued += album_task(album_ids)            
-            self.exceptions = {**self.exceptions,**album_task.exceptions}
+            album_task.forIds = self.forIds
+            # All exceptions will still be handled by this subroutine
+            # TODO: Try to... handle this nicer?
+            queued += album_task(album_ids)                        
         return queued
 
 class Song(Playlist):
@@ -518,7 +520,7 @@ def parse_args():
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
     group.add_argument("--log-level", help="日志等级", default="NOTSET")
     group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID）")
-    group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制",type=int)
+    group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制（注：过大值可能导致限流）",type=int)
     group.add_argument(
         "--sort-by",
         metavar="歌曲排序",
