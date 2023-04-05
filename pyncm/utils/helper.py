@@ -233,7 +233,7 @@ class FuzzyPathHelper(IDCahceHelper):
         super().__init__(basepath)
     def _factory_func(self,_item_id):        
         # Make some hashtables w/ directory's file listing
-        files = filter(lambda file:path.isfile(path.join(self.base_path,file)),listdir(self.base_path))
+        files = filter(lambda file:path.isfile(path.join(self.base_path,file)),listdir(self.base_path) if path.exists(self.base_path) else [])
         # 1. Table of basename
         self.tbl_basenames = {path.basename(file) for file in files}
         # 2. Table of basename w/o extension, but with the premise that the files themselves contain the extensions we want    
