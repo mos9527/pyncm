@@ -114,6 +114,27 @@ def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):
         "rv": str(rv),
     }
 
+@EapiCryptoRequest
+def GetTrackLyricsNew(song_id: str):
+    """PC 端 - 获取歌曲歌词 (新 API)
+
+    Args:
+        song_id (str): 歌曲 ID
+
+    Returns:
+        dict
+    """
+    return "/eapi/song/lyric/v1", {
+        "id": str(song_id),
+        "cp": False,
+        "lv": 0,
+        "tv": 0,
+        "rv": 0,
+        "kv": 0,
+        "yv": 0,
+        "ytv": 0,
+        "yrv": 0,
+    }
 
 @WeapiCryptoRequest
 def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
