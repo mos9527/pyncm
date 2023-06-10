@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
-__version__ = "0.0.1"
+__version__ = "0.0.0.1"
 
 from threading import current_thread
 from typing import Text, Union
