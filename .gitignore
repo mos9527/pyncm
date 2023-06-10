@@ -10,7 +10,7 @@ notes
 .cookies
 \!*
 dist
-pyncm.egg-info
+pyncm_async.egg-info
 build
 docs
 *wiki*

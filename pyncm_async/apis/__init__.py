@@ -124,41 +124,25 @@ def UserIDBasedApi(func):
 
     return wrapper
 
-
-def EapiEncipered(func):
-    """函数值有 Eapi 加密 - 解密并返回原文"""
-    @wraps(func)
-    def wrapper(*a, **k):
-        payload = func(*a, **k)
-        try:
-            return EapiDecrypt(payload).decode()
-        except:
-            return payload
-
-    return wrapper
-
 @_BaseWrapper
-def WeapiCryptoRequest(url, plain, method):
-    """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
-    async def wrapper():
-        sess = GetCurrentSession()
-        payload = json.dumps({**plain, "csrf_token": sess.csrf_token})
-        return await sess.request(
-            method,
-            url.replace("/api/", "/weapi/"),
-            params={"csrf_token": sess.csrf_token},
-            data={**WeapiEncrypt(payload)},
-        )
+async def WeapiCryptoRequest(url, plain, method):
+    """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""    
+    sess = GetCurrentSession()
+    payload = json.dumps({**plain, "csrf_token": sess.csrf_token})
+    return await sess.request(
+        method,
+        url.replace("/api/", "/weapi/"),
+        params={"csrf_token": sess.csrf_token},
+        data={**WeapiEncrypt(payload)},
+    )
     
-    return wrapper()
-
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
-def LapiCryptoRequest(url, plain, method):
+async def LapiCryptoRequest(url, plain, method):
     """Linux API - 适用于Linux客户端部分APIs"""
     payload = {"method": method, "url": GetCurrentSession().HOST + url, "params": plain}
     payload = json.dumps(payload)
-    return GetCurrentSession().request(
+    return await GetCurrentSession().request(
         method,
         "/api/linux/forward",
         headers={"User-Agent": GetCurrentSession().UA_LINUX_API},
@@ -167,18 +151,17 @@ def LapiCryptoRequest(url, plain, method):
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
-@EapiEncipered
-def EapiCryptoRequest(url, plain, method):
+async def EapiCryptoRequest(url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""    
     payload = {**plain, "header": json.dumps({
         **GetCurrentSession().eapi_config,
         "requestId": str(randrange(20000000,30000000))
     })}
     digest = EapiEncrypt(urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload))    
-    request = GetCurrentSession().request(
+    request = await GetCurrentSession().request(
         method,
         url,
-        headers={"User-Agent": GetCurrentSession().UA_EAPI, "Referer": None},
+        headers={"User-Agent": GetCurrentSession().UA_EAPI, "Referer": ''},
         cookies={
             **GetCurrentSession().eapi_config
         },
@@ -186,7 +169,12 @@ def EapiCryptoRequest(url, plain, method):
             **digest
         },
     )
-    return request.content
+    payload = request.content
+    try:
+        return EapiDecrypt(payload).decode()
+    except:
+        return payload
+
 
 from . import (
     artist,

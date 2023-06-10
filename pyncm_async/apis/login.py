@@ -28,8 +28,7 @@ def WriteLoginInfo(response):
         sess.login_info["success"] = False
         raise LoginFailedException(sess.login_info["content"])
     sess.login_info["success"] = True
-    cookie = sess.cookies.get_dict()
-    sess.csrf_token = cookie["__csrf"]
+    sess.csrf_token = sess.cookies.get('__csrf')
 
 
 @WeapiCryptoRequest
@@ -104,7 +103,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
+async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
     """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -135,7 +134,7 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
 
     auth_token = {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
 
-    login_status = EapiCryptoRequest(
+    login_status = await EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -153,7 +152,7 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
     return {'code':200,'result':sess.login_info}
 
 
-def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
+async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
     """网页端 - 邮箱登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -181,7 +180,7 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
 
     auth_token = {"password": str(passwordHash)}
 
-    login_status = EapiCryptoRequest(
+    login_status = await EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -258,7 +257,7 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
-def LoginViaAnonymousAccount(deviceId=None):
+async def LoginViaAnonymousAccount(deviceId=None):
     '''PC 端 - 游客登陆
 
     Args:
@@ -273,7 +272,7 @@ def LoginViaAnonymousAccount(deviceId=None):
     if deviceId:
         GetCurrentSession().deviceId = deviceId
     deviceId = GetCurrentSession().deviceId
-    login_status = WeapiCryptoRequest(
+    login_status = await WeapiCryptoRequest(
         lambda: ("/api/register/anonimous" , {
         "username" : b64encode(
             ('%s %s' % (

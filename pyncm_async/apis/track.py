@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """歌曲 - Track APIs"""
-from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest, LoginRequiredApi
+from . import EapiCryptoRequest, WeapiCryptoRequest, LoginRequiredApi
 from ..utils import RandomString
 import json
 
@@ -157,8 +157,6 @@ def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
         "beforeTime": str(beforeTime * 1000),
     }
 
-
-@EapiEncipered
 @EapiCryptoRequest
 @LoginRequiredApi
 def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
