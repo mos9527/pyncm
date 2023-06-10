@@ -1,7 +1,7 @@
 ![Logo](https://github.com/greats3an/pyncm/raw/master/demos/_logo.png)
 
 # PyNCM
-
+**注意** : 异步使用，请移步 [`async` 分支](https://github.com/mos9527/pyncm/tree/async)
 # 安装
     pip install pyncm
 可选 （若不考虑使用CLI则请忽略）
