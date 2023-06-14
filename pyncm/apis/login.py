@@ -270,9 +270,8 @@ def LoginViaAnonymousAccount(deviceId=None):
     Returns:
         dict
     '''
-    if deviceId:
-        GetCurrentSession().deviceId = deviceId
-    deviceId = GetCurrentSession().deviceId
+    if not deviceId:
+        deviceId = GetCurrentSession().deviceId    
     login_status = WeapiCryptoRequest(
         lambda: ("/api/register/anonimous" , {
         "username" : b64encode(
@@ -282,7 +281,7 @@ def LoginViaAnonymousAccount(deviceId=None):
         ).decode()
         }
         )
-    )()
+    )()    
     assert login_status['code'] == 200,"匿名登陆失败"
     WriteLoginInfo({
         **login_status,

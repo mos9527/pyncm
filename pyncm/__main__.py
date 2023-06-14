@@ -182,7 +182,22 @@ class TaskPoolExecutorThread(Thread):
                     # Downloding source audio
                     dAudio = track.GetTrackAudioV1(task.audio.id, level=task.audio.level)
                     dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value                
-                    assert dAudio["url"], "%s 无法下载，资源不存在" % task.song.Title                
+                    if not dAudio['url']:
+                        # Attempt to give some sort of explaination
+                        # 来自 https://neteasecloudmusicapi-docs.4everland.app/#/?id=%e8%8e%b7%e5%8f%96%e6%ad%8c%e6%9b%b2%e8%af%a6%e6%83%85
+                        ''' fee : enum                       
+                        0: 免费或无版权
+                        1: VIP 歌曲
+                        4: 购买专辑
+                        8: 非会员可免费播放低音质，会员可播放高音质及下载
+                        fee 为 1 或 8 的歌曲均可单独购买 2 元单曲
+                        '''
+                        fee = dAudio['fee']
+                        assert fee != 0,"可能无版权"
+                        assert fee != 1,"VIP歌曲，账户可能无权访问"
+                        assert fee != 4,"歌曲所在专辑需购买"
+                        assert fee != 8,"歌曲可能需要单独购买或以低音质加载"                        
+                        assert False, "未知原因 (fee=%d)" % fee
                     logger.info(
                         "开始下载 #%d / %d - %s - %s - %skbps - %s"
                         % (
@@ -597,8 +612,14 @@ def __main__():
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
     if not GetCurrentSession().logged_in:
+        # deviceID doesn't seem to have a format,so to speak
+        # Meaning anything will work. 
+        # What we're trying to do here is to generate a UUID for
+        # the current machine so pyncm users won't be sharing the same one (i.e. id=pyncm!)        
+        import uuid,base64
+        GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()
         login.LoginViaAnonymousAccount()
-        logger.info("以匿名身份登陆成功，UID: %s" % GetCurrentSession().uid)
+        logger.info("以匿名身份登陆成功，deviceId=%s, UID: %s" % (GetCurrentSession().deviceId,GetCurrentSession().uid))
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
     executor.start()
