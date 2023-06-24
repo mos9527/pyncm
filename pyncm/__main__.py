@@ -411,7 +411,7 @@ class Artist(Playlist):
             # would be straight out empty
             # TODO: Fix GetArtistTracks
             # We iterate all Albums instead as this would provide a superset of what `GetArtistsTracks` gives us   
-            album_ids = [album['id'] for album in artist.GetArtistAlbums(_id,limit=self.args.count)['hotAlbums']]
+            album_ids = [album['id'] for album in artist.GetArtistAlbums(_id)['hotAlbums']]
             album_task = Album(self.args,self.put,prefix='艺术家专辑')
             album_task.forIds = self.forIds
             # All exceptions will still be handled by this subroutine
