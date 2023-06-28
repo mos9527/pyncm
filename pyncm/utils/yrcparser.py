@@ -117,7 +117,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
 
     def begin_line(self,start_millis,end_millis):
-        self.content += '''Dialogue: 0,%s,%s,,,0,0,0,,''' % (stamp2tag(start_millis / 1000),stamp2tag(end_millis / 1000))
+        self.content += '''Dialogue: 0,0:%s,0:%s,,,0,0,0,,''' % (stamp2tag(start_millis / 1000),stamp2tag(end_millis / 1000))
 
     def add_meta(self,text):
         self.content += text
@@ -125,7 +125,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     def add_syllable(self,duration,text):
         # From https://aegi.vmoe.info/docs/3.1/ASS_Tags/
         # The duration is given in centiseconds, ie. a duration of 100 is equivalent to 1 second
-        self.content += r'''{\k%d}%s''' % (duration / 100,text)
+        self.content += r'''{\K%d}%s''' % (duration / 100,text)
 
     def end_line(self):
         self.content += '\n'
