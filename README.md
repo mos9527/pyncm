@@ -42,14 +42,19 @@
         --no-overwrite        不重复下载已经存在的音频文件
 
         歌词:
-        --lyric-no 跳过歌词 [跳过歌词 ...]
-                                跳过某些歌词类型的合并
+        --lyric-no 跳过歌词       跳过某些歌词类型的下载
                                     参数：
-                                        lrc    - 源语言歌词
-                                        tlyric - 翻译后歌词
-                                        romalrc- 罗马音歌词
+                                        lrc    - 源语言歌词  (合并到 .lrc)
+                                        tlyric - 翻译后歌词  (合并到 .lrc)
+                                        romalrc- 罗马音歌词  (合并到 .lrc)
+                                        yrc    - 逐词滚动歌词 (保存到 .ass)
+                                        none   - 下载所有歌词
                                     例：
-                                        --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词
+                                        --lyric-no tlyric romalrc yrc 将只下载源语言歌词
+                                        --lyric-no none 将下载所有歌词
+                                    注：
+                                        默认不下载 *逐词滚动歌词*
+
 
         登陆:
         --phone 手机            网易账户手机号
@@ -63,8 +68,8 @@
 
         限量及过滤（注：只适用于*每单个*链接 / ID）:
         -n 下载总量, --count 下载总量
-                                限制下载歌曲总量，n=0即不限制
-        --sort-by 歌曲排序        【限制总量时】歌曲排序方式 (default: 默认排序 hot: 热度高（相对于其所在专辑）在前 time: 发行时间新在前)
+                                限制下载歌曲总量，n=0即不限制（注：过大值可能导致限流）
+        --sort-by 歌曲排序        【限制总量时】歌曲排序方式 (default: 默认排序 hot: 热度高（相对于其所在专辑）在前 time:  发行时间新在前)
         --reverse-sort        【限制总量时】倒序排序歌曲
 
         工具:

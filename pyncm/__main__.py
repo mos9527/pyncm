@@ -233,7 +233,7 @@ class TaskPoolExecutorThread(Thread):
                     if lrc_text:
                         open(task.save_as + '.lrc', "w", encoding="utf-8").write(lrc_text)
                     # `yrc` (whatever that means) lyrics contains syllable-by-syllable time sigs                                        
-                    if 'yrc' in dLyrics:
+                    if not 'yrc' in task.lyrics.lrc_blacklist and 'yrc' in dLyrics:
                         yrc = YrcParser(dLyrics['yrc']['version'],dLyrics['yrc']['lyric'])
                         parsed = yrc.parse()
                         writer = ASSWriter()
@@ -532,17 +532,20 @@ def parse_args():
     group.add_argument(
         "--lyric-no",
         metavar="跳过歌词",
-        help=r"""跳过某些歌词类型的合并
-    参数：
-        lrc    - 源语言歌词
-        tlyric - 翻译后歌词
-        romalrc- 罗马音歌词
-        yrc    - 逐词滚动歌词 （保存时，为 ASS 格式）
+        help=r"""跳过某些歌词类型的下载
+    参数：        
+        lrc    - 源语言歌词  (合并到 .lrc)
+        tlyric - 翻译后歌词  (合并到 .lrc)
+        romalrc- 罗马音歌词  (合并到 .lrc)
+        yrc    - 逐词滚动歌词 (保存到 .ass)
+        none   - 下载所有歌词
     例：
-        --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词""",
-        choices=["lrc", "tlyric", "romalrc", "yrc"],
-        default="",
-        nargs="+",
+        --lyric-no tlyric romalrc yrc 将只下载源语言歌词
+        --lyric-no none 将下载所有歌词
+    注：
+        默认不下载 *逐词滚动歌词*
+        """,
+        default="yrc",
     )
     group = parser.add_argument_group("登陆")
     group.add_argument("--phone", metavar="手机", default="", help="网易账户手机号")
@@ -573,7 +576,11 @@ def parse_args():
         顺序为：链接先后优先——每个连接的所有歌曲依照歌曲排序设定 （--sort-by）排序"""
     )
     args = parser.parse_args()
-    
+    # Clean up    
+    args.lyric_no = args.lyric_no.lower()
+    args.lyric_no = args.lyric_no.split(' ')
+    if 'none' in args.lyric_no:
+        args.lyric_no = []
     try:
         return args , [parse_sharelink(url) for url in args.url]
     except AssertionError:
