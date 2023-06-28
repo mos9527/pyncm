@@ -136,6 +136,11 @@ class TrackHelper:
         self.__dict__.update({"data":track_dict})
 
     @property
+    def Duration(self) -> int:
+        """歌曲时长 （毫秒）"""
+        return int(self.data["dt"])
+
+    @property
     def Album(self) -> AlbumHelper:
         """专辑对象，会有更多歌曲元数据"""
         return AlbumHelper(self.data["al"]["id"])        

@@ -24,10 +24,10 @@ def LrcProperty(tagname):
 
 
 class LrcRegexes:
-    LIDTag_ = re.compile(r"(?<=\[)[^\[\]]*(?=\])")
     LIDTag_Type = re.compile(r"[a-z]{2,}(?=:)")
     LIDTag_Content = re.compile(r"(?<=[a-z]{2}:).*")
-    LLyrics_ = re.compile(r"[^\[\]]*$")
+    LIDTag = re.compile(r"(?<=^\[)[^\[\]]*(?=\])")
+    LLyrics = re.compile(r"[^\[\]]*$")
     LBrackets = re.compile(r"(?<=\[).*(?=\])")
     LTimestamp = re.compile(r"\d*[\.,:]\d*[\.,:]\d*")
 
@@ -153,10 +153,14 @@ class LrcParser:
     def LoadLrc(self, lrc):
         """Loads a LRC formmated lryics file"""
         for line in lrc.split("\n"):
-            IDTag = LrcRegexes.LIDTag_.findall(line)
+            IDTag = LrcRegexes.LIDTag.findall(line)
+            if not IDTag:
+                # Known causes:
+                # 1. There's JSON in my LRC (wtf netease)                
+                continue
             IDTagType = "".join(LrcRegexes.LIDTag_Type.findall("".join(IDTag)))
             IDTagContent = "".join(LrcRegexes.LIDTag_Content.findall("".join(IDTag)))
-            Lyrics = "".join(LrcRegexes.LLyrics_.findall(line))
+            Lyrics = "".join(LrcRegexes.LLyrics.findall(line))
             if IDTagType:
                 # Tag's type is set,write as class attribute
                 setattr(self, IDTagType, IDTagContent)

@@ -9,6 +9,7 @@ from pyncm import (
     __version__
 )
 from pyncm.utils.lrcparser import LrcParser
+from pyncm.utils.yrcparser import YrcParser , ASSWriter , YrcLine , YrcBlock
 from pyncm.utils.helper import TrackHelper,ArtistHelper, FuzzyPathHelper, SubstituteWithFullwidth
 from pyncm.apis import artist, login, track, playlist, album
 from queue import Queue
@@ -221,17 +222,34 @@ class TaskPoolExecutorThread(Thread):
                     dest_cvr = self.download_by_url(
                         task.cover.url, task.save_as + '.jpg'
                     )
-                    # Downloading & Parsing lyrics
-                    dest_lrc = task.save_as + '.lrc'
+                    # Downloading & Parsing lyrics                    
                     lrc = LrcParser()
-                    dLyrics = track.GetTrackLyrics(task.lyrics.id)
+                    dLyrics = track.GetTrackLyricsNew(task.lyrics.id)
                     for k in set(dLyrics.keys()) & (
                         {"lrc", "tlyric", "romalrc"} - task.lyrics.lrc_blacklist
                     ):  # Filtering LRCs
                         lrc.LoadLrc(dLyrics[k]["lyric"])
                     lrc_text = lrc.DumpLyrics()
                     if lrc_text:
-                        open(dest_lrc, "w", encoding="utf-8").write(lrc_text)
+                        open(task.save_as + '.lrc', "w", encoding="utf-8").write(lrc_text)
+                    # `yrc` (whatever that means) lyrics contains syllable-by-syllable time sigs                                        
+                    if 'yrc' in dLyrics:
+                        yrc = YrcParser(dLyrics['yrc']['version'],dLyrics['yrc']['lyric'])
+                        parsed = yrc.parse()
+                        writer = ASSWriter()
+
+                        for line in parsed:
+                            line : YrcLine
+                            writer.begin_line(line.t_begin,line.t_end)
+                            for block in line:
+                                block : YrcBlock
+                                if block.meta:
+                                    writer.add_meta(YrcParser.extract_meta(block.meta))
+                                else:
+                                    writer.add_syllable(block.t_duration,block.text)
+                            writer.end_line()
+
+                        open(task.save_as + '.ass', "w", encoding="utf-8").write(writer.content)
                     # Tagging the audio
                     try:
                         self.tag_audio(task.song, dest_src, dest_cvr)
@@ -519,9 +537,10 @@ def parse_args():
         lrc    - 源语言歌词
         tlyric - 翻译后歌词
         romalrc- 罗马音歌词
+        yrc    - 逐词滚动歌词 （保存时，为 ASS 格式）
     例：
         --lyric-no tlyric --lyric-no romalrc 将只下载源语言歌词""",
-        choices=["lrc", "tlyric", "romalrc"],
+        choices=["lrc", "tlyric", "romalrc", "yrc"],
         default="",
         nargs="+",
     )
