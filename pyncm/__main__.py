@@ -182,7 +182,7 @@ class TaskPoolExecutorThread(Thread):
                 try:
                     # Downloding source audio
                     apiCall = track.GetTrackAudioV1 if not task.routine.args.use_download_api else track.GetTrackDownloadURLV1
-                    if task.routine.args.use_download_api: logger.warn("使用下载 API，可能消耗 VIP 下载额度！")
+                    if task.routine.args.use_download_api: logger.warning("使用下载 API，可能消耗 VIP 下载额度！")
                     dAudio = apiCall(task.audio.id, level=task.audio.level)
                     dAudio = dAudio.get("data", [{"url": ""}])  # Dummy fallback value   
                     if type(dAudio) == list:
@@ -580,6 +580,7 @@ def parse_args():
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
+    group.add_argument("--deviceId", metavar="设备ID", default="", help="指定设备 ID；匿名登陆时，设备 ID 既指定对应账户\n【注意】只使用 ID 前 10 个字符；默认 ID 与当前设备相关")
     group.add_argument("--log-level", help="日志等级", default="NOTSET")
     group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID）")
     group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制（注：过大值可能导致限流）",type=int)
@@ -651,6 +652,13 @@ def __main__():
     basicConfig(
         level=args.log_level, format="[%(levelname).4s] %(name)s %(message)s", stream=log_stream
     )
+    # Update deviceId
+    import uuid,base64
+    GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()
+    if args.deviceId:
+        GetCurrentSession().deviceId = args.deviceId
+    # TODO: Truncate at 10 characters seem to fail less often...or does it? If so, why?????
+    GetCurrentSession().deviceId = GetCurrentSession().deviceId[:10]
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)
         SetCurrentSession(LoadSessionFromString(open(args.load).read()))
@@ -667,12 +675,7 @@ def __main__():
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
-    if not GetCurrentSession().logged_in:
-        # What even is with this thing???
-        # Does only a selected few deviceIds actually work?
-        # Nevertheless, no Issues has come to me yet so let's just leave this be lol        
-        import uuid,base64
-        GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()[:10]
+    if not GetCurrentSession().logged_in:                
         login.LoginViaAnonymousAccount()
         logger.info("以匿名身份登陆成功，deviceId=%s, UID: %s" % (GetCurrentSession().deviceId,GetCurrentSession().uid))
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
