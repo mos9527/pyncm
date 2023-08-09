@@ -129,6 +129,35 @@ class ArtistHelper(IDCahceHelper):
         """艺术家简述"""
         return self.data["data"]["artist"]["briefDesc"]    
     
+class UserHelper(IDCahceHelper):
+    def __init__(self, item_id):        
+        from pyncm.apis.user import GetUserDetail
+        super().__init__(item_id, GetUserDetail)
+    
+    def refresh(self):        
+        logger.debug('Caching user info %s' % self._item_id)
+        return super().refresh()
+
+    @Default()
+    def ID(self):
+        """UID"""
+        return self.data["userPoint"]["userId"]
+
+    @Default()
+    def UserName(self):
+        """用户名"""
+        return self.data["profile"]["nickname"]
+
+    @Default()
+    def Avatar(self):
+        """头像"""
+        return self.data["profile"]["avatarUrl"]
+
+    @Default()
+    def AvatarBackground(self):
+        """主页背景"""
+        return self.data["profile"]["backgroundUrl"]
+    
 class TrackHelper:
     """Helper class for handling generic track objects"""
 

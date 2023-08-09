@@ -10,8 +10,8 @@ from pyncm import (
 )
 from pyncm.utils.lrcparser import LrcParser
 from pyncm.utils.yrcparser import YrcParser , ASSWriter , YrcLine , YrcBlock
-from pyncm.utils.helper import TrackHelper,ArtistHelper, FuzzyPathHelper, SubstituteWithFullwidth
-from pyncm.apis import artist, login, track, playlist, album
+from pyncm.utils.helper import TrackHelper,ArtistHelper,UserHelper,FuzzyPathHelper, SubstituteWithFullwidth
+from pyncm.apis import artist, login, track, playlist, album , user
 from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
@@ -437,6 +437,21 @@ class Artist(Playlist):
             queued += album_task(album_ids)                        
         return queued
 
+class User(Playlist):
+    prefix = '用户'
+    def __call__(self, ids):
+        queued = []
+        for _id in ids:
+            logger.info(self.prefix + "： %s" % UserHelper(_id).UserName)
+            logger.warn('同时下载收藏歌单' if self.args.user_bookmarks else '只下载该用户创建的歌单')
+            playlist_ids = [
+                pl['id'] for pl in user.GetUserPlaylists(_id)['playlist'] if self.args.user_bookmarks or pl['creator']['userId'] == UserHelper(_id).ID
+            ]
+            playlist_task = Playlist(self.args,self.put,prefix='用户歌单')
+            playlist_task.forIds = self.forIds
+            queued += playlist_task(playlist_ids)                        
+        return queued
+
 class Song(Playlist):
     def __call__(self, ids):
         queuedTasks = self.forIds(ids)
@@ -446,8 +461,7 @@ class Song(Playlist):
     
 def create_subroutine(sub_type) -> Subroutine:
     """Dynamically creates subroutine callable by string specified"""
-    return {"song": Song, "playlist": Playlist, "album": Album, "artist": Artist}[sub_type]
-
+    return {"song": Song, "playlist": Playlist, "album": Album, "artist": Artist, "user": User}[sub_type]
 
 def parse_sharelink(url):
     """Parses (partial) URLs for NE resources and determines its ID and type
@@ -457,6 +471,7 @@ def parse_sharelink(url):
         https://mos9527.github.io/pyncmd/?trackId=1818064296 (pyncmd)
         分享Ali Edwards的单曲《Devil Trigger》: http://music.163.com/song/1353163404/?userid=6483697162 (来自@网易云音乐) (mobile app)
         "分享mos9527创建的歌单「東方 PC」: http://music.163.com/playlist?id=72897851187" (desktop app)
+        https://music.163.com/#/user/home?id=315542615 (user homepage)
     """
     rurl = re.findall("(?:http|https):\/\/.*", url)
     if rurl:
@@ -468,7 +483,8 @@ def parse_sharelink(url):
         "song": ["trackId", "song"],
         "playlist": ["playlist"],
         "artist": ["artist"],
-        "album": ["album"]
+        "album": ["album"],
+        "user" : ["user"]
     }
     rtype = "song"  # Defaults to songs (tracks)
     for rtype_, rkeyword in table.items():
@@ -566,6 +582,7 @@ def parse_args():
         choices=["default", "hot","time"]
     )
     group.add_argument("--reverse-sort",action="store_true",default=False,help="【限制总量时】倒序排序歌曲")
+    group.add_argument("--user-bookmarks",action="store_true",default=False,help="【下载用户歌单时】在下载用户创建的歌单的同时，也下载其收藏的歌单")
     group = parser.add_argument_group("工具")
     group.add_argument(
         "--save-m3u",
@@ -574,7 +591,7 @@ def parse_args():
         help=r"""将本次下载的歌曲文件名依一定顺序保存在M3U文件中；写入的文件目录相对于该M3U文件
         文件编码为 UTF-8
         顺序为：链接先后优先——每个连接的所有歌曲依照歌曲排序设定 （--sort-by）排序"""
-    )
+    )    
     args = parser.parse_args()
     # Clean up    
     args.lyric_no = args.lyric_no.lower()
@@ -643,7 +660,7 @@ def __main__():
         # What we're trying to do here is to generate a UUID for
         # the current machine so pyncm users won't be sharing the same one (i.e. id=pyncm!)        
         import uuid,base64
-        GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()
+        GetCurrentSession().deviceId = 'ahahahaman'
         login.LoginViaAnonymousAccount()
         logger.info("以匿名身份登陆成功，deviceId=%s, UID: %s" % (GetCurrentSession().deviceId,GetCurrentSession().uid))
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
@@ -656,7 +673,7 @@ def __main__():
     subroutines = []
     queuedTasks = []
     for rtype,ids in tasks:
-        task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲','artist':'艺术家'}[rtype])
+        task_desc = "ID: %s 类型: %s" % (ids[0],{'album':'专辑','playlist':'歌单®','song':'单曲','artist':'艺术家','user':'用户'}[rtype])
         logger.info("处理任务 %s" % task_desc) 
         subroutine = create_subroutine(rtype)(args, enqueue_task)
         queuedTasks += subroutine(ids)  # Enqueue tasks
