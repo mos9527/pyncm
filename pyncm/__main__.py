@@ -181,8 +181,12 @@ class TaskPoolExecutorThread(Thread):
             if type(task) == TrackDownloadTask:
                 try:
                     # Downloding source audio
-                    dAudio = track.GetTrackAudioV1(task.audio.id, level=task.audio.level)
-                    dAudio = dAudio.get("data", [{"url": ""}])[0]  # Dummy fallback value                
+                    apiCall = track.GetTrackAudioV1 if not task.routine.args.use_download_api else track.GetTrackDownloadURLV1
+                    if task.routine.args.use_download_api: logger.warn("使用下载 API，可能消耗 VIP 下载额度！")
+                    dAudio = apiCall(task.audio.id, level=task.audio.level)
+                    dAudio = dAudio.get("data", [{"url": ""}])  # Dummy fallback value   
+                    if type(dAudio) == list:
+                        dAudio = dAudio[0]
                     if not dAudio['url']:
                         # Attempt to give some sort of explaination
                         # 来自 https://neteasecloudmusicapi-docs.4everland.app/#/?id=%e8%8e%b7%e5%8f%96%e6%ad%8c%e6%9b%b2%e8%af%a6%e6%83%85
@@ -476,8 +480,8 @@ def parse_sharelink(url):
     rurl = re.findall("(?:http|https):\/\/.*", url)
     if rurl:
         url = rurl[0]  # Use first URL found. Otherwise use value given as is.
-    numerics = re.findall("\d{4,}", url)
-    assert numerics, "未在链接中找到任何 ID"
+    numerics = re.findall("\d{4,}", url)    
+    assert numerics != None, "未在链接中找到任何 ID"
     ids = numerics[:1]  # Only pick the first match
     table = {
         "song": ["trackId", "song"],
@@ -496,7 +500,6 @@ def parse_sharelink(url):
 
 
 PLACEHOLDER_URL = "00000"
-
 
 def parse_args():
     """Setting up __main__ argparser"""
@@ -542,6 +545,12 @@ def parse_args():
         exhigh  - 较高
         standard- 标准""",
         default="standard",
+    )
+    group.add_argument(
+        "-dl",
+        "--use-download-api",
+        action="store_true", 
+        help="调用下载API，而非播放API进行下载。如此可能允许更高高音质音频的下载。\n【注意】此API有额度限制，参考 https://music.163.com/member/downinfo"
     )
     group.add_argument("--no-overwrite", action="store_true", help="不重复下载已经存在的音频文件")
     group = parser.add_argument_group("歌词")
@@ -590,7 +599,7 @@ def parse_args():
         default="",
         help=r"""将本次下载的歌曲文件名依一定顺序保存在M3U文件中；写入的文件目录相对于该M3U文件
         文件编码为 UTF-8
-        顺序为：链接先后优先——每个连接的所有歌曲依照歌曲排序设定 （--sort-by）排序"""
+        顺序为：链接先后优先——每个链接的所有歌曲依照歌曲排序设定 （--sort-by）排序"""
     )    
     args = parser.parse_args()
     # Clean up    
@@ -598,12 +607,16 @@ def parse_args():
     args.lyric_no = args.lyric_no.split(' ')
     if 'none' in args.lyric_no:
         args.lyric_no = []
+    def print_help_and_exit():
+        sys.argv.append("-h")  # If using placeholder, no argument is really passed
+        sys.exit(__main__())  # In which case, print help and exit
+    if args.url == PLACEHOLDER_URL and not args.save:
+        print_help_and_exit()
     try:
         return args , [parse_sharelink(url) for url in args.url]
     except AssertionError:
         if args.url == PLACEHOLDER_URL:
-            sys.argv.append("-h")  # If using placeholder, no argument is really passed
-            return __main__()  # In which case, print help and exit
+            print_help_and_exit()
         assert args.save, "无效分享链接 %s" % ' '.join(args.url) # Allow invalid links for this one            
         return args , []
 
@@ -655,12 +668,11 @@ def __main__():
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
     if not GetCurrentSession().logged_in:
-        # deviceID doesn't seem to have a format,so to speak
-        # Meaning anything will work. 
-        # What we're trying to do here is to generate a UUID for
-        # the current machine so pyncm users won't be sharing the same one (i.e. id=pyncm!)        
+        # What even is with this thing???
+        # Does only a selected few deviceIds actually work?
+        # Nevertheless, no Issues has come to me yet so let's just leave this be lol        
         import uuid,base64
-        GetCurrentSession().deviceId = 'ahahahaman'
+        GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()[:10]
         login.LoginViaAnonymousAccount()
         logger.info("以匿名身份登陆成功，deviceId=%s, UID: %s" % (GetCurrentSession().deviceId,GetCurrentSession().uid))
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
