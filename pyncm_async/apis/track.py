@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """歌曲 - Track APIs"""
-from . import EapiCryptoRequest, WeapiCryptoRequest, LoginRequiredApi
+from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest, LoginRequiredApi
 from ..utils import RandomString
 import json
 
@@ -70,7 +70,7 @@ def GetTrackAudioV1(song_ids: list, level='standard', encodeType="flac"):
 
 @EapiCryptoRequest
 def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
-    """PC 端 - 以计费下载方式，获取资源URL
+    """PC 端 - 获取资源URL
 
     Args:
         song_ids (list): 歌曲 ID
@@ -91,6 +91,24 @@ def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
         "br": str(bitrate),
     }
 
+@EapiCryptoRequest
+def GetTrackDownloadURLV1(song_id:int, level='standard'):
+    """PC 端 - 获取资源URL V1
+
+    Args:
+        song_ids (list): 歌曲 ID
+        level (str, optional): 音质 standard / exhigh / lossless / hires
+    Notes:
+        song_ids 项目数应 <= 1000
+
+    Returns:
+        dict
+    """
+
+    return "/eapi/song/enhance/download/url/v1", {
+        "id": '%s_0' % song_id,        
+        "level": str(level),
+    }
 
 @WeapiCryptoRequest
 def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):
@@ -157,6 +175,8 @@ def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
         "beforeTime": str(beforeTime * 1000),
     }
 
+
+@EapiEncipered
 @EapiCryptoRequest
 @LoginRequiredApi
 def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
