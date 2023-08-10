@@ -580,7 +580,7 @@ def parse_args():
         "--load", metavar="[保存的登陆信息文件]", default="", help="从文件读取登录信息供本次登陆使用"
     )
     group.add_argument("--http", action="store_true", help="优先使用 HTTP，不保证不被升级")
-    group.add_argument("--deviceId", metavar="设备ID", default="", help="指定设备 ID；匿名登陆时，设备 ID 既指定对应账户\n【注意】只使用 ID 前 10 个字符；默认 ID 与当前设备相关")
+    group.add_argument("--deviceId", metavar="设备ID", default="", help="指定设备 ID；匿名登陆时，设备 ID 既指定对应账户\n【注意】默认 ID 与当前设备无关，乃从内嵌 256 可用 ID 中随机选取；指定自定义 ID 不一定能登录，相关性暂时未知")
     group.add_argument("--log-level", help="日志等级", default="NOTSET")
     group = parser.add_argument_group("限量及过滤（注：只适用于*每单个*链接 / ID）")
     group.add_argument("-n","--count",metavar="下载总量",default=0,help="限制下载歌曲总量，n=0即不限制（注：过大值可能导致限流）",type=int)
@@ -651,14 +651,13 @@ def __main__():
         )
     basicConfig(
         level=args.log_level, format="[%(levelname).4s] %(name)s %(message)s", stream=log_stream
-    )
-    # Update deviceId
-    import uuid,base64
-    GetCurrentSession().deviceId = base64.b64encode(uuid.getnode().to_bytes(48,"little")).decode()
+    )    
+    from pyncm.utils.constant import known_good_deviceIds
+    from random import choice as rnd_choice
+    GetCurrentSession().deviceId = rnd_choice(known_good_deviceIds)
+    # Pick a random one that WILL work!    
     if args.deviceId:
-        GetCurrentSession().deviceId = args.deviceId
-    # TODO: Truncate at 10 characters seem to fail less often...or does it? If so, why?????
-    GetCurrentSession().deviceId = GetCurrentSession().deviceId[:10]
+        GetCurrentSession().deviceId = args.deviceId        
     if args.load:
         logger.info("读取登录信息 : %s" % args.load)
         SetCurrentSession(LoadSessionFromString(open(args.load).read()))
