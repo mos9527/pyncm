@@ -758,7 +758,8 @@ def __main__():
         logger.error('所有失败的任务 ID: %s' % ' '.join([str(i) for i in failed_ids.keys()]))
     report()
     logger.info(f'任务完成率 {(executor.finished_tasks * 100 / len(queuedTasks)):.1f}%')
-    return 0
+    # To get actually downloaded tasks, filter by exlcuding failed_ids against task.song.ID
+    return queuedTasks, failed_ids
 
 
 if __name__ == "__main__":
