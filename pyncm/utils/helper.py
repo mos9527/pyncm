@@ -8,7 +8,7 @@ import datetime,logging
 truncate_length = 64
 logger = logging.getLogger("pyncm.helper")
 
-def SubstituteWithFullwidth(string,sub=set('\x00\\/:<>|?*"')):
+def SubstituteWithFullwidth(string,sub=set('\x00\\/:<>|?*".')):
     return "".join([c if not c in sub else chr(ord(c) + 0xFEE0) for c in string])
 
 def Default(default=None):    
