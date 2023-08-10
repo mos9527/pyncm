@@ -501,7 +501,7 @@ def parse_sharelink(url):
 
 PLACEHOLDER_URL = "00000"
 
-def parse_args():
+def parse_args(quit_on_empty_args=True):
     """Setting up __main__ argparser"""
     parser = argparse.ArgumentParser(
         description=__desc__, formatter_class=argparse.RawTextHelpFormatter
@@ -612,7 +612,10 @@ def parse_args():
         sys.argv.append("-h")  # If using placeholder, no argument is really passed
         sys.exit(__main__())  # In which case, print help and exit
     if args.url == PLACEHOLDER_URL and not args.save:
-        print_help_and_exit()
+        if quit_on_empty_args:
+            print_help_and_exit()
+        else:
+            return args,[]
     try:
         return args , [parse_sharelink(url) for url in args.url]
     except AssertionError:
