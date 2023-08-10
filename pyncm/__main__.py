@@ -447,7 +447,7 @@ class User(Playlist):
         queued = []
         for _id in ids:
             logger.info(self.prefix + "： %s" % UserHelper(_id).UserName)
-            logger.warn('同时下载收藏歌单' if self.args.user_bookmarks else '只下载该用户创建的歌单')
+            logger.warning('同时下载收藏歌单' if self.args.user_bookmarks else '只下载该用户创建的歌单')
             playlist_ids = [
                 pl['id'] for pl in user.GetUserPlaylists(_id)['playlist'] if self.args.user_bookmarks or pl['creator']['userId'] == UserHelper(_id).ID
             ]
@@ -491,11 +491,16 @@ def parse_sharelink(url):
         "user" : ["user"]
     }
     rtype = "song"  # Defaults to songs (tracks)
+    best_index = len(url)
     for rtype_, rkeyword in table.items():
         for kw in rkeyword:
-            if kw in url:
-                rtype = rtype_
-                break  # Match type by keyword
+            try:
+                index = url.index(kw)
+                if index < best_index:
+                    best_index = index
+                    rtype = rtype_                    
+            except ValueError:
+                continue                
     return rtype, ids
 
 
@@ -757,7 +762,7 @@ def __main__():
         logger.error('你可以将下载失败的 ID 作为参数以再次下载')
         logger.error('所有失败的任务 ID: %s' % ' '.join([str(i) for i in failed_ids.keys()]))
     report()
-    logger.info(f'任务完成率 {(executor.finished_tasks * 100 / len(queuedTasks)):.1f}%')
+    logger.info(f'任务完成率 {(executor.finished_tasks * 100 / max(1,len(queuedTasks))):.1f}%')
     # To get actually downloaded tasks, filter by exlcuding failed_ids against task.song.ID
     return queuedTasks, failed_ids
 
