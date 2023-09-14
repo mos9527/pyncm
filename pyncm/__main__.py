@@ -184,7 +184,7 @@ class TaskPoolExecutorThread(Thread):
                     apiCall = track.GetTrackAudioV1 if not task.routine.args.use_download_api else track.GetTrackDownloadURLV1
                     if task.routine.args.use_download_api: logger.warning("使用下载 API，可能消耗 VIP 下载额度！")
                     dAudio = apiCall(task.audio.id, level=task.audio.level)
-                    dAudio = dAudio.get("data", [{"url": ""}])  # Dummy fallback value   
+                    assert "data" in dAudio, "其他错误： %s" % dAudio                    
                     if type(dAudio) == list:
                         dAudio = dAudio[0]
                     if not dAudio['url']:
