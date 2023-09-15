@@ -35,7 +35,7 @@ if args.url == PLACEHOLDER_URL:
 argv.append("--no-overwrite")
 # 不覆写已存在歌曲
 # argv 传参，调用 __main__ 即可
-queuedTasks, failed_ids = __main__()
+queuedTasks, failed_ids = __main__(return_tasks=True)
 # 无视拓展名的文件白名单
 file_tree_whitelist = [normalize(task.save_as) for task in queuedTasks]
 # 只删除这些拓展名的文件

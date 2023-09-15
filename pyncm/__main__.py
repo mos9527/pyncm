@@ -184,7 +184,8 @@ class TaskPoolExecutorThread(Thread):
                     apiCall = track.GetTrackAudioV1 if not task.routine.args.use_download_api else track.GetTrackDownloadURLV1
                     if task.routine.args.use_download_api: logger.warning("使用下载 API，可能消耗 VIP 下载额度！")
                     dAudio = apiCall(task.audio.id, level=task.audio.level)
-                    assert "data" in dAudio, "其他错误： %s" % dAudio                    
+                    assert "data" in dAudio, "其他错误： %s" % dAudio
+                    dAudio = dAudio['data']
                     if type(dAudio) == list:
                         dAudio = dAudio[0]
                     if not dAudio['url']:
@@ -629,7 +630,7 @@ def parse_args(quit_on_empty_args=True):
         assert args.save, "无效分享链接 %s" % ' '.join(args.url) # Allow invalid links for this one            
         return args , []
 
-def __main__():    
+def __main__(return_tasks=False):    
     args , tasks = parse_args()    
     log_stream = sys.stdout
     # Getting tqdm & logger to work nicely together
@@ -764,7 +765,9 @@ def __main__():
     report()
     logger.info(f'任务完成率 {(executor.finished_tasks * 100 / max(1,len(queuedTasks))):.1f}%')
     # To get actually downloaded tasks, filter by exlcuding failed_ids against task.song.ID
-    return queuedTasks, failed_ids
+    if return_tasks:
+        return queuedTasks, failed_ids
+    return
 
 
 if __name__ == "__main__":
