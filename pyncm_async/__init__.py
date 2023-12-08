@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
-__version__ = "0.0.0.1"
+__VERSION_MAJOR__ = 0
+__VERSION_MINOR__ = 0
+__VERSION_PATCH__ = 2
+
+__version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
+
 
 from threading import current_thread
 from typing import Text, Union
@@ -88,7 +93,7 @@ class Session(httpx.AsyncClient):
             "content": None
         }
         self.eapi_config = {
-            "os": "pc",
+            "os": "ios",
             "appver": "",
             "osver": "",
             "deviceId": DEVICE_ID_DEFAULT,
@@ -176,7 +181,7 @@ class Session(httpx.AsyncClient):
             lambda self: [
                 {"name": c.name, "value": c.value,
                     "domain": c.domain, "path": c.path}
-                for c in getattr(self, "cookies")
+                for c in getattr(getattr(self, "cookies"),"jar")
             ],
             lambda self, cookies: [
                 getattr(self, "cookies").set(**cookie) for cookie in cookies

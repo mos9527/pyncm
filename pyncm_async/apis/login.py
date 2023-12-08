@@ -195,6 +195,43 @@ async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True
     WriteLoginInfo(login_status)
     return {'code':200,'result':sess.login_info}
 
+async def LoginViaAnonymousAccount(deviceId=None):
+    '''PC 端 - 游客登陆
+
+    Args:
+        deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
+    
+    Notes:
+        Session 默认使用 `pyncm!` 作为设备 ID
+
+    Returns:
+        dict
+    '''
+    if not deviceId:
+        deviceId = GetCurrentSession().deviceId    
+    login_status = WeapiCryptoRequest(
+        lambda: ("/api/register/anonimous" , {
+        "username" : b64encode(
+            ('%s %s' % (
+                deviceId,
+                cloudmusic_dll_encode_id(deviceId))).encode()
+        ).decode()
+        }
+        )
+    )()    
+    assert login_status['code'] == 200,"匿名登陆失败"
+    WriteLoginInfo({
+        **login_status,
+        'profile':{
+            'nickname' : 'Anonymous',
+            **login_status
+        },
+        'account':{
+            'id' : login_status['userId'],
+            **login_status
+        }
+    })
+    return GetCurrentSession().login_info
 
 @WeapiCryptoRequest
 def SetSendRegisterVerifcationCodeViaCellphone(cell: str, ctcode=86):

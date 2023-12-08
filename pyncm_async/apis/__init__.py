@@ -124,6 +124,18 @@ def UserIDBasedApi(func):
 
     return wrapper
 
+def EapiEncipered(func):
+    """函数值有 Eapi 加密 - 解密并返回原文"""
+    @wraps(func)
+    def wrapper(*a, **k):
+        payload = func(*a, **k)
+        try:
+            return EapiDecrypt(payload).decode()
+        except:
+            return payload
+
+    return wrapper
+
 @_BaseWrapper
 async def WeapiCryptoRequest(url, plain, method):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""    
