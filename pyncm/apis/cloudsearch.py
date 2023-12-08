@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """网易云搜索 - Cloudsearch APIs"""
-from . import WeapiCryptoRequest
+from . import EapiCryptoRequest
 
 SONG = 1
 """歌曲"""
@@ -22,7 +22,7 @@ VIDEO = 1014
 """视频"""
 
 
-@WeapiCryptoRequest
+@EapiCryptoRequest
 def GetSearchResult(keyword: str, stype=SONG, limit=30, offset=0):
     """网页端 - 搜索某类型关键字
 
@@ -35,7 +35,7 @@ def GetSearchResult(keyword: str, stype=SONG, limit=30, offset=0):
     Returns:
         dict
     """
-    return "/weapi/cloudsearch/get/web", {
+    return "/eapi/cloudsearch/pc", {
         "s": str(keyword),
         "type": str(stype),
         "limit": str(limit),
