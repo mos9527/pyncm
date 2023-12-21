@@ -571,7 +571,7 @@ def parse_args(quit_on_empty_args=True):
         yrc    - 逐词滚动歌词 (保存到 .ass)
         none   - 下载所有歌词
     例：
-        --lyric-no tlyric romalrc yrc 将只下载源语言歌词
+        --lyric-no "tlyric romalrc yrc" 将只下载源语言歌词
         --lyric-no none 将下载所有歌词
     注：
         默认不下载 *逐词滚动歌词*
