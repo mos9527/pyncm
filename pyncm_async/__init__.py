@@ -2,7 +2,7 @@
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
 __VERSION_MAJOR__ = 0
 __VERSION_MINOR__ = 0
-__VERSION_PATCH__ = 2
+__VERSION_PATCH__ = 3
 
 __version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
 
@@ -51,12 +51,13 @@ class Session(httpx.AsyncClient):
     ```python
     # 利用全局 Session 完成该 API Call
     await LoginViaEmail(...) 
-    session = CreateNewSession() # 建立新的 Session
-    with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完成
+    async with CreateNewSession(): # 建立新的 Session，并进入该 Session, 在 `with` 内的 API 将由该 Session 完成
         await LoginViaCellPhone(...)
     # 离开 Session. 此后 API 将继续由全局 Session 管理
     ```
     注：Session 各*线程*独立，各线程利用 `with` 设置的 Session 不互相影响
+    注：Session 离开 with clause 时，Session 会被销毁，但不会影响全局 Session
+    注：Session 生命周期细节请参阅 https://www.python-httpx.org/async/
 
     获取其他具体信息请参考该文档注释
     """
