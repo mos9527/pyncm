@@ -22,6 +22,7 @@ Out[4]:
 {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 ```
 - 多 Session 示例
+
 ```python
 LoginViaEmail(...) 
 # 利用全局 Session 完成该 API Call
