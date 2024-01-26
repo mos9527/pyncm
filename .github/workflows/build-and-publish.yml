@@ -25,6 +25,7 @@ jobs:
         pip install build
         pip install httpx
         pip install setuptools
+        pip install wheel
     - name: Build package
       run: python -m build --no-isolation
     - name: Publish package
