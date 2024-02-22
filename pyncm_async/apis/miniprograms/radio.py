@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """私人FM - Raido APIs"""
 
-from .. import EapiCryptoRequest, LoginRequiredApi
+from .. import EapiCryptoRequest
 
 
 @EapiCryptoRequest
-@LoginRequiredApi
 def GetMoreRaidoContent(limit=3, e_r=True):
     """PC 端 - 拉取更多FM内容
 
@@ -20,7 +19,6 @@ def GetMoreRaidoContent(limit=3, e_r=True):
 
 
 @EapiCryptoRequest
-@LoginRequiredApi
 def SetSkipRadioContent(songId, time=0, alg="itembased", e_r=True):
     """PC 端 - 跳过 FM 歌曲
 
@@ -42,7 +40,6 @@ def SetSkipRadioContent(songId, time=0, alg="itembased", e_r=True):
 
 
 @EapiCryptoRequest
-@LoginRequiredApi
 def SetLikeRadioContent(trackId, like=True, time="0", alg="itembased", e_r=True):
     """PC 端 - `收藏喜欢` FM 歌曲
 
@@ -66,7 +63,6 @@ def SetLikeRadioContent(trackId, like=True, time="0", alg="itembased", e_r=True)
 
 
 @EapiCryptoRequest
-@LoginRequiredApi
 def SetTrashRadioContent(songId, time="0", alg="itembased", e_r=True):
     """PC 端 - 删除 FM 歌曲
 

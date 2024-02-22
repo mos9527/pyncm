@@ -33,9 +33,15 @@ async with CreateNewSession(): # 建立新的 Session，并进入该 Session, �
 # 离开 Session. 此后 API 将继续由全局 Session 管理
 await GetTrackComments(...)
 ```
+使用 `with` 时...
 - 注：Session 各*线程*独立，各线程利用 `with` 设置的 Session 不互相影响
 - 注：Session 离开 `with` clause 时，**Session 会被销毁**，但不会影响全局 Session
 - 注：Session 生命周期细节请参阅 https://www.python-httpx.org/async/
+
+同时，你也可以在 API Call 中 指定 Session
+```python
+await GetTrackComments(..., session=session)
+```
 
 详见 [Session 说明](https://github.com/mos9527/pyncm/blob/async/pyncm/__init__.py#L35)
 ## API 说明

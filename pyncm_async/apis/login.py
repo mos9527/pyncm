@@ -13,8 +13,8 @@ from ..utils.security import cloudmusic_dll_encode_id
 import time
 
 
-def WriteLoginInfo(response):
-    """写登录态入当前 Session
+def WriteLoginInfo(response, session):
+    """写登录态入Session
 
     Args:
         response (dict): 解码后的登录态
@@ -22,13 +22,12 @@ def WriteLoginInfo(response):
     Raises:
         LoginFailedException: 登陆失败时发生
     """
-    sess = GetCurrentSession()
-    sess.login_info = {"tick": time.time(), "content": response}
-    if not sess.login_info["content"]["code"] == 200:
-        sess.login_info["success"] = False
-        raise LoginFailedException(sess.login_info["content"])
-    sess.login_info["success"] = True
-    sess.csrf_token = sess.cookies.get('__csrf')
+    session.login_info = {"tick": time.time(), "content": response}
+    if not session.login_info["content"]["code"] == 200:
+        session.login_info["success"] = False
+        raise LoginFailedException(session.login_info["content"])
+    session.login_info["success"] = True
+    session.csrf_token = session.cookies.get('__csrf')
 
 
 @WeapiCryptoRequest
@@ -103,7 +102,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
+async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True, session=None) -> dict:
     """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -125,7 +124,7 @@ async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ct
         dict
     """
     path = "/eapi/w/login/cellphone"
-    sess = GetCurrentSession()
+    session = session or GetCurrentSession()
     if password:
         passwordHash = HashHexDigest(password)        
     
@@ -148,11 +147,11 @@ async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ct
         )
     )()
     
-    WriteLoginInfo(login_status)
-    return {'code':200,'result':sess.login_info}
+    WriteLoginInfo(login_status, session)
+    return {'code':200,'result':session.login_info}
 
 
-async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
+async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True, session=None) -> dict:
     """网页端 - 邮箱登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -171,7 +170,7 @@ async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True
         dict
     """
     path = "/eapi/login"
-    sess = GetCurrentSession()
+    session = session or GetCurrentSession()
     if password:
         passwordHash = HashHexDigest(password)        
     
@@ -192,10 +191,10 @@ async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True
         )
     )()
     
-    WriteLoginInfo(login_status)
-    return {'code':200,'result':sess.login_info}
+    WriteLoginInfo(login_status,session)
+    return {'code':200,'result':session.login_info}
 
-async def LoginViaAnonymousAccount(deviceId=None):
+async def LoginViaAnonymousAccount(deviceId=None, session=None):
     '''PC 端 - 游客登陆
 
     Args:
@@ -207,8 +206,9 @@ async def LoginViaAnonymousAccount(deviceId=None):
     Returns:
         dict
     '''
+    session = session or GetCurrentSession()
     if not deviceId:
-        deviceId = GetCurrentSession().deviceId    
+        deviceId = session.deviceId    
     login_status = WeapiCryptoRequest(
         lambda: ("/api/register/anonimous" , {
         "username" : b64encode(
@@ -230,8 +230,8 @@ async def LoginViaAnonymousAccount(deviceId=None):
             'id' : login_status['userId'],
             **login_status
         }
-    })
-    return GetCurrentSession().login_info
+    }, session)
+    return session.login_info
 
 @WeapiCryptoRequest
 def SetSendRegisterVerifcationCodeViaCellphone(cell: str, ctcode=86):
@@ -293,45 +293,6 @@ def SetRegisterAccountViaCellphone(
         "password": HashHexDigest(password),
         "phone": str(cell),
     }
-
-async def LoginViaAnonymousAccount(deviceId=None):
-    '''PC 端 - 游客登陆
-
-    Args:
-        deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
-    
-    Notes:
-        Session 默认使用 `pyncm!` 作为设备 ID
-
-    Returns:
-        dict
-    '''
-    if deviceId:
-        GetCurrentSession().deviceId = deviceId
-    deviceId = GetCurrentSession().deviceId
-    login_status = await WeapiCryptoRequest(
-        lambda: ("/api/register/anonimous" , {
-        "username" : b64encode(
-            ('%s %s' % (
-                deviceId,
-                cloudmusic_dll_encode_id(deviceId))).encode()
-        ).decode()
-        }
-        )
-    )()
-    assert login_status['code'] == 200,"匿名登陆失败"
-    WriteLoginInfo({
-        **login_status,
-        'profile':{
-            'nickname' : 'Anonymous',
-            **login_status
-        },
-        'account':{
-            'id' : login_status['userId'],
-            **login_status
-        }
-    })
-    return GetCurrentSession().login_info
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell: str, prefix=86):

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
 __VERSION_MAJOR__ = 0
-__VERSION_MINOR__ = 0
-__VERSION_PATCH__ = 3
+__VERSION_MINOR__ = 1
+__VERSION_PATCH__ = 0
 
 __version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
 

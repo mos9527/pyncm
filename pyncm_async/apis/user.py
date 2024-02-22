@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """用户 - User APIs"""
-from . import WeapiCryptoRequest, UserIDBasedApi, LoginRequiredApi
+from . import WeapiCryptoRequest
 from json import dumps
 
 @WeapiCryptoRequest
-@UserIDBasedApi
-def GetUserDetail(user_id=0):
+def GetUserDetail(user_id):
     """网页端 - 获取某用户资料详情
 
     Args:
-        user_id (int): 用户 ID。置 0 表示当前已登录的用户 . defaults to 0
+        user_id (int): 用户 ID.
 
     Returns:
         dict
@@ -18,12 +17,11 @@ def GetUserDetail(user_id=0):
 
 
 @WeapiCryptoRequest
-@UserIDBasedApi
 def GetUserPlaylists(user_id, offset=0, limit=1001):
     """网页端 - 获取某用户创建的歌单
 
     Args:
-        user_id (int): 用户 ID。置 0 表示当前已登录的用户 . defaults to 0
+        user_id (int): 用户 ID.
         offset (int, optional): 获取偏移数. Defaults to 0.
         limit (int, optional): 单次获取量. Defaults to 30.
 
@@ -38,7 +36,6 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def GetUserAlbumSubs(limit=30):
     """网页端 - 获取收藏专辑内容
     Args:
@@ -51,7 +48,6 @@ def GetUserAlbumSubs(limit=30):
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def GetUserArtistSubs(limit=30):
     """网页端 - 获取收藏歌手内容
     Args:
@@ -70,7 +66,6 @@ SIGNIN_TYPE_WEB = 1
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def SetSignin(dtype=0):
     """移动端、PC端 - 每日签到
 
@@ -84,7 +79,6 @@ def SetSignin(dtype=0):
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def SetWeblog(logs):
     '''移动端、PC端 - 用户足迹
 

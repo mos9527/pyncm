@@ -1,7 +1,8 @@
 import asyncio
 import logging
 import pyncm_async, pyncm_async.apis
-logging.basicConfig(level=0)
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger('pyncm.api').setLevel(logging.DEBUG)
 # Account from https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/test/login.test.js
 pyncm_async.SetCurrentSession(
     pyncm_async.LoadSessionFromString(

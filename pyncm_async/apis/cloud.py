@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """我的音乐云盘 - Cloud APIs"""
 import json
-from . import WeapiCryptoRequest, LoginRequiredApi, EapiCryptoRequest, GetCurrentSession
+from . import WeapiCryptoRequest, EapiCryptoRequest, GetCurrentSession
 
 BUCKET = "jd-musicrep-privatecloud-audio-public"
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def GetCloudDriveInfo(limit=30, offset=0):
     """PC端 - 获取个人云盘内容
 
@@ -22,7 +21,6 @@ def GetCloudDriveInfo(limit=30, offset=0):
 
 
 @WeapiCryptoRequest
-@LoginRequiredApi
 def GetCloudDriveItemInfo(song_ids: list):
     """PC端 - 获取个人云盘项目详情
 
@@ -181,8 +179,7 @@ def SetPublishCloudResource(songid):
     }
 
 
-@LoginRequiredApi
-def SetRectifySongId(oldSongId, newSongId):
+def SetRectifySongId(oldSongId, newSongId,session=None):
     """移动端 - 歌曲纠偏
 
     Args:
@@ -193,7 +190,7 @@ def SetRectifySongId(oldSongId, newSongId):
         dict
     """
     return (
-        GetCurrentSession()
+        (session or GetCurrentSession())
         .get(
             "/api/cloud/user/song/match",
             params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
