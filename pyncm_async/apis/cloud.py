@@ -73,7 +73,7 @@ def GetNosToken(
 
 
 async def SetUploadObject(
-    stream, md5, fileSize, objectKey, token, offset=0, compete=True, bucket=BUCKET
+    stream, md5, fileSize, objectKey, token, offset=0, compete=True, bucket=BUCKET, session=None
 ):
     """移动端 - 上传内容
 
@@ -88,7 +88,7 @@ async def SetUploadObject(
     Returns:
         dict
     """
-    r = await GetCurrentSession().post(
+    r = await (session or GetCurrentSession()).post(
         "http://45.127.129.8/%s/" % bucket + objectKey.replace("/", "%2F"),
         data=stream,
         params={"version": "1.0", "offset": offset, "complete": str(compete).lower()},

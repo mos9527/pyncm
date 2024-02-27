@@ -145,7 +145,7 @@ async def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ct
                 **auth_token
             },
         )
-    )()
+    )(session=session)
     
     WriteLoginInfo(login_status, session)
     return {'code':200,'result':session.login_info}
@@ -189,7 +189,7 @@ async def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True
                 **auth_token
             },
         )
-    )()
+    )(session=session)
     
     WriteLoginInfo(login_status,session)
     return {'code':200,'result':session.login_info}
@@ -218,7 +218,7 @@ async def LoginViaAnonymousAccount(deviceId=None, session=None):
         ).decode()
         }
         )
-    )()    
+    )(session=session)    
     assert login_status['code'] == 200,"匿名登陆失败"
     WriteLoginInfo({
         **login_status,
