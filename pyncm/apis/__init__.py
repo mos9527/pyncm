@@ -64,19 +64,25 @@ def _BaseWrapper(requestFunc):
     def apiWrapper(apiFunc):
         @wraps(apiFunc)
         def wrapper(*a, **k):
+            # HACK: 'session=' keyword support            
+            session = k.get("session", GetCurrentSession())
+            # HACK: For now,wrapped functions will not have access to the session object
+            if 'session' in k: del k['session']
+
             ret = apiFunc(*a, **k)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"            
-            logger.debug('TYPE=%s API=%s.%s %s url=%s deviceId=%s payload=%s' % (
+            logger.debug('TYPE=%s API=%s.%s %s url=%s deviceId=%s payload=%s session=0x%x' % (
                 requestFunc.__name__.split('Crypto')[0].upper(),
                 apiFunc.__module__,
-                apiFunc,
+                apiFunc.__name__,
                 method,
                 url,
-                GetCurrentSession().deviceId,
-                payload)
+                session.deviceId,
+                payload,
+                id(session))
             )
-            rsp = requestFunc(url, payload, method)
+            rsp = requestFunc(session, url, payload, method)
             try:
                 payload = rsp.text if isinstance(rsp, Response) else rsp
                 payload = payload.decode() if not isinstance(payload, str) else payload
@@ -101,30 +107,6 @@ def _BaseWrapper(requestFunc):
     return apiWrapper
 
 
-def LoginRequiredApi(func):
-    """API 需要事先登录"""
-    @wraps(func)
-    def wrapper(*a, **k):
-        if not GetCurrentSession().login_info["success"]:
-            raise LOGIN_REQUIRED
-        return func(*a, **k)
-
-    return wrapper
-
-
-def UserIDBasedApi(func):
-    """API 第一参数为用户 ID，而该参数可留 0 而指代已登录的用户 ID"""
-    @wraps(func)
-    def wrapper(user_id=0, *a, **k):
-        if user_id == 0 and GetCurrentSession().login_info["success"]:
-            user_id = GetCurrentSession().uid
-        elif user_id == 0:
-            raise LOGIN_REQUIRED
-        return func(user_id, *a, **k)
-
-    return wrapper
-
-
 def EapiEncipered(func):
     """函数值有 Eapi 加密 - 解密并返回原文"""
     @wraps(func)
@@ -138,51 +120,42 @@ def EapiEncipered(func):
     return wrapper
 
 @_BaseWrapper
-def WeapiCryptoRequest(url, plain, method):
-    """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
-    payload = json.dumps({**plain, "csrf_token": GetCurrentSession().csrf_token})
-    return GetCurrentSession().request(
+def WeapiCryptoRequest(session, url, plain, method):
+    """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""    
+    payload = json.dumps({**plain, "csrf_token": session.csrf_token})
+    return session.request(
         method,
         url.replace("/api/", "/weapi/"),
-        params={"csrf_token": GetCurrentSession().csrf_token},
+        params={"csrf_token": session.csrf_token},
         data={**WeapiEncrypt(payload)},
     )
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
-def LapiCryptoRequest(url, plain, method):
-    """Linux API - 适用于Linux客户端部分APIs"""
-    payload = {"method": method, "url": GetCurrentSession().HOST + url, "params": plain}
-    payload = json.dumps(payload)
-    return GetCurrentSession().request(
-        method,
-        "/api/linux/forward",
-        headers={"User-Agent": GetCurrentSession().UA_LINUX_API},
-        data={**LinuxApiEncrypt(payload)},
-    )
-
-# 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
-@_BaseWrapper
 @EapiEncipered
-def EapiCryptoRequest(url, plain, method):
+def EapiCryptoRequest(session, url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""    
     payload = {**plain, "header": json.dumps({
-        **GetCurrentSession().eapi_config,
+        **session.eapi_config,
         "requestId": str(randrange(20000000,30000000))
     })}
     digest = EapiEncrypt(urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload))    
-    request = GetCurrentSession().request(
+    request = session.request(
         method,
         url,
-        headers={"User-Agent": GetCurrentSession().UA_EAPI, "Referer": None},
+        headers={"User-Agent": session.UA_EAPI, "Referer": ''},
         cookies={
-            **GetCurrentSession().eapi_config
+            **session.eapi_config
         },
         data={
             **digest
         },
     )
-    return request.content
+    payload = request.content
+    try:
+        return EapiDecrypt(payload).decode()
+    except:
+        return payload
 
 from . import (
     artist,

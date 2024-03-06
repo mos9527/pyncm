@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """歌单 - Playlist APIs"""
-from . import EapiCryptoRequest, LapiCryptoRequest, WeapiCryptoRequest
+from . import EapiCryptoRequest, WeapiCryptoRequest
 import json
 
 
@@ -45,16 +45,6 @@ def GetPlaylistComments(playlist_id: str, offset=0, limit=20, beforeTime=0):
         "offset": str(offset),
         "beforeTime": str(beforeTime * 1000),
     }
-
-
-@LapiCryptoRequest
-def GetTopPlaylists():
-    """Linux PC端 - 获取热门歌单
-
-    Returns:
-        dict
-    """
-    return "/api/toplist", {}
 
 
 @WeapiCryptoRequest

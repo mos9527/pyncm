@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """歌曲 - Track APIs"""
-from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest, LoginRequiredApi
+from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest
 from ..utils import RandomString
 import json
 
@@ -178,7 +178,6 @@ def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
 
 @EapiEncipered
 @EapiCryptoRequest
-@LoginRequiredApi
 def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
     """PC端 - 收藏歌曲到 `我喜欢的音乐`
 

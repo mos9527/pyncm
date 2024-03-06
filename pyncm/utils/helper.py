@@ -269,10 +269,10 @@ class FuzzyPathHelper(IDCahceHelper):
         # Make some hashtables w/ directory's file listing
         files = filter(lambda file:path.isfile(path.join(self.base_path,file)),listdir(self.base_path) if path.exists(self.base_path) else [])
         # 1. Table of basename
-        self.tbl_basenames = {path.basename(file) for file in files}
+        self.tbl_basenames = {path.basename(file) : file for file in files}
         # 2. Table of basename w/o extension, but with the premise that the files themselves contain the extensions we want    
         split = lambda file:path.splitext(path.basename(file))
-        self.tbl_basenames_noext = {(split(file)[0] if (split(file)[1].lower() in self.limit_exts) else None) for file in self.tbl_basenames}
+        self.tbl_basenames_noext = {(split(file)[0] if (split(file)[1].lower() in self.limit_exts) else None) : file for file in self.tbl_basenames}
         
     def exists(self,name,partial_extension_check=True):
         """Chcek if a file exists in O(1) time
@@ -289,3 +289,13 @@ class FuzzyPathHelper(IDCahceHelper):
             return name in self.tbl_basenames_noext
         else:
             return name in self.tbl_basenames
+        
+    def fullpath(self,name):
+        if name in self.tbl_basenames:
+            return path.join(self.base_path,self.tbl_basenames[name])
+        if name in self.tbl_basenames_noext:
+            return path.join(self.base_path,self.tbl_basenames_noext[name])
+        
+    def get_extension(self,name):
+        p = self.fullpath(name)
+        return path.splitext(p)[1][1:]

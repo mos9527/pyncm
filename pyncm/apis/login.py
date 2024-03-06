@@ -13,8 +13,8 @@ from ..utils.security import cloudmusic_dll_encode_id
 import time
 
 
-def WriteLoginInfo(response):
-    """写登录态入当前 Session
+def WriteLoginInfo(response, session):
+    """写登录态入Session
 
     Args:
         response (dict): 解码后的登录态
@@ -22,14 +22,12 @@ def WriteLoginInfo(response):
     Raises:
         LoginFailedException: 登陆失败时发生
     """
-    sess = GetCurrentSession()
-    sess.login_info = {"tick": time.time(), "content": response}
-    if not sess.login_info["content"]["code"] == 200:
-        sess.login_info["success"] = False
-        raise LoginFailedException(sess.login_info["content"])
-    sess.login_info["success"] = True
-    cookie = sess.cookies.get_dict()
-    sess.csrf_token = cookie["__csrf"]
+    session.login_info = {"tick": time.time(), "content": response}
+    if not session.login_info["content"]["code"] == 200:
+        session.login_info["success"] = False
+        raise LoginFailedException(session.login_info["content"])
+    session.login_info["success"] = True
+    session.csrf_token = session.cookies.get('__csrf')
 
 
 @WeapiCryptoRequest
@@ -126,7 +124,7 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
         dict
     """
     path = "/eapi/w/login/cellphone"
-    sess = GetCurrentSession()
+    session = session or GetCurrentSession()
     if password:
         passwordHash = HashHexDigest(password)        
     
@@ -147,10 +145,10 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
                 **auth_token
             },
         )
-    )()
+    )(session=session)
     
-    WriteLoginInfo(login_status)
-    return {'code':200,'result':sess.login_info}
+    WriteLoginInfo(login_status, session)
+    return {'code':200,'result':session.login_info}
 
 
 def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
@@ -172,7 +170,7 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
         dict
     """
     path = "/eapi/login"
-    sess = GetCurrentSession()
+    session = session or GetCurrentSession()
     if password:
         passwordHash = HashHexDigest(password)        
     
@@ -191,10 +189,10 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> d
                 **auth_token
             },
         )
-    )()
+    )(session=session)
     
-    WriteLoginInfo(login_status)
-    return {'code':200,'result':sess.login_info}
+    WriteLoginInfo(login_status,session)
+    return {'code':200,'result':session.login_info}
 
 
 @WeapiCryptoRequest
@@ -270,8 +268,9 @@ def LoginViaAnonymousAccount(deviceId=None):
     Returns:
         dict
     '''
+    session = session or GetCurrentSession()
     if not deviceId:
-        deviceId = GetCurrentSession().deviceId    
+        deviceId = session.deviceId    
     login_status = WeapiCryptoRequest(
         lambda: ("/api/register/anonimous" , {
         "username" : b64encode(
@@ -281,7 +280,7 @@ def LoginViaAnonymousAccount(deviceId=None):
         ).decode()
         }
         )
-    )()    
+    )(session=session)    
     assert login_status['code'] == 200,"匿名登陆失败"
     WriteLoginInfo({
         **login_status,
@@ -293,8 +292,9 @@ def LoginViaAnonymousAccount(deviceId=None):
             'id' : login_status['userId'],
             **login_status
         }
-    })
-    return GetCurrentSession().login_info
+    }, session)
+    return session.login_info
+
 
 @EapiCryptoRequest
 def CheckIsCellphoneRegistered(cell: str, prefix=86):

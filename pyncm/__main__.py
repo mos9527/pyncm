@@ -18,6 +18,7 @@ from threading import Thread
 from time import sleep
 from os.path import join, exists
 from os import remove, makedirs
+from dataclasses import dataclass
 
 from logging import exception, getLogger, basicConfig
 import sys, argparse, re , os
@@ -39,13 +40,6 @@ for import_name in OPTIONALS:
         )
 
 __desc__ = """PyNCM 网易云音乐下载工具 %s""" % __version__
-
-# Key-Value classes
-class BaseKeyValueClass:
-    def __init__(self, **kw) -> None:
-      for k, v in kw.items():
-            self.__setattr__(k, v)
-
 
 class TaskPoolExecutorThread(Thread):
     @staticmethod
@@ -173,13 +167,11 @@ class TaskPoolExecutorThread(Thread):
         self.max_workers = max_workers
 
     def run(self):
-        def execute(task: BaseKeyValueClass):
-            if type(task) == MarkerTask:
-                # Mark a finished task w/o execution                
-                self.finished_tasks += 1
-                return
+        def execute(task):
             if type(task) == TrackDownloadTask:
                 try:
+                    if task.skip_download:
+                        return
                     # Downloding source audio
                     apiCall = track.GetTrackAudioV1 if not task.routine.args.use_download_api else track.GetTrackDownloadURLV1
                     if task.routine.args.use_download_api: logger.warning("使用下载 API，可能消耗 VIP 下载额度！")
@@ -300,36 +292,35 @@ class Subroutine:
     @property
     def has_exceptions(self):
         return len(self.exceptions) > 0
-    
-class BaseDownloadTask(BaseKeyValueClass):
-    id: int
-    url: str
-    dest: str
-    level : str
+@dataclass
+class BaseDownloadTask:
+    id: int = 0
+    url: str = ''
+    dest: str = ''
+    level : str = ''
 
-
+@dataclass
 class LyricsDownloadTask(BaseDownloadTask):
-    id: int
-    dest: str
-    lrc_blacklist: set
+    id: int = 0
+    dest: str = ''
+    lrc_blacklist: set = None
 
+@dataclass
+class TrackDownloadTask:
+    song: TrackHelper = None
+    cover: BaseDownloadTask = None
+    lyrics: BaseDownloadTask = None
+    audio: BaseDownloadTask = None
 
-class TrackDownloadTask(BaseKeyValueClass):
-    song: TrackHelper
-    cover: BaseDownloadTask
-    lyrics: BaseDownloadTask
-    audio: BaseDownloadTask
+    index: int = 0
+    total: int = 0
+    lyrics_exclude: set = None
+    save_as: str = ''
+    extension: str = ''
 
-    index: int
-    total: int
-    lyrics_exclude: set
-    save_as: str
-    extension: str
+    routine : Subroutine = None
 
-    routine : Subroutine
-
-class MarkerTask(BaseKeyValueClass):
-    pass
+    skip_download : bool = False
 
 class Playlist(Subroutine):
     prefix = '歌单'
@@ -391,7 +382,9 @@ class Playlist(Subroutine):
                         logger.warning(
                             "单曲 #%d / %d - %s - %s 已存在，跳过"
                             % (index + 1, len(dDetails), song.Title, song.AlbumName))
-                        self.put(MarkerTask())
+                        tSong.skip_download = True
+                        tSong.extension = FuzzyPathHelper(output_folder).get_extension(output_name)
+                        self.put(tSong)
                         continue
                 self.put(tSong)
 

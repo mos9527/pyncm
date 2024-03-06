@@ -1,7 +1,10 @@
 ![Logo](https://github.com/greats3an/pyncm/raw/master/demos/_logo.png)
 
 # PyNCM
+第三方网易云音乐 Python API 及个人音乐库离线转储工具
+
 **注意** : 异步使用，请移步 [`async` 分支](https://github.com/mos9527/pyncm/tree/async)
+
 # 安装
     pip install pyncm
 可选 （若不考虑使用CLI则请忽略）
@@ -88,11 +91,10 @@
 |-|-|
 |`PYNCM_DEBUG`|调试日志输出等级,`'CRITICAL', 'DEBUG', 'ERROR','FATAL','INFO','WARNING'` 之一|
 ### 使用示例
-## 下载单曲
+## 转储单曲
 [![asciicast](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1.svg)](https://asciinema.org/a/4PEC5977rTcm4hp9jLuPFYUM1)
-## 使用 [UNM](https://github.com/UnblockNeteaseMusic/server) 下载灰色歌曲
-[![asciicast](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb.svg)](https://asciinema.org/a/AX4cdzD7YcgQlTebAdCTKZQnb)
-其他功能详见 
+
+API使用详见 
 - [Demo](https://github.com/mos9527/pyncm/tree/master/demos)
 
 # API 使用示例
@@ -119,6 +121,12 @@ with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完�
 # 离开 Session. 此后 API 将继续由全局 Session 管理
 GetTrackComments(...)
 ```
+
+同时，你也可以在 API Call 中 指定 Session
+```python
+await GetTrackComments(..., session=session)
+```
+
 详见 [Session 说明](https://github.com/mos9527/pyncm/blob/master/pyncm/__init__.py#L52)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
@@ -140,6 +148,3 @@ GetTrackComments(...)
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
-
-### 衍生项目
-[PyNCMd](https://github.com/mos9527/pyncmd)

@@ -34,7 +34,7 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 """
 __VERSION_MAJOR__ = 1
 __VERSION_MINOR__ = 6
-__VERSION_PATCH__ = 13
+__VERSION_PATCH__ = 14
 
 __version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
 
