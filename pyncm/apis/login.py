@@ -102,7 +102,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True) -> dict:
+def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True, session=None) -> dict:
     """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -151,7 +151,7 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
     return {'code':200,'result':session.login_info}
 
 
-def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True) -> dict:
+def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True, session=None) -> dict:
     """网页端 - 邮箱登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -256,7 +256,7 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
-def LoginViaAnonymousAccount(deviceId=None):
+def LoginViaAnonymousAccount(deviceId=None, session=None):
     '''PC 端 - 游客登陆
 
     Args:
