@@ -471,10 +471,10 @@ def parse_sharelink(url):
         "分享mos9527创建的歌单「東方 PC」: http://music.163.com/playlist?id=72897851187" (desktop app)
         https://music.163.com/#/user/home?id=315542615 (user homepage)
     """
-    rurl = re.findall("(?:http|https):\/\/.*", url)
+    rurl = re.findall(r"(?:http|https):\/\/.*", url)
     if rurl:
         url = rurl[0]  # Use first URL found. Otherwise use value given as is.
-    numerics = re.findall("\d{4,}", url)    
+    numerics = re.findall(r"\d{4,}", url)
     assert numerics != None, "未在链接中找到任何 ID"
     ids = numerics[:1]  # Only pick the first match
     table = {

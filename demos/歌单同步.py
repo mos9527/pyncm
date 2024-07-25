@@ -2,11 +2,11 @@
 以下 .pyncm 即为你保存的登陆凭据
 ---
 使用例 : 同步个人创建的歌单到`NetEase/[专辑名]`
-    python .\demos\歌单同步.py --load .pyncm --quality hires --output NetEase/{album}
+    python ./demos/歌单同步.py --load .pyncm --quality hires --output NetEase/{album}
 使用例 : 同步个人创建+收藏的歌单到`NetEase/[专辑名]`,并保存 M3U 播放列表
-    python .\demos\歌单同步.py --load .pyncm --quality hires --output NetEase/{album} --user-bookmarks --save-m3u NetEase/PLAYLIST.m3u
+    python ./demos/歌单同步.py --load .pyncm --quality hires --output NetEase/{album} --user-bookmarks --save-m3u NetEase/PLAYLIST.m3u
 使用例 : 同步某一歌单到`NetEase/[专辑名]`
-    python .\demos\歌单同步.py --load .pyncm --quality hires --output NetEase/{album} https://music.163.com/playlist?id=988690134
+    python ./demos/歌单同步.py --load .pyncm --quality hires --output NetEase/{album} https://music.163.com/playlist?id=988690134
 '''
 from sys import argv
 from os import walk,path,remove
