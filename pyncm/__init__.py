@@ -34,7 +34,7 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 """
 __VERSION_MAJOR__ = 1
 __VERSION_MINOR__ = 6
-__VERSION_PATCH__ = 15
+__VERSION_PATCH__ = 16
 
 __version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
 
@@ -114,7 +114,7 @@ with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完�
         self.login_info = {"success": False, "tick": time(), "content": None}
         self.eapi_config = {
             "os": "ios",
-            "appver": "",
+            "appver": "9.0.0",
             "osver": "",
             "deviceId": DEVICE_ID_DEFAULT,
         }        
