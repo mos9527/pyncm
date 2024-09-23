@@ -2,7 +2,7 @@
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
 __VERSION_MAJOR__ = 0
 __VERSION_MINOR__ = 1
-__VERSION_PATCH__ = 1
+__VERSION_PATCH__ = 2
 
 __version__ = '%s.%s.%s' % (__VERSION_MAJOR__,__VERSION_MINOR__,__VERSION_PATCH__)
 
@@ -95,7 +95,7 @@ class Session(httpx.AsyncClient):
         }
         self.eapi_config = {
             "os": "ios",
-            "appver": "",
+            "appver": "9.0.0",
             "osver": "",
             "deviceId": DEVICE_ID_DEFAULT,
         }

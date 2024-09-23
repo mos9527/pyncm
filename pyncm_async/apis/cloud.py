@@ -179,7 +179,7 @@ def SetPublishCloudResource(songid):
     }
 
 
-def SetRectifySongId(oldSongId, newSongId,session=None):
+async def SetRectifySongId(oldSongId, newSongId,session=None):
     """移动端 - 歌曲纠偏
 
     Args:
@@ -189,11 +189,8 @@ def SetRectifySongId(oldSongId, newSongId,session=None):
     Returns:
         dict
     """
-    return (
-        (session or GetCurrentSession())
-        .get(
+    resp = await (session or GetCurrentSession()).get(
             "/api/cloud/user/song/match",
             params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
-        )
-        .json()
     )
+    return resp.json()
