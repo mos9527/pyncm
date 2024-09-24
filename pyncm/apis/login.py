@@ -27,7 +27,7 @@ def WriteLoginInfo(response, session):
         session.login_info["success"] = False
         raise LoginFailedException(session.login_info["content"])
     session.login_info["success"] = True
-    session.csrf_token = session.cookies.get('__csrf')
+    session.csrf_token = session.cookies.get("__csrf")
 
 
 @WeapiCryptoRequest
@@ -102,7 +102,15 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=86, remeberLogin=True, session=None) -> dict:
+def LoginViaCellphone(
+    phone="",
+    password="",
+    passwordHash="",
+    captcha="",
+    ctcode=86,
+    remeberLogin=True,
+    session=None,
+) -> dict:
     """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -114,8 +122,8 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
         remeberLogin (bool, optional): 是否‘自动登录’，设置 `False` 可能导致权限问题. Defaults to True.
         * 以下验证方式有 1 个含参即可
         password (str, optional): 明文密码. Defaults to ''.
-        passwordHash (str, optional): 密码md5哈希. Defaults to ''.        
-        captcha (str, optional): 手机验证码. 需要已在同一 Session 中发送过 SetSendRegisterVerifcationCodeViaCellphone. Defaults to ''.        
+        passwordHash (str, optional): 密码md5哈希. Defaults to ''.
+        captcha (str, optional): 手机验证码. 需要已在同一 Session 中发送过 SetSendRegisterVerifcationCodeViaCellphone. Defaults to ''.
 
     Raises:
         LoginFailedException: 登陆失败时发生
@@ -126,43 +134,47 @@ def LoginViaCellphone(phone="", password="",passwordHash="",captcha="", ctcode=8
     path = "/eapi/w/login/cellphone"
     session = session or GetCurrentSession()
     if password:
-        passwordHash = HashHexDigest(password)        
-    
+        passwordHash = HashHexDigest(password)
+
     if not (passwordHash or captcha):
         raise LoginFailedException("未提供密码或验证码")
 
-    auth_token = {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
+    auth_token = (
+        {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
+    )
 
     login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
-                "type": '1',
-                "phone": str(phone),                
+                "type": "1",
+                "phone": str(phone),
                 "remember": str(remeberLogin).lower(),
                 "countrycode": str(ctcode),
-                "checkToken" : "",
-                **auth_token
+                "checkToken": "",
+                **auth_token,
             },
         )
     )(session=session)
-    
+
     WriteLoginInfo(login_status, session)
-    return {'code':200,'result':session.login_info}
+    return {"code": 200, "result": session.login_info}
 
 
-def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True, session=None) -> dict:
+def LoginViaEmail(
+    email="", password="", passwordHash="", remeberLogin=True, session=None
+) -> dict:
     """网页端 - 邮箱登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
-    
+
     Args:
         email (str, optional): 邮箱地址. Defaults to ''.
         remeberLogin (bool, optional): 是否‘自动登录’，设置 `False` 可能导致权限问题. Defaults to True.
         * 以下验证方式有 1 个含参即可
         password (str, optional): 明文密码. Defaults to ''.
-        passwordHash (str, optional): 密码md5哈希. Defaults to ''.        
-        
+        passwordHash (str, optional): 密码md5哈希. Defaults to ''.
+
     Raises:
         LoginFailedException: 登陆失败时发生
 
@@ -172,8 +184,8 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True, sess
     path = "/eapi/login"
     session = session or GetCurrentSession()
     if password:
-        passwordHash = HashHexDigest(password)        
-    
+        passwordHash = HashHexDigest(password)
+
     if not passwordHash:
         raise LoginFailedException("未提供密码")
 
@@ -183,16 +195,16 @@ def LoginViaEmail(email="", password="",passwordHash="", remeberLogin=True, sess
         lambda: (
             path,
             {
-                "type": '1',
-                "username": str(email),                
-                "remember": str(remeberLogin).lower(),                
-                **auth_token
+                "type": "1",
+                "username": str(email),
+                "remember": str(remeberLogin).lower(),
+                **auth_token,
             },
         )
     )(session=session)
-    
-    WriteLoginInfo(login_status,session)
-    return {'code':200,'result':session.login_info}
+
+    WriteLoginInfo(login_status, session)
+    return {"code": 200, "result": session.login_info}
 
 
 @WeapiCryptoRequest
@@ -256,43 +268,41 @@ def SetRegisterAccountViaCellphone(
         "phone": str(cell),
     }
 
+
 def LoginViaAnonymousAccount(deviceId=None, session=None):
-    '''PC 端 - 游客登陆
+    """PC 端 - 游客登陆
 
     Args:
         deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
-    
+
     Notes:
         Session 默认使用 `pyncm!` 作为设备 ID
 
     Returns:
         dict
-    '''
+    """
     session = session or GetCurrentSession()
     if not deviceId:
-        deviceId = session.deviceId    
+        deviceId = session.deviceId
     login_status = WeapiCryptoRequest(
-        lambda: ("/api/register/anonimous" , {
-        "username" : b64encode(
-            ('%s %s' % (
-                deviceId,
-                cloudmusic_dll_encode_id(deviceId))).encode()
-        ).decode()
-        }
+        lambda: (
+            "/api/register/anonimous",
+            {
+                "username": b64encode(
+                    ("%s %s" % (deviceId, cloudmusic_dll_encode_id(deviceId))).encode()
+                ).decode()
+            },
         )
-    )(session=session)    
-    assert login_status['code'] == 200,"匿名登陆失败"
-    WriteLoginInfo({
-        **login_status,
-        'profile':{
-            'nickname' : 'Anonymous',
-            **login_status
+    )(session=session)
+    assert login_status["code"] == 200, "匿名登陆失败"
+    WriteLoginInfo(
+        {
+            **login_status,
+            "profile": {"nickname": "Anonymous", **login_status},
+            "account": {"id": login_status["userId"], **login_status},
         },
-        'account':{
-            'id' : login_status['userId'],
-            **login_status
-        }
-    }, session)
+        session,
+    )
     return session.login_info
 
 

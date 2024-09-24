@@ -1,6 +1,8 @@
 ![Logo](https://github.com/greats3an/pyncm/raw/master/demos/_logo.png)
 
 # PyNCM
+[![Windows Build](https://github.com/mos9527/pyncm/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mos9527/pyncm/blob/main/.github/workflows/build-and-publish.yml) [![Releases](https://img.shields.io/github/downloads/mos9527/pyncm/total.svg)](https://GitHub.com/mos9527/pyncm/releases/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
+
 第三方网易云音乐 Python API 及个人音乐库离线转储工具
 
 **注意** : 异步使用，请移步 [`async` 分支](https://github.com/mos9527/pyncm/tree/async)

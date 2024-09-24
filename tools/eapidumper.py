@@ -8,14 +8,17 @@ r = HexCompose(r)
 r = EapiDecrypt(r).decode()
 url, payload, _ = r.split("-36cd479b6b5-")
 payload = json.loads(payload)
-if type(payload['header']) == str:
-    payload['header'] = json.loads(payload['header'])
+if type(payload["header"]) == str:
+    payload["header"] = json.loads(payload["header"])
+
+
 def comp(s1, s2):
     if ("id" in s1.lower()) or s1 > s2:
         return -1
     if ("id" in s2.lower()) or s1 < s2:
         return 1
     return 0
+
 
 print("Payload  ===============")
 print(payload)
@@ -32,5 +35,5 @@ for arg in args:
 
 
 print("== Headers ===============")
-for header in payload['header']:
-    print("    %s:      %s" % (header.ljust(16), payload['header'][header]))
+for header in payload["header"]:
+    print("    %s:      %s" % (header.ljust(16), payload["header"][header]))

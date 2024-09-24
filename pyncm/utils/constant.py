@@ -1,8 +1,9 @@
-'''deviceId produced by a fuzzer that is known to actually work!
+"""deviceId produced by a fuzzer that is known to actually work!
 The acutal implementaion is device dependent. 
 For now, this will have to work. Alas,RE-ing their implementation
 is simply not nor ever will be on my TODO list...for now
-'''
+"""
+
 known_good_deviceIds = """
 63348165213CB8FEA1423095D2BC9C9BFA87EA6FDD900D0CA241
 2942E19068F8567989A76B699B6BA18CC5AF01E8E2570BE9B67E
@@ -260,4 +261,8 @@ F337C4382911DB7A4AF85D1EFD666CB638719B996259B6DD6C94
 5FF485FDF2F86A14F17E0F770AA955E7ABF5CBACA767AECF944C
 3E40938C94D65A59E010EA2D349369EC752349B584F7226A9E0C
 BE0DCE77DFE789192ACD70D20A690C594D944644E370E04BE798
-""".split('\n')[1:-1]
+""".split(
+    "\n"
+)[
+    1:-1
+]

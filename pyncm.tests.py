@@ -1,5 +1,6 @@
-import unittest,logging
+import unittest, logging
 import pyncm, pyncm.apis
+
 logging.basicConfig(level=0)
 # Account from https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/test/login.test.js
 pyncm.SetCurrentSession(
@@ -8,30 +9,31 @@ pyncm.SetCurrentSession(
     )
 )
 
+
 class APITest(unittest.TestCase):
     def test_set_like(self):
         self.assertEqual(
-            pyncm.apis.track.SetLikeTrack(31140560, like=True).get("code", 0),200
+            pyncm.apis.track.SetLikeTrack(31140560, like=True).get("code", 0), 200
         )
 
     def test_set_like_revert(self):
         self.assertEqual(
-            pyncm.apis.track.SetLikeTrack(31140560, like=False).get("code", 0) , 200
+            pyncm.apis.track.SetLikeTrack(31140560, like=False).get("code", 0), 200
         )
 
     def test_manipulate_playlist(self):
         playlist = pyncm.apis.playlist.SetCreatePlaylist("Playlist")
-        self.assertEqual(playlist.get("code", 0) , 200, "Cannot create Playlist")
+        self.assertEqual(playlist.get("code", 0), 200, "Cannot create Playlist")
         self.assertEqual(
             pyncm.apis.playlist.SetManipulatePlaylistTracks(
                 31140560, playlist.get("id", 0)
-            ).get("code", 0)
-            , 200,
+            ).get("code", 0),
+            200,
             "Cannot add track to playlist created",
         )
         self.assertEqual(
-            pyncm.apis.playlist.SetRemovePlaylist(playlist.get("id", 0)).get("code", 0)
-            , 200,
+            pyncm.apis.playlist.SetRemovePlaylist(playlist.get("id", 0)).get("code", 0),
+            200,
             "Cannot remove track from playlist created",
         )
 

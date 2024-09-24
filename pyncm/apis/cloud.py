@@ -73,7 +73,15 @@ def GetNosToken(
 
 
 def SetUploadObject(
-    stream, md5, fileSize, objectKey, token, offset=0, compete=True, bucket=BUCKET, session=None
+    stream,
+    md5,
+    fileSize,
+    objectKey,
+    token,
+    offset=0,
+    compete=True,
+    bucket=BUCKET,
+    session=None,
 ):
     """移动端 - 上传内容
 
@@ -177,6 +185,7 @@ def SetPublishCloudResource(songid):
     return "/eapi/cloud/pub/v2", {
         "songid": str(songid),
     }
+
 
 def SetRectifySongId(oldSongId, newSongId, session=None):
     """移动端 - 歌曲纠偏

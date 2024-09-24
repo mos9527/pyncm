@@ -1,4 +1,4 @@
-__desc__ = '''user.SetWeblog API 功能演示
+__desc__ = """user.SetWeblog API 功能演示
 
 摘自 https://github.com/Binaryify/NeteaseCloudMusicApi
 
@@ -13,24 +13,30 @@ __desc__ = '''user.SetWeblog API 功能演示
     接口地址 : /scrobble
 
     调用例子 : /scrobble?id=518066366&sourceid=36780169&time=291
-'''
+"""
 from __init__ import login
+
 assert login(), "登录失败"
 from pyncm.apis.user import SetWeblog
 from pprint import pprint
+
 print(__desc__)
-pprint(SetWeblog(
-    [{
-        'action': 'play',
-        'json': {
-            'download': 0,
-            'end': 'playend',
-            'id': input('歌曲 ID:'),
-            'sourceId': input('来源 ID:'),
-            'time': input('时长:') or 300,
-            'type': 'song',
-            'wifi': 0,
-            'source' : 'list',
-        }
-    }]
-))
+pprint(
+    SetWeblog(
+        [
+            {
+                "action": "play",
+                "json": {
+                    "download": 0,
+                    "end": "playend",
+                    "id": input("歌曲 ID:"),
+                    "sourceId": input("来源 ID:"),
+                    "time": input("时长:") or 300,
+                    "type": "song",
+                    "wifi": 0,
+                    "source": "list",
+                },
+            }
+        ]
+    )
+)

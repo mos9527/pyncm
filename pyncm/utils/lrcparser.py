@@ -3,6 +3,7 @@
 import re
 from collections import defaultdict
 
+
 def LrcProperty(tagname):
     def wrapper(func):
         @property
@@ -107,6 +108,7 @@ class LrcParser:
 
     def __init__(self, lrc=""):
         """Takes lyrics in `LRC` format,then provides lyrics based on timestamps"""
+
         # Parsing lrc,line by line
         def EnmurateAttributes():
             for m in dir(self):
@@ -156,7 +158,7 @@ class LrcParser:
             IDTag = LrcRegexes.LIDTag.findall(line)
             if not IDTag:
                 # Known causes:
-                # 1. There's JSON in my LRC (wtf netease)                
+                # 1. There's JSON in my LRC (wtf netease)
                 continue
             IDTagType = "".join(LrcRegexes.LIDTag_Type.findall("".join(IDTag)))
             IDTagContent = "".join(LrcRegexes.LIDTag_Content.findall("".join(IDTag)))
@@ -234,7 +236,8 @@ class LrcParser:
             Returns `(timestamp_seconds,lyrics[(timestamp_tag,lyrics)],indexof)`
 
             Returns None if nothing is found
-        """        
+        """
+
         def search(val, src: list, l, r):
             """Binary serach"""
             pivot = (l + r) >> 1
