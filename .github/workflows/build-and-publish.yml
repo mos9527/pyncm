@@ -29,10 +29,12 @@ jobs:
     - name: Build package
       run: python -m build --no-isolation
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN_2 }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN_2 }}
+      run: |
+        twine upload ./dist/*.whl --skip-existing
+        twine upload ./dist/*.tar.gz --skip-existing      
     - name: Build Windows executables
       run: |          
           pyinstaller -F -i NONE pyncm/__main__.py --name pyncm
