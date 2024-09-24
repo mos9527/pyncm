@@ -14,7 +14,7 @@
 - `tqdm`    : 显示实时下载进度
 - `coloredlogs` : 彩色日志输出
 
-**Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本
+**Windows 用户**: 在 [Releases](https://github.com/mos9527/pyncm/releases) 可下载已打包 `.exe` 版本 (x86)
 # 命令行使用
     positional arguments:
     链接                    网易云音乐分享链接
