@@ -11,6 +11,7 @@ def login():
         LoginQrcodeUnikey,
         LoginQrcodeCheck,
     )
+    from pyncm import GetCurrentSession, DumpSessionAsString, LoadSessionFromString
 
     uuid = LoginQrcodeUnikey()["unikey"]  # 获取 UUID
     print("UUID", uuid)
@@ -28,6 +29,10 @@ def login():
                 # 登录成功
                 print(f"{rsp['code']} -- {rsp['message']}", "...")
                 WriteLoginInfo(GetCurrentLoginStatus())
+                print("[!] 登录态 Session:", DumpSessionAsString(GetCurrentSession()))
+                print(
+                    '[-] 此后可通过 SetCurrentSession(LoadSessionFromString("PYNCMe...")) 恢复当前登录态'
+                )
                 return True
             time.sleep(1)
 
