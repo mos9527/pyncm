@@ -34,7 +34,7 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 """
 __VERSION_MAJOR__ = 1
 __VERSION_MINOR__ = 6
-__VERSION_PATCH__ = 17
+__VERSION_PATCH__ = 18
 
 __version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
 
@@ -119,10 +119,12 @@ class Session(requests.Session):
             "Referer": self.HOST,
         }
         self.login_info = {"success": False, "tick": time(), "content": None}
+        # https://gitlab.com/Binaryify/neteasecloudmusicapi/-/blob/main/util/request.js?ref_type=heads
         self.eapi_config = {
-            "os": "ios",
-            "appver": "9.0.0",
-            "osver": "",
+            "os": "iPhone OS",
+            "appver": "10.0.0",
+            "osver": "16.2",
+            "channel": "distribution",
             "deviceId": DEVICE_ID_DEFAULT,
         }
         self.csrf_token = ""
