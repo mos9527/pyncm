@@ -18,3 +18,4 @@ docs
 *.ncm
 private*
 .test
+.pyncm

@@ -40,14 +40,14 @@ def LoginLogout():
     return "/weapi/logout", {}
 
 
-@WeapiCryptoRequest
+@EapiCryptoRequest
 def LoginRefreshToken():
     """网页端 - 刷新登录令牌
 
     Returns:
         dict
     """
-    return "/weapi/w/login/cellphone", {}
+    return "/eapi/login/token/refresh", {}
 
 
 @WeapiCryptoRequest
@@ -100,6 +100,22 @@ def GetCurrentLoginStatus():
         dict
     """
     return "/weapi/w/nuser/account/get", {}
+
+
+def LoginViaCookie(MUSIC_U="", **kwargs):
+    """通过 Cookie 登陆
+
+    Args:
+        MUSIC_U (str, optional): Cookie 中的 MUSIC_U. Defaults to ''.
+
+    Returns:
+        dict
+    """
+    session = GetCurrentSession()
+    session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
+    resp = GetCurrentLoginStatus()
+    WriteLoginInfo(resp, session)
+    return {"code": 200, "result": session.login_info}
 
 
 def LoginViaCellphone(
@@ -298,7 +314,7 @@ def LoginViaAnonymousAccount(deviceId=None, session=None):
     WriteLoginInfo(
         {
             **login_status,
-            "profile": {"nickname": "Anonymous", **login_status},
+            "profile": {"nickname": "", **login_status},
             "account": {"id": login_status["userId"], **login_status},
         },
         session,

@@ -656,6 +656,12 @@ def parse_args(quit_on_empty_args=True):
     group = parser.add_argument_group("登陆")
     group.add_argument("--phone", metavar="手机", default="", help="网易账户手机号")
     group.add_argument(
+        "--cookie",
+        metavar="Cookie (MUSIC_U)",
+        default="",
+        help="网易云音乐 MUSIC_U Cookie (形如 '00B2471D143...')",
+    )
+    group.add_argument(
         "--pwd", "--password", metavar="密码", default="", help="网易账户密码"
     )
     group.add_argument(
@@ -789,6 +795,16 @@ def __main__(return_tasks=False):
         logger.warning("优先使用 HTTP")
     if args.phone and args.pwd:
         login.LoginViaCellphone(args.phone, args.pwd)
+    if args.cookie:
+        login.LoginViaCookie(args.cookie)
+    if not GetCurrentSession().logged_in:
+        login.LoginViaAnonymousAccount()
+        logger.info(
+            "以匿名身份登陆成功，deviceId=%s, UID: %s"
+            % (GetCurrentSession().deviceId, GetCurrentSession().uid)
+        )
+    executor = TaskPoolExecutorThread(max_workers=args.max_workers)
+    if not GetCurrentSession().is_anonymous:
         logger.info(
             "账号 ：%s (VIP %s)"
             % (GetCurrentSession().nickname, GetCurrentSession().vipType)
@@ -797,13 +813,6 @@ def __main__(return_tasks=False):
         logger.info("保存登陆信息于 : %s" % args.save)
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
-    if not GetCurrentSession().logged_in:
-        login.LoginViaAnonymousAccount()
-        logger.info(
-            "以匿名身份登陆成功，deviceId=%s, UID: %s"
-            % (GetCurrentSession().deviceId, GetCurrentSession().uid)
-        )
-    executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     executor.daemon = True
     executor.start()
 

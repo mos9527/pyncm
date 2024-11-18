@@ -33,8 +33,8 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
     - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
 """
 __VERSION_MAJOR__ = 1
-__VERSION_MINOR__ = 6
-__VERSION_PATCH__ = 18
+__VERSION_MINOR__ = 7
+__VERSION_PATCH__ = 0
 
 __version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
 
@@ -163,12 +163,21 @@ class Session(requests.Session):
     @property
     def vipType(self):
         """账号 VIP 等级"""
-        return self.login_info["content"]["profile"]["vipType"] if self.logged_in else 0
+        return (
+            self.login_info["content"]["profile"]["vipType"]
+            if self.logged_in and not self.is_anonymous
+            else 0
+        )
 
     @property
     def logged_in(self):
         """是否已经登陆"""
         return self.login_info["success"]
+
+    @property
+    def is_anonymous(self):
+        """是否匿名登陆"""
+        return self.logged_in and not self.nickname
 
     # endregion
     def request(

@@ -66,13 +66,15 @@
 
     登陆:
     --phone 手机            网易账户手机号
+    --cookie Cookie (MUSIC_U)
+                            网易云音乐 MUSIC_U Cookie (形如 '00B2471D143...')
     --pwd 密码, --password 密码
                             网易账户密码
     --save [保存到]          写本次登录信息于文件
     --load [保存的登陆信息文件]    从文件读取登录信息供本次登陆使用
     --http                优先使用 HTTP，不保证不被升级
     --deviceId 设备ID       指定设备 ID；匿名登陆时，设备 ID 既指定对应账户
-                            【注意】默认 ID 与当前设备无关，乃从内嵌 256 可用 ID 中随机选取；指定自定义 ID 不一定能登录，相关性暂时 未知
+                            【注意】默认 ID 与当前设备无关，乃从内嵌 256 可用 ID 中随机选取；指定自定义 ID 不一定能登录，相关性暂时未知
     --log-level LOG_LEVEL
                             日志等级
 
@@ -149,4 +151,4 @@ await GetTrackComments(..., session=session)
 # 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
-[Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
+[Binaryify/NeteaseCloudMusicApi](https://gitlab.com/Binaryify/neteasecloudmusicapi)
