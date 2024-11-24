@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """歌单 - Playlist APIs"""
-from . import EapiCryptoRequest, WeapiCryptoRequest
+
 import json
+
+from . import EapiCryptoRequest, WeapiCryptoRequest
 
 
 @WeapiCryptoRequest
@@ -24,6 +26,25 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
         "limit": str(limit),
         "n": str(limit),
     }
+
+
+def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
+    """网页端 - 获取歌单所有歌曲
+
+    Args:
+        playlist_id ([type]): 歌单 ID
+        offset (int, optional): 获取偏移数. Defaults to 0.
+        limit (int, optional): 单次获取量. Defaults to 1000.
+
+    Returns:
+        dict
+    """
+    data = GetPlaylistInfo(playlist_id, offset, True, limit)
+    trackIds = [track["id"] for track in data["playlist"]["trackIds"]]
+    id = trackIds[offset : offset + limit]
+    from .track import GetTrackDetail
+
+    return GetTrackDetail(id)
 
 
 @WeapiCryptoRequest
