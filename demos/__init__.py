@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 import sys, os
 
 IS_FIRSTTIME = sys.path[0] != "."
