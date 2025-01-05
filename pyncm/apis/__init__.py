@@ -171,6 +171,7 @@ def EapiCryptoRequest(session, url, plain, method):
     except Exception:
         return payload
 
+
 from . import (
     album,
     artist,

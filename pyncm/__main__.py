@@ -215,7 +215,8 @@ class TaskPoolExecutorThread(Thread):
                         assert fee != 8, "歌曲可能需要单独购买或以低音质加载"
                         assert False, f"未知原因 (fee={fee})"
                     logger.info(
-                        f"开始下载 #{task.index + 1:d} / {task.total:d} - {task.song.Title} - {task.song.AlbumName} - {task.downloadSpeed:d}kbps - {task.status}"
+                        f"开始下载 #{task.index + 1} / {task.total} - {task.song.Title} - {task.song.AlbumName} - "
+                        f"{dAudio['br'] // 1000}kbps - {dAudio['type'].upper()}"
                     )
                     task.extension = dAudio["type"].lower()
                     if not exists(task.audio.dest):
@@ -432,7 +433,7 @@ class Playlist(Subroutine):
         queued = []
         for _id in ids:
             dList = playlist.GetPlaylistInfo(_id)
-            logger.info(self.prefix + "：{}".format(dict(dList)["playlist"]["name"]))
+            logger.info(self.prefix + f"：{dict(dList)['playlist']['name']}")
             queuedTasks = self.forIds(
                 [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
             )
@@ -447,7 +448,7 @@ class Album(Playlist):
         queued = []
         for _id in ids:
             dList = album.GetAlbumInfo(_id)
-            logger.info(self.prefix + "：{}".format(dict(dList)["album"]["name"]))
+            logger.info(self.prefix + f"：{dict(dList)['album']['name']}")
             queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
             queued += queuedTasks
         return queued
@@ -547,7 +548,9 @@ def parse_sharelink(url):
     for rtype_, rkeyword in table.items():
         for kw in rkeyword:
             index = url.find(kw)  # Use `find` instead of `index`
-            if index != -1 and index < best_index:  # `find` returns -1 if the keyword is not found
+            if (
+                index != -1 and index < best_index
+            ):  # `find` returns -1 if the keyword is not found
                 best_index = index
                 rtype = rtype_
     return rtype, ids
@@ -726,9 +729,7 @@ def parse_args(quit_on_empty_args=True):
     except AssertionError:
         if args.url == PLACEHOLDER_URL:
             print_help_and_exit()
-        assert args.save, "无效分享链接 {}".format(
-            " ".join(args.url)
-        )  # Allow invalid links for this one
+        assert args.save, f"无效分享链接 {' '.join(args.url)}"
         return args, []
 
 
