@@ -1,6 +1,7 @@
 import re
-from typing import List
+from collections import UserList
 from json import loads
+
 from .lrcparser import LrcRegexes, stamp2tag
 
 CurlyBracketRegex = re.compile(r"^{.*}$")
@@ -53,7 +54,7 @@ class YrcBlock(TimestampedObject):
 
     def __repr__(self) -> str:
         if self.meta:
-            return "<meta=%s>" % self.meta
+            return f"<meta={self.meta}>"
         return self.text
 
 
@@ -64,18 +65,14 @@ class YrcLine(TimestampedObject, list):
         return block
 
     def __repr__(self) -> str:
-        return "start=%d duration=%d %s" % (
-            self.t_begin,
-            self.t_duration,
-            "".join([str(b) for b in self]),
-        )
+        return f"start={self.t_begin:d} duration={self.t_duration:d} {self.additional_info}"
 
 
-class YrcParser(list):
+class YrcParser(UserList):
     @staticmethod
     def extract_meta(meta):
         tgt = meta.get("c", meta)
-        assert type(tgt) == list
+        assert isinstance(tgt, list)
         return "".join([i.get("tx", "") for i in tgt])
 
     def __init__(self, version: int, yrc: str):
@@ -84,7 +81,8 @@ class YrcParser(list):
 
     def parse(self):
         self.parser = self.parser(
-            -1, self.yrc  # Dummy number to prevent subclassing
+            -1,
+            self.yrc,  # Dummy number to prevent subclassing
         ).parse()
         self.parser.fixup()
         return self.parser
@@ -137,10 +135,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
     def begin_line(self, start_millis, end_millis):
-        self.content += """Dialogue: 0,0:%s,0:%s,,,0,0,0,,""" % (
-            stamp2tag(start_millis / 1000),
-            stamp2tag(end_millis / 1000),
-        )
+        self.content += f"""Dialogue: 0,0:{stamp2tag(start_millis / 1000)},0:{stamp2tag(end_millis / 1000)},,,0,0,0,,"""
 
     def add_meta(self, text):
         self.content += text
@@ -148,7 +143,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     def add_syllable(self, duration, text):
         # From https://aegi.vmoe.info/docs/3.1/ASS_Tags/
         # The duration is given in centiseconds, ie. a duration of 100 is equivalent to 1 second
-        self.content += r"""{\K%d}%s""" % (duration / 100, text)
+        self.content += rf"\K{duration / 100:.2f}{text}"
 
     def end_line(self):
         self.content += "\n"

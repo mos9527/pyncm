@@ -1,16 +1,17 @@
-# -*- coding: utf-8 -*-
 """Helper utilites to aid operations w/ API responses"""
-from threading import Lock
+
+import datetime
+import logging
 from functools import wraps
 from os import listdir, path
-import datetime, logging
+from threading import Lock
 
 truncate_length = 64
 logger = logging.getLogger("pyncm.helper")
 
 
 def SubstituteWithFullwidth(string, sub=set('\x00\\/:<>|?*".')):
-    return "".join([c if not c in sub else chr(ord(c) + 0xFEE0) for c in string])
+    return "".join([c if c not in sub else chr(ord(c) + 0xFEE0) for c in string])
 
 
 def Default(default=None):
@@ -21,7 +22,7 @@ def Default(default=None):
             try:
                 return func(*a, **k)
             except Exception as e:
-                logger.warn("Failed to get attribute %s : %s" % (func.__name__, e))
+                logger.warn(f"Failed to get attribute {func.__name__} : {e}")
                 return default
 
         return wrapper
@@ -32,10 +33,10 @@ def Default(default=None):
 class IDCahceHelper:
     """Generic cache for pesudo-static ID-based dicts"""
 
-    _cache = dict()
+    _cache = {}
 
     def __new__(cls, item_id, *args):
-        if not item_id in IDCahceHelper._cache:
+        if item_id not in IDCahceHelper._cache:
             IDCahceHelper._cache[item_id] = super().__new__(cls)
         return IDCahceHelper._cache[item_id]
 
@@ -43,7 +44,7 @@ class IDCahceHelper:
         # __init__ is always called after __new__
         if hasattr(self, "_lock"):
             with self._lock:  # Ensure update's finished
-                return
+                return None
         # We only want to initialze once
         self._item_id = item_id
         if factory_func:
@@ -65,7 +66,7 @@ class AlbumHelper(IDCahceHelper):
         super().__init__(item_id, GetAlbumInfo)
 
     def refresh(self):
-        logger.debug("Caching album info %s" % self._item_id)
+        logger.debug(f"Caching album info {self._item_id}")
         return super().refresh()
 
     @Default()
@@ -119,7 +120,7 @@ class ArtistHelper(IDCahceHelper):
         super().__init__(item_id, GetArtistDetails)
 
     def refresh(self):
-        logger.debug("Caching artist info %s" % self._item_id)
+        logger.debug(f"Caching artist info {self._item_id}")
         return super().refresh()
 
     @Default()
@@ -150,7 +151,7 @@ class UserHelper(IDCahceHelper):
         super().__init__(item_id, GetUserDetail)
 
     def refresh(self):
-        logger.debug("Caching user info %s" % self._item_id)
+        logger.debug(f"Caching user info {self._item_id}")
         return super().refresh()
 
     @Default()
@@ -211,7 +212,7 @@ class TrackHelper:
     @Default(default="Unknown")
     def TrackName(self):
         """歌曲名"""
-        assert self.data["name"] != None
+        assert self.data["name"] is not None
         return self.data["name"]
 
     @Default(default=[])
@@ -224,8 +225,7 @@ class TrackHelper:
         """专辑名"""
         if self.data["al"]["id"]:
             return self.data["al"]["name"]
-        else:
-            return self.data["pc"]["alb"]
+        return self.data["pc"]["alb"]
 
     @Default(
         default="https://p1.music.126.net/UeTuwE7pvjBpypWLudqukA==/3132508627578625.jpg"
@@ -235,9 +235,8 @@ class TrackHelper:
         al = self.data["al"] if "al" in self.data else self.data["album"]
         if al["id"]:
             return al["picUrl"]
-        else:
-            return "https://music.163.com/api/img/blur/" + self.data["pc"]["cid"]
-            # source:PC version's core.js
+        return "https://music.163.com/api/img/blur/" + self.data["pc"]["cid"]
+        # source:PC version's core.js
 
     @Default(default=["Various Artists"])
     def Artists(self):
@@ -246,8 +245,7 @@ class TrackHelper:
         ret = [_ar["name"] for _ar in ar]
         if not ret.count(None):
             return ret
-        else:
-            return [self.data["pc"]["ar"]]  # for NCM cloud-drive stored audio
+        return [self.data["pc"]["ar"]]  # for NCM cloud-drive stored audio
 
     @Default(default="null")
     def CD(self):
@@ -293,8 +291,11 @@ class FuzzyPathHelper(IDCahceHelper):
         )
         # 1. Table of basename
         self.tbl_basenames = {path.basename(file): file for file in files}
+
         # 2. Table of basename w/o extension, but with the premise that the files themselves contain the extensions we want
-        split = lambda file: path.splitext(path.basename(file))
+        def split(file):
+            return path.splitext(path.basename(file))
+
         self.tbl_basenames_noext = {
             (
                 split(file)[0] if (split(file)[1].lower() in self.limit_exts) else None
@@ -315,14 +316,14 @@ class FuzzyPathHelper(IDCahceHelper):
         """
         if partial_extension_check:
             return name in self.tbl_basenames_noext
-        else:
-            return name in self.tbl_basenames
+        return name in self.tbl_basenames
 
     def fullpath(self, name):
         if name in self.tbl_basenames:
             return path.join(self.base_path, self.tbl_basenames[name])
         if name in self.tbl_basenames_noext:
             return path.join(self.base_path, self.tbl_basenames_noext[name])
+        return None
 
     def get_extension(self, name):
         p = self.fullpath(name)

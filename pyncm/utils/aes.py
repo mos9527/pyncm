@@ -4,11 +4,14 @@ Code from: https://github.com/ricmoo/pyaes
 
 As for why this is needed...well, pycryptodome is quite finicky to install,
 
-especially on services like Tencent's SCF. 
+especially on services like Tencent's SCF.
 
 Since it's not platform dependent the speed is rather poor (w/o hardware registers)
 But for our use case it's more than enough...haha.
 """
+
+import functools
+import operator
 
 s_box = (
     0x63,
@@ -559,7 +562,8 @@ def add_round_key(s, k):
             s[i][j] ^= k[i][j]
 
 
-xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)
+def xtime(a):
+    return (a << 1 ^ 27) & 255 if a & 128 else a << 1
 
 
 def mix_single_column(a):
@@ -630,7 +634,7 @@ def bytes2matrix(text):
 
 def matrix2bytes(matrix):
     """Converts a 4x4 matrix into a 16-byte array."""
-    return bytes(sum(matrix, []))
+    return bytes(functools.reduce(operator.iadd, matrix, []))
 
 
 def xor_bytes(a, b):

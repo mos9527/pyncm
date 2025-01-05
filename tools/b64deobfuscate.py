@@ -1,6 +1,7 @@
 """Decrypts(?) obfuscated strings enforced by `a.auu.c` seen in Android version of the app"""
 
-import base64, code
+import base64
+import code
 
 
 def xor(arr: bytearray, key=b"Encrypt"):

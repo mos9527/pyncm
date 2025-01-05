@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """PyNCM 网易云音乐 API 封装
 
-本模块提供各种网易云音乐 API 的 Python 封装，及编写新 API 所需的加密修饰器
+本模块提供各种网易云音乐 API 的 Python 封装,及编写新 API 所需的加密修饰器
 
-模块使用可参考子模块说明，如::
+模块使用可参考子模块说明,如::
 
     ...
     def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
@@ -23,23 +22,25 @@
 
     可参考已有 API 函数格式编写相关 PyNCM API. 各API模式修饰器已在本文件注释
 - WEAPI
-    由于Weapi使用不对称加密，截取Weapi可从浏览器内断点尝试
+    由于Weapi使用不对称加密,截取Weapi可从浏览器内断点尝试
 
-    一般在 `encSecKey` 处下断点即可，具体方法不再阐述
+    一般在 `encSecKey` 处下断点即可,具体方法不再阐述
 """
 
-from random import randrange
+import json
+import urllib.parse
 from functools import wraps
+from random import randrange
+
 from requests.models import Response
+
+from .. import GetCurrentSession, logger
 from ..utils.crypto import (
+    AbroadDecrypt,
     EapiDecrypt,
     EapiEncrypt,
-    LinuxApiEncrypt,
     WeapiEncrypt,
-    AbroadDecrypt,
 )
-from .. import GetCurrentSession, logger
-import json, urllib.parse
 
 
 class LoginRequiredException(Exception):
@@ -79,8 +80,7 @@ def _BaseWrapper(requestFunc):
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
             logger.debug(
-                "TYPE=%s API=%s.%s %s url=%s deviceId=%s payload=%s session=0x%x"
-                % (
+                "TYPE={} API={}.{} {} url={} deviceId={} payload={} session=0x{:x}".format(
                     requestFunc.__name__.split("Crypto")[0].upper(),
                     apiFunc.__module__,
                     apiFunc.__name__,
@@ -109,7 +109,7 @@ def _BaseWrapper(requestFunc):
                     payload["abroad"] = True
                 return payload
             except json.JSONDecodeError as e:
-                logger.error("Response is not valid JSON : %s" % e)
+                logger.error(f"Response is not valid JSON : {e}")
                 logger.error("Response : %s", rsp)
                 return rsp
 
@@ -126,7 +126,7 @@ def EapiEncipered(func):
         payload = func(*a, **k)
         try:
             return EapiDecrypt(payload).decode()
-        except:
+        except Exception:
             return payload
 
     return wrapper
@@ -168,19 +168,31 @@ def EapiCryptoRequest(session, url, plain, method):
     payload = request.content
     try:
         return EapiDecrypt(payload).decode()
-    except:
+    except Exception:
         return payload
 
-
 from . import (
-    artist,
-    miniprograms,
     album,
+    artist,
     cloud,
     cloudsearch,
     login,
+    miniprograms,
     playlist,
     track,
     user,
     video,
 )
+
+__all__ = [
+    "album",
+    "artist",
+    "cloud",
+    "cloudsearch",
+    "login",
+    "miniprograms",
+    "playlist",
+    "track",
+    "user",
+    "video",
+]

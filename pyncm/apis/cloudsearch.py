@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """网易云搜索 - Cloudsearch APIs"""
+
 from . import EapiCryptoRequest
 
 SONG = 1

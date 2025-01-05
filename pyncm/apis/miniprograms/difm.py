@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """最嗨电音、爵士电台 - DI.FM APIs"""
 
 from .. import WeapiCryptoRequest
@@ -33,7 +32,7 @@ def GetChannelCollection(source=0):
     Returns:
         dict
     """
-    return "/api/dj/difm/all/style/channel/v2", {"sources": "[%s]" % source}
+    return "/api/dj/difm/all/style/channel/v2", {"sources": f"[{source}]"}
 
 
 @WeapiCryptoRequest
@@ -46,7 +45,7 @@ def GetChannelSubscriptionCollection(source=0):
     Returns:
         dict
     """
-    return "/api/dj/difm/subscribe/channels/get/v2", {"sources": "[%s]" % source}
+    return "/api/dj/difm/subscribe/channels/get/v2", {"sources": f"[{source}]"}
 
 
 @WeapiCryptoRequest

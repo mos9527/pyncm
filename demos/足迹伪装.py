@@ -17,8 +17,9 @@ __desc__ = """user.SetWeblog API 功能演示
 from __init__ import login
 
 assert login(), "登录失败"
-from pyncm.apis.user import SetWeblog
 from pprint import pprint
+
+from pyncm.apis.user import SetWeblog
 
 print(__desc__)
 pprint(

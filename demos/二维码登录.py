@@ -1,17 +1,19 @@
 from __init__ import assert_dep
 
 assert_dep("qrcode")
-import time, qrcode
+import time
+
+import qrcode
 
 
 def login():
+    from pyncm import DumpSessionAsString, GetCurrentSession
     from pyncm.apis.login import (
         GetCurrentLoginStatus,
-        WriteLoginInfo,
-        LoginQrcodeUnikey,
         LoginQrcodeCheck,
+        LoginQrcodeUnikey,
+        WriteLoginInfo,
     )
-    from pyncm import GetCurrentSession, DumpSessionAsString, LoadSessionFromString
 
     uuid = LoginQrcodeUnikey()["unikey"]  # 获取 UUID
     print("UUID", uuid)
@@ -22,7 +24,6 @@ def login():
     img.show()
     while True:
         for dot in ["...", ".. ", ".  "]:
-
             rsp = LoginQrcodeCheck(uuid)  # 检测扫描状态
             print(f"{rsp['code']} -- {rsp['message']}", dot, end="\r")
             if rsp["code"] == 803 or rsp["code"] == 800:

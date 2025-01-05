@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 """我的音乐云盘 - Cloud APIs"""
+
 import json
-from . import WeapiCryptoRequest, EapiCryptoRequest, GetCurrentSession
+
+from . import EapiCryptoRequest, GetCurrentSession, WeapiCryptoRequest
 
 BUCKET = "jd-musicrep-privatecloud-audio-public"
 
@@ -97,7 +98,7 @@ def SetUploadObject(
         dict
     """
     r = (session or GetCurrentSession()).post(
-        "http://45.127.129.8/%s/" % bucket + objectKey.replace("/", "%2F"),
+        f"http://45.127.129.8/{bucket}/" + objectKey.replace("/", "%2F"),
         data=stream,
         params={"version": "1.0", "offset": offset, "complete": str(compete).lower()},
         headers={

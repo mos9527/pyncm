@@ -1,4 +1,5 @@
 from __init__ import login
+
 from pyncm.apis.track import GetTrackAudio
 
 assert login(), "登录失败"

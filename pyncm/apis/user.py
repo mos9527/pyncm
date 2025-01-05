@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 """用户 - User APIs"""
-from . import WeapiCryptoRequest
+
 from json import dumps
+
+from . import WeapiCryptoRequest
 
 
 @WeapiCryptoRequest
@@ -14,7 +15,7 @@ def GetUserDetail(user_id=0):
     Returns:
         dict
     """
-    return "/weapi/v1/user/detail/%s" % user_id, {}
+    return f"/weapi/v1/user/detail/{user_id}", {}
 
 
 @WeapiCryptoRequest

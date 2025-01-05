@@ -1,15 +1,14 @@
+from pprint import pprint
+
+from pyncm import (
+    DumpSessionAsString,
+    GetCurrentSession,
+)
 from pyncm.apis.login import (
+    GetRegisterVerifcationStatusViaCellphone,
     LoginViaCellphone,
     SetSendRegisterVerifcationCodeViaCellphone,
-    GetRegisterVerifcationStatusViaCellphone,
 )
-from pyncm import (
-    GetCurrentSession,
-    DumpSessionAsString,
-    LoadSessionFromString,
-    SetCurrentSession,
-)
-from pprint import pprint
 
 
 def login():

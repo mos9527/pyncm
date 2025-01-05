@@ -1,19 +1,18 @@
-# -*- coding: utf-8 -*-
 """PyNCM 网易云音乐 Python API / 下载工具
 
 PyNCM 包装的网易云音乐 API 的使用非常简单::
-    
+
     >>> from pyncm import apis
     # 登录
     >>> apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True)
-    # 获取歌曲信息    
+    # 获取歌曲信息
     >>> apis.track.GetTrackAudio(29732235)
     {'data': [{'id': 29732235, 'url': 'http://m701.music...
     # 获取歌曲详情
-    >>> apis.track.GetTrackDetail(29732235)    
+    >>> apis.track.GetTrackDetail(29732235)
     {'songs': [{'name': 'Supernova', 'id': 2...
     # 获取歌曲评论
-    >>> apis.track.GetTrackComments(29732235)    
+    >>> apis.track.GetTrackComments(29732235)
     {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 
 PyNCM 的所有 API 请求都将经过单例的 `pyncm.Session` 发出，管理此单例可以使用::
@@ -30,21 +29,26 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
         )
 
 # 注意事项
-    - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
+    - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`
 """
 
 __version__ = "1.7.1"
 
+import json
+import logging
+import os
 from threading import current_thread
-from typing import Text, Union
 from time import time
-from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
-import requests, logging, json, os
+from typing import Union
+
+import requests
+
+from .utils.crypto import EapiDecrypt, EapiEncrypt, HexCompose
 
 logger = logging.getLogger("pyncm.api")
 if "PYNCM_DEBUG" in os.environ:
     debug_level = os.environ["PYNCM_DEBUG"].upper()
-    if not debug_level in {"CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "WARNING"}:
+    if debug_level not in {"CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "WARNING"}:
         debug_level = "DEBUG"
     logging.basicConfig(
         level=debug_level, format="[%(levelname).4s] %(name)s %(message)s"
@@ -55,7 +59,7 @@ DEVICE_ID_DEFAULT = "pyncm!"
 # Though with this, all pyncm users would then be sharing the same device Id.
 # Don't think that would be of any issue though...
 """默认 deviceID"""
-SESSION_STACK = dict()
+SESSION_STACK = {}
 
 
 class Session(requests.Session):
@@ -89,7 +93,7 @@ class Session(requests.Session):
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
     UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__
+        f"Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.{__version__}"
     )
     """Weapi 使用的 UA"""
     UA_EAPI = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154"
@@ -100,7 +104,7 @@ class Session(requests.Session):
     """优先使用 HTTP 作 API 请求协议"""
 
     def __enter__(self):
-        SESSION_STACK.setdefault(current_thread(), list())
+        SESSION_STACK.setdefault(current_thread(), [])
         SESSION_STACK[current_thread()].append(self)
         return super().__enter__()
 
@@ -178,7 +182,7 @@ class Session(requests.Session):
 
     # endregion
     def request(
-        self, method: str, url: Union[str, bytes, Text], *a, **k
+        self, method: str, url: Union[str, bytes, str], *a, **k
     ) -> requests.Response:
         """发起 HTTP(S) 请求
         该函数与 `requests.Session.request` 有以下不同：
@@ -193,7 +197,7 @@ class Session(requests.Session):
             requests.Response
         """
         if url[:4] != "http":
-            url = "https://%s%s" % (self.HOST, url)
+            url = f"https://{self.HOST}{url}"
         if self.force_http:
             url = url.replace("https:", "http:")
         return super().request(method, url, *a, **k)
@@ -278,9 +282,9 @@ class SessionManager:
     @staticmethod
     def stringify(session: Session) -> str:
         """序列化 `Session` 为 `str`"""
+        from base64 import b64encode
         from json import dumps
         from zlib import compress
-        from base64 import b64encode
 
         return "PYNCM" + b64encode(compress(dumps(session.dump()).encode())).decode()
 
@@ -290,15 +294,14 @@ class SessionManager:
         if (
             dump[:5] == "PYNCM"
         ):  # New marshaler (compressed,base64 encoded) has magic header
+            from base64 import b64decode
             from json import loads
             from zlib import decompress
-            from base64 import b64decode
 
             session = Session()
             session.load(loads(decompress(b64decode(dump[5:])).decode()))
             return session
-        else:
-            return SessionManager.parse_legacy(dump)
+        return SessionManager.parse_legacy(dump)
 
 
 # endregion
@@ -328,8 +331,7 @@ def CreateNewSession() -> Session:
 
 def LoadSessionFromString(dump: str) -> Session:
     """从 `str` 加载 Session / 登录态"""
-    session = SessionManager.parse(dump)
-    return session
+    return SessionManager.parse(dump)
 
 
 def DumpSessionAsString(session: Session) -> str:

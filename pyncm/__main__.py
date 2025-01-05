@@ -1,5 +1,18 @@
-# -*- coding: utf-8 -*-
 # PyNCM CLI interface
+
+import argparse
+import os
+import re
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from importlib.util import find_spec
+from logging import basicConfig, getLogger
+from os import makedirs, remove
+from os.path import exists, join
+from queue import Queue
+from threading import Thread
+from time import sleep
 
 from pyncm import (
     DumpSessionAsString,
@@ -8,26 +21,16 @@ from pyncm import (
     SetCurrentSession,
     __version__,
 )
-from pyncm.utils.lrcparser import LrcParser
-from pyncm.utils.yrcparser import YrcParser, ASSWriter, YrcLine, YrcBlock
+from pyncm.apis import album, artist, login, playlist, track, user
 from pyncm.utils.helper import (
-    TrackHelper,
     ArtistHelper,
-    UserHelper,
     FuzzyPathHelper,
     SubstituteWithFullwidth,
+    TrackHelper,
+    UserHelper,
 )
-from pyncm.apis import artist, login, track, playlist, album, user
-from queue import Queue
-from concurrent.futures import ThreadPoolExecutor
-from threading import Thread
-from time import sleep
-from os.path import join, exists
-from os import remove, makedirs
-from dataclasses import dataclass
-
-from logging import exception, getLogger, basicConfig
-import sys, argparse, re, os
+from pyncm.utils.lrcparser import LrcParser
+from pyncm.utils.yrcparser import ASSWriter, YrcBlock, YrcLine, YrcParser
 
 logger = getLogger("pyncm.main")
 # Import checks
@@ -37,7 +40,6 @@ OPTIONALS_MISSING_INFO = {
     "tqdm": "将不会显示下载进度条",
     "coloredlogs": "日志不会以彩色输出",
 }
-from importlib.util import find_spec
 
 for import_name in OPTIONALS:
     OPTIONALS[import_name] = find_spec(import_name)
@@ -46,14 +48,14 @@ for import_name in OPTIONALS:
             [f"[WARN] {import_name} 没有安装，{OPTIONALS_MISSING_INFO[import_name]}\n"]
         )
 
-__desc__ = """PyNCM 网易云音乐下载工具 %s""" % __version__
+__desc__ = f"""PyNCM 网易云音乐下载工具 {__version__}"""
 
 
 class TaskPoolExecutorThread(Thread):
     @staticmethod
     def tag_audio(track: TrackHelper, file: str, cover_img: str = ""):
         if not OPTIONALS["mutagen"]:
-            return
+            return None
 
         def write_keys(song):
             # Writing metadata
@@ -64,8 +66,7 @@ class TaskPoolExecutorThread(Thread):
                 "artist": [*(track.Artists or [])],
                 "albumartist": [*(track.Album.AlbumArtists or [])],
                 "album": [track.AlbumName],
-                "tracknumber": "%s/%s"
-                % (track.TrackNumber, track.Album.AlbumSongCount),
+                "tracknumber": f"{track.TrackNumber}/{track.Album.AlbumSongCount}",
                 "date": [
                     str(track.Album.AlbumPublishTime)
                 ],  # TrackPublishTime is not very reliable!
@@ -76,10 +77,8 @@ class TaskPoolExecutorThread(Thread):
                 "ncm-id": [str(track.ID)],
             }
             for k, v in complete_metadata.items():
-                try:
+                if k in song:
                     song[k] = v
-                except:
-                    pass
             song.save()
 
         def mp4():
@@ -94,8 +93,8 @@ class TaskPoolExecutorThread(Thread):
                 song.save()
 
         def mp3():
+            from mutagen.id3 import APIC, ID3
             from mutagen.mp3 import EasyMP3, HeaderNotFoundError
-            from mutagen.id3 import ID3, APIC
 
             try:
                 song = EasyMP3(file)
@@ -121,7 +120,6 @@ class TaskPoolExecutorThread(Thread):
 
         def flac():
             from mutagen.flac import FLAC, Picture
-            from mutagen.mp3 import EasyMP3
 
             song = FLAC(file)
             write_keys(song)
@@ -134,6 +132,7 @@ class TaskPoolExecutorThread(Thread):
 
         def ogg():
             import base64
+
             from mutagen.flac import Picture
             from mutagen.oggvorbis import OggVorbis
 
@@ -182,7 +181,7 @@ class TaskPoolExecutorThread(Thread):
 
     def run(self):
         def execute(task):
-            if type(task) == TrackDownloadTask:
+            if isinstance(task, TrackDownloadTask):
                 try:
                     if task.skip_download:
                         return
@@ -195,9 +194,9 @@ class TaskPoolExecutorThread(Thread):
                     if task.routine.args.use_download_api:
                         logger.warning("使用下载 API，可能消耗 VIP 下载额度！")
                     dAudio = apiCall(task.audio.id, level=task.audio.level)
-                    assert "data" in dAudio, "其他错误： %s" % dAudio
+                    assert "data" in dAudio, f"其他错误： {dAudio}"
                     dAudio = dAudio["data"]
-                    if type(dAudio) == list:
+                    if isinstance(dAudio, list):
                         dAudio = dAudio[0]
                     if not dAudio["url"]:
                         # Attempt to give some sort of explaination
@@ -214,17 +213,9 @@ class TaskPoolExecutorThread(Thread):
                         assert fee != 1, "VIP歌曲，账户可能无权访问"
                         assert fee != 4, "歌曲所在专辑需购买"
                         assert fee != 8, "歌曲可能需要单独购买或以低音质加载"
-                        assert False, "未知原因 (fee=%d)" % fee
+                        assert False, f"未知原因 (fee={fee})"
                     logger.info(
-                        "开始下载 #%d / %d - %s - %s - %skbps - %s"
-                        % (
-                            task.index + 1,
-                            task.total,
-                            task.song.Title,
-                            task.song.AlbumName,
-                            dAudio["br"] // 1000,
-                            dAudio["type"].upper(),
-                        )
+                        f"开始下载 #{task.index + 1:d} / {task.total:d} - {task.song.Title} - {task.song.AlbumName} - {task.downloadSpeed:d}kbps - {task.status}"
                     )
                     task.extension = dAudio["type"].lower()
                     if not exists(task.audio.dest):
@@ -251,7 +242,7 @@ class TaskPoolExecutorThread(Thread):
                             lrc_text
                         )
                     # `yrc` (whatever that means) lyrics contains syllable-by-syllable time sigs
-                    if not "yrc" in task.lyrics.lrc_blacklist and "yrc" in dLyrics:
+                    if "yrc" not in task.lyrics.lrc_blacklist and "yrc" in dLyrics:
                         yrc = YrcParser(
                             dLyrics["yrc"]["version"], dLyrics["yrc"]["lyric"]
                         )
@@ -276,13 +267,12 @@ class TaskPoolExecutorThread(Thread):
                     try:
                         self.tag_audio(task.song, dest_src, dest_cvr)
                     except Exception as e:
-                        logger.warning("标签失败 - %s - %s" % (task.song.Title, e))
+                        logger.warning(f"标签失败 - {task.song.Title} - {e}")
                     logger.info(
-                        "完成下载 #%d / %d - %s"
-                        % (task.index + 1, task.total, task.song.Title)
+                        f"完成下载 #{task.index + 1:d} / {task.total:d} - {task.song.Title}"
                     )
                 except Exception as e:
-                    logger.warning("下载失败 %s - %s" % (task.song.Title, e))
+                    logger.warning(f"下载失败 {task.song.Title} - {e}")
                     task.routine.result_exception(task.song.ID, e, task.song.Title)
                 # Cleaning up
                 remove(dest_cvr)
@@ -311,10 +301,10 @@ class Subroutine:
         self.args = args
         self.put = put_func
         self.prefix = prefix or self.prefix
-        self.exceptions = dict()
+        self.exceptions = {}
 
     def result_exception(self, result_id, exception: Exception, desc=None):
-        self.exceptions.setdefault(result_id, list())
+        self.exceptions.setdefault(result_id, [])
         self.exceptions[result_id].append((exception, desc))
 
     @property
@@ -421,8 +411,7 @@ class Playlist(Subroutine):
                         output_name, partial_extension_check=True
                     ):
                         logger.warning(
-                            "单曲 #%d / %d - %s - %s 已存在，跳过"
-                            % (index + 1, len(dDetails), song.Title, song.AlbumName)
+                            f"单曲 #{index + 1:d} / {len(dDetails):d} - {song.Title} - {song.AlbumName} 已存在，跳过"
                         )
                         tSong.skip_download = True
                         tSong.extension = FuzzyPathHelper(output_folder).get_extension(
@@ -434,8 +423,7 @@ class Playlist(Subroutine):
 
             except Exception as e:
                 logger.warning(
-                    "单曲 #%d / %d - %s - %s 无法下载： %s"
-                    % (index + 1, len(dDetails), song.Title, song.AlbumName, e)
+                    f"单曲 #{index + 1:d} / {len(dDetails):d} - {song.Title} - {song.AlbumName} 无法下载： {e}"
                 )
                 self.result_exception(song.ID, e, song.Title)
         return downloadTasks
@@ -444,7 +432,7 @@ class Playlist(Subroutine):
         queued = []
         for _id in ids:
             dList = playlist.GetPlaylistInfo(_id)
-            logger.info(self.prefix + "：%s" % dict(dList)["playlist"]["name"])
+            logger.info(self.prefix + "：{}".format(dict(dList)["playlist"]["name"]))
             queuedTasks = self.forIds(
                 [tid.get("id") for tid in dict(dList)["playlist"]["trackIds"]]
             )
@@ -459,7 +447,7 @@ class Album(Playlist):
         queued = []
         for _id in ids:
             dList = album.GetAlbumInfo(_id)
-            logger.info(self.prefix + "：%s" % dict(dList)["album"]["name"])
+            logger.info(self.prefix + "：{}".format(dict(dList)["album"]["name"]))
             queuedTasks = self.forIds([tid["id"] for tid in dList["songs"]])
             queued += queuedTasks
         return queued
@@ -471,7 +459,7 @@ class Artist(Playlist):
     def __call__(self, ids):
         queued = []
         for _id in ids:
-            logger.info(self.prefix + "：%s" % ArtistHelper(_id).ArtistName)
+            logger.info(self.prefix + f"：{ArtistHelper(_id).ArtistName}")
             # dList = artist.GetArtisTracks(_id,limit=self.args.count,order=self.args.sort_by)
             # This API is rather inconsistent for some reason. Sometimes 'songs' list
             # would be straight out empty
@@ -494,7 +482,7 @@ class User(Playlist):
     def __call__(self, ids):
         queued = []
         for _id in ids:
-            logger.info(self.prefix + "： %s" % UserHelper(_id).UserName)
+            logger.info(self.prefix + f"： {UserHelper(_id).UserName}")
             logger.warning(
                 "同时下载收藏歌单"
                 if self.args.user_bookmarks
@@ -545,7 +533,7 @@ def parse_sharelink(url):
     if rurl:
         url = rurl[0]  # Use first URL found. Otherwise use value given as is.
     numerics = re.findall(r"\d{4,}", url)
-    assert numerics != None, "未在链接中找到任何 ID"
+    assert numerics is not None, "未在链接中找到任何 ID"
     ids = numerics[:1]  # Only pick the first match
     table = {
         "song": ["trackId", "song"],
@@ -558,13 +546,10 @@ def parse_sharelink(url):
     best_index = len(url)
     for rtype_, rkeyword in table.items():
         for kw in rkeyword:
-            try:
-                index = url.index(kw)
-                if index < best_index:
-                    best_index = index
-                    rtype = rtype_
-            except ValueError:
-                continue
+            index = url.find(kw)  # Use `find` instead of `index`
+            if index != -1 and index < best_index:  # `find` returns -1 if the keyword is not found
+                best_index = index
+                rtype = rtype_
     return rtype, ids
 
 
@@ -741,8 +726,8 @@ def parse_args(quit_on_empty_args=True):
     except AssertionError:
         if args.url == PLACEHOLDER_URL:
             print_help_and_exit()
-        assert args.save, "无效分享链接 %s" % " ".join(
-            args.url
+        assert args.save, "无效分享链接 {}".format(
+            " ".join(args.url)
         )  # Allow invalid links for this one
         return args, []
 
@@ -780,15 +765,16 @@ def __main__(return_tasks=False):
         format="[%(levelname).4s] %(name)s %(message)s",
         stream=log_stream,
     )
-    from pyncm.utils.constant import known_good_deviceIds
     from random import choice as rnd_choice
+
+    from pyncm.utils.constant import known_good_deviceIds
 
     GetCurrentSession().deviceId = rnd_choice(known_good_deviceIds)
     # Pick a random one that WILL work!
     if args.deviceId:
         GetCurrentSession().deviceId = args.deviceId
     if args.load:
-        logger.info("读取登录信息 : %s" % args.load)
+        logger.info(f"读取登录信息 : {args.load}")
         SetCurrentSession(LoadSessionFromString(open(args.load).read()))
     if args.http:
         GetCurrentSession().force_http = True
@@ -800,17 +786,15 @@ def __main__(return_tasks=False):
     if not GetCurrentSession().logged_in:
         login.LoginViaAnonymousAccount()
         logger.info(
-            "以匿名身份登陆成功，deviceId=%s, UID: %s"
-            % (GetCurrentSession().deviceId, GetCurrentSession().uid)
+            f"以匿名身份登陆成功，deviceId={GetCurrentSession().deviceId}, UID: {GetCurrentSession().uid}"
         )
     executor = TaskPoolExecutorThread(max_workers=args.max_workers)
     if not GetCurrentSession().is_anonymous:
         logger.info(
-            "账号 ：%s (VIP %s)"
-            % (GetCurrentSession().nickname, GetCurrentSession().vipType)
+            f"账号 ：{GetCurrentSession().nickname} (VIP {GetCurrentSession().vipType})"
         )
     if args.save:
-        logger.info("保存登陆信息于 : %s" % args.save)
+        logger.info(f"保存登陆信息于 : {args.save}")
         open(args.save, "w").write(DumpSessionAsString(GetCurrentSession()))
         return 0
     executor.daemon = True
@@ -822,7 +806,7 @@ def __main__(return_tasks=False):
     subroutines = []
     queuedTasks = []
     for rtype, ids in tasks:
-        task_desc = "ID: %s 类型: %s" % (
+        task_desc = "ID: {} 类型: {}".format(
             ids[0],
             {
                 "album": "专辑",
@@ -832,7 +816,7 @@ def __main__(return_tasks=False):
                 "user": "用户",
             }[rtype],
         )
-        logger.info("处理任务 %s" % task_desc)
+        logger.info(f"处理任务 {task_desc}")
         subroutine = create_subroutine(rtype)(args, enqueue_task)
         queuedTasks += subroutine(ids)  # Enqueue tasks
         subroutines.append((subroutine, task_desc))
@@ -840,14 +824,14 @@ def __main__(return_tasks=False):
     if OPTIONALS["tqdm"]:
         import tqdm
 
-        _tqdm = tqdm.tqdm(
+        tqdm_ = tqdm.tqdm(
             bar_format="{desc}: {percentage:.1f}%|{bar}| {n:.2f}/{total_fmt} {elapsed}<{remaining}"
         )
-        _tqdm.total = len(queuedTasks)
+        tqdm_.total = len(queuedTasks)
 
         def report():
-            _tqdm.desc = _tqdm.format_sizeof(executor.xfered, suffix="B", divisor=1024)
-            _tqdm.update(min(executor.finished_tasks, len(queuedTasks)) - _tqdm.n)
+            tqdm_.desc = tqdm_.format_sizeof(executor.xfered, suffix="B", divisor=1024)
+            tqdm_.update(min(executor.finished_tasks, len(queuedTasks)) - tqdm_.n)
             return True
 
     else:
@@ -868,18 +852,19 @@ def __main__(return_tasks=False):
 
     # Check final results
     # Thought: Maybe we should automatically retry these afterwards?
-    failed_ids = dict()
+    failed_ids = {}
     for routine, desc in subroutines:
         routine: Subroutine
         if routine.has_exceptions:
-            logger.error("%s - 下载未完成" % desc)
+            logger.error(f"{desc} - 下载未完成")
             for exception_id, exceptions in routine.exceptions.items():
                 failed_ids[exception_id] = True
                 for exception in exceptions:
                     exception_obj, desc = exception
                     logger.warning(
-                        "下载出错 ID: %s - %s%s"
-                        % (exception_id, exception_obj, " (%s)" % desc if desc else "")
+                        "下载出错 ID: {} - {}{}".format(
+                            exception_id, exception_obj, f" ({desc})" if desc else ""
+                        )
                     )
 
     if args.save_m3u:
@@ -895,12 +880,14 @@ def __main__(return_tasks=False):
                 f.write("#EXTINF:,\n")
                 f.write(relPath)
                 f.write("\n")
-        logger.info("已保存播放列表至：%s" % output_name)
+        logger.info(f"已保存播放列表至：{output_name}")
 
     if failed_ids:
         logger.error("你可以将下载失败的 ID 作为参数以再次下载")
         logger.error(
-            "所有失败的任务 ID: %s" % " ".join([str(i) for i in failed_ids.keys()])
+            "所有失败的任务 ID: {}".format(
+                " ".join([str(i) for i in failed_ids.keys()])
+            )
         )
     report()
     logger.info(
@@ -909,7 +896,7 @@ def __main__(return_tasks=False):
     # To get actually downloaded tasks, filter by exlcuding failed_ids against task.song.ID
     if return_tasks:
         return queuedTasks, failed_ids
-    return
+    return None
 
 
 if __name__ == "__main__":

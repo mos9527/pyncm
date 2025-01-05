@@ -1,16 +1,19 @@
 import importlib.util
-import sys, os
+import os
+import sys
 
 IS_FIRSTTIME = sys.path[0] != "."
 
 
 def assert_dep(name):
-    assert importlib.util.find_spec(name), "需要安装 %s" % name
+    assert importlib.util.find_spec(name), f"需要安装 {name}"
 
 
 def login():
     import inquirer
-    import demos.手机登录 as 手机登录, 二维码登录
+    import 二维码登录
+
+    import demos.手机登录 as 手机登录
 
     class 匿名登陆:
         @staticmethod
@@ -45,6 +48,6 @@ if IS_FIRSTTIME:
     if inquirer.confirm("使用调试模式"):
         os.environ["PYNCM_DEBUG"] = "DEBUG"
     sys.path.insert(0, ".")
-    from pyncm import __version__, __file__
+    from pyncm import __file__, __version__
 
-    print("PyNCM %s" % __version__, __file__)
+    print(f"PyNCM {__version__}", __file__)

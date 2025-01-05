@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 """Sports FM - 跑步FM APIs"""
-from .. import EapiCryptoRequest
+
 import json
+
+from .. import EapiCryptoRequest
 
 
 @EapiCryptoRequest

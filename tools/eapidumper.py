@@ -1,5 +1,7 @@
-import json, functools
-from pyncm.utils.crypto import HexCompose, EapiDecrypt
+import functools
+import json
+
+from pyncm.utils.crypto import EapiDecrypt, HexCompose
 
 IGNORE_ARGS = {"e_r", "header"}
 r = input("粘贴 EAPI params 参数>>>")
@@ -8,7 +10,7 @@ r = HexCompose(r)
 r = EapiDecrypt(r).decode()
 url, payload, _ = r.split("-36cd479b6b5-")
 payload = json.loads(payload)
-if type(payload["header"]) == str:
+if isinstance(payload["header"], str):
     payload["header"] = json.loads(payload["header"])
 
 
@@ -31,9 +33,9 @@ args = args - IGNORE_ARGS
 args = sorted(args, key=functools.cmp_to_key(comp))
 print("== Parameters ============")
 for arg in args:
-    print("    %s:      %s" % (arg.ljust(16), payload[arg]))
+    print(f"    {arg.ljust(16)}:      {payload[arg]}")
 
 
 print("== Headers ===============")
 for header in payload["header"]:
-    print("    %s:      %s" % (header.ljust(16), payload["header"][header]))
+    print("    {}:      {}".format(header.ljust(16), payload["header"][header]))

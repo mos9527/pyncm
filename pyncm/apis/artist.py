@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """艺术家 - Artist APIs"""
+
 from . import WeapiCryptoRequest
 
 
@@ -16,7 +16,7 @@ def GetArtistAlbums(artist_id: str, offset=0, total=True, limit=1000):
     Returns:
         dict
     """
-    return "/weapi/artist/albums/%s" % artist_id, {
+    return f"/weapi/artist/albums/{artist_id}", {
         "offset": str(offset),
         "total": str(total).lower(),
         "limit": str(limit),

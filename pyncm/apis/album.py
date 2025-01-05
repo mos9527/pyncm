@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """专辑 - Album APIs"""
+
 from . import WeapiCryptoRequest
 
 
@@ -13,7 +13,7 @@ def GetAlbumInfo(album_id: str):
     Returns:
         dict
     """
-    return "/weapi/v1/album/%s" % album_id, {}
+    return f"/weapi/v1/album/{album_id}", {}
 
 
 @WeapiCryptoRequest
@@ -29,8 +29,8 @@ def GetAlbumComments(album_id: str, offset=0, limit=20, beforeTime=0):
     Returns:
         dict
     """
-    return "/weapi/v1/resource/comments/R_AL_3_%s" % album_id, {
-        "rid": "R_AL_3_%s" % album_id,
+    return f"/weapi/v1/resource/comments/R_AL_3_{album_id}", {
+        "rid": f"R_AL_3_{album_id}",
         "offset": str(offset),
         "total": "true",
         "limit": str(limit),

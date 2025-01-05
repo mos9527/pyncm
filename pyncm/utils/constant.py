@@ -1,5 +1,5 @@
 """deviceId produced by a fuzzer that is known to actually work!
-The acutal implementaion is device dependent. 
+The acutal implementaion is device dependent.
 For now, this will have to work. Alas,RE-ing their implementation
 is simply not nor ever will be on my TODO list...for now
 """
@@ -261,8 +261,4 @@ F337C4382911DB7A4AF85D1EFD666CB638719B996259B6DD6C94
 5FF485FDF2F86A14F17E0F770AA955E7ABF5CBACA767AECF944C
 3E40938C94D65A59E010EA2D349369EC752349B584F7226A9E0C
 BE0DCE77DFE789192ACD70D20A690C594D944644E370E04BE798
-""".split(
-    "\n"
-)[
-    1:-1
-]
+""".split("\n")[1:-1]

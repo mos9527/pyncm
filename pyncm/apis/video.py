@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """视频 - Video - 有关 APIs"""
+
 from . import WeapiCryptoRequest
 
 
@@ -43,8 +43,8 @@ def GetMVComments(mv_id: str, offset=0, limit=20, total=False):
     Returns:
         dict
     """
-    return "/weapi/v1/resource/comments/R_MV_5_%s" % mv_id, {
-        "rid": "R_MV_5_%s" % mv_id,
+    return f"/weapi/v1/resource/comments/R_MV_5_{mv_id}", {
+        "rid": f"R_MV_5_{mv_id}",
         "offset": str(offset),
         "total": str(total).lower(),
         "limit": str(limit),

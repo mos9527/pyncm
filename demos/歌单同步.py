@@ -9,23 +9,24 @@
     python ./demos/歌单同步.py --load .pyncm --quality hires --output NetEase/{album} https://music.163.com/playlist?id=988690134
 """
 
+from os import path, remove, walk
 from sys import argv
-from os import walk, path, remove
-from pyncm.__main__ import parse_args, PLACEHOLDER_URL, __main__
-from pyncm import GetCurrentSession, SetCurrentSession, LoadSessionFromString
+
+from pyncm import GetCurrentSession, LoadSessionFromString, SetCurrentSession
+from pyncm.__main__ import PLACEHOLDER_URL, __main__, parse_args
 from pyncm.utils.helper import UserHelper
 
 # 指定 quit_on_empty_args=False 便于传入空 ID
 args, _ = parse_args(quit_on_empty_args=False)
-print("[-] 读取登录信息 : %s" % args.load)
+print(f"[-] 读取登录信息 : {args.load}")
 SetCurrentSession(LoadSessionFromString(open(args.load).read()))
-print("[*] 用户 : %s" % UserHelper(GetCurrentSession().uid).UserName)
+print(f"[*] 用户 : {UserHelper(GetCurrentSession().uid).UserName}")
 try:
     # 使用未模板化的最高级目录做输出目录起点
     output = args.output[: args.output.index("{")]
 except IndexError:
     output = args.output
-print("[*] 输出文件夹起点 : %s" % output)
+print(f"[*] 输出文件夹起点 : {output}")
 
 
 def normalize(path):
@@ -41,7 +42,7 @@ file_tree = [
 # 调用 pyncm 下载
 if args.url == PLACEHOLDER_URL:
     # 未填入 ID 则使用用户本人歌单
-    argv.append("https://music.163.com/#/user/home?id=%s" % GetCurrentSession().uid)
+    argv.append(f"https://music.163.com/#/user/home?id={GetCurrentSession().uid}")
 argv.append("--no-overwrite")
 # 不覆写已存在歌曲
 # argv 传参，调用 __main__ 即可
@@ -60,7 +61,7 @@ for file in file_tree:
         ext = file.split(".")[-1].lower()
         if ext in extension_blacklist:
             try:
-                print("[!] 删除 %s" % file)
+                print(f"[!] 删除 {file}")
                 remove(file)
             except Exception as e:
-                print("[!!] 删除 %s 失败: %s" % (file, e))
+                print(f"[!!] 删除 {file} 失败: {e}")

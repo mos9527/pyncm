@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Another lrc file parser"""
+
 import re
 from collections import defaultdict
 
@@ -12,7 +12,7 @@ def LrcProperty(tagname):
                 return Exception(tagname)
             try:
                 return getattr(self, tagname)
-            except:
+            except Exception:
                 return Exception(tagname)
 
         @_wrapper.setter
@@ -37,7 +37,7 @@ class LrcRegexes:
 # Timestamp parsers
 def stamp2tag(timestamp):
     mm = int(timestamp / 60)
-    ss = int((timestamp - mm * 60))
+    ss = int(timestamp - mm * 60)
     xx = int(
         (timestamp - mm * 60 - ss) * 100
     )  # We'd use standard 100th of a second here
@@ -55,10 +55,9 @@ def tag2stamp(IDTag):
         ss, xx = ss.split(".")
     else:
         mm, ss, xx = div
-    timestamp = (
+    return (
         int(mm) * 60 + int(ss) + int(xx) * (0.1 ** len(xx))
     )  # <- workaround for NE's bizarre tag format
-    return timestamp
 
 
 # endregion
@@ -136,8 +135,7 @@ class LrcParser:
         if not lrc:
             # empty input,we are creating lyrics then
             return
-        else:
-            self.LoadLrc(lrc)
+        self.LoadLrc(lrc)
 
     @property
     def lyrics_sorted(self):
@@ -149,8 +147,7 @@ class LrcParser:
                 defaultdict(list, sorted(self.lyrics.items())),
             )
             return self.lyrics_sorted
-        else:
-            return lastDict
+        return lastDict
 
     def LoadLrc(self, lrc):
         """Loads a LRC formmated lryics file"""
@@ -181,7 +178,7 @@ class LrcParser:
                                 self.lyrics[timestamp].append(
                                     (_IDTag, Lyrics)
                                 )  # Ignore empty lines
-                except:
+                except Exception:
                     pass
         self.lyrics = self.lyrics_sorted  # sort stuff once loaded
 
@@ -247,10 +244,9 @@ class LrcParser:
             if in_between:
                 if src[pivot] == val:
                     return pivot
-                elif src[pivot - 1] == val:
+                if src[pivot - 1] == val:
                     return pivot - 1
-                else:
-                    return pivot
+                return pivot
             return (
                 search(val, src, pivot, r)
                 if src[pivot] < val

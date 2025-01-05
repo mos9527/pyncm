@@ -1,5 +1,8 @@
-import unittest, logging
-import pyncm, pyncm.apis
+import logging
+import unittest
+
+import pyncm
+import pyncm.apis
 
 logging.basicConfig(level=0)
 # Account from https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/test/login.test.js

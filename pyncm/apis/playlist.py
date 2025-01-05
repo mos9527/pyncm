@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """歌单 - Playlist APIs"""
 
 import json
@@ -14,7 +13,7 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
         摘自：https://binaryify.github.io/NeteaseCloudMusicApi/#/?id=%e8%8e%b7%e5%8f%96%e6%ad%8c%e5%8d%95%e8%af%a6%e6%83%85
         歌单能看到歌单名字, 但看不到具体歌单内容 , 调用此接口 , 传入歌单 id, 可 以获取对应歌单内的所有的音乐
         (未登录状态只能获取不完整的歌单,登录后是完整的)，但是返回的 trackIds 是完整的，tracks 则是不完整的
-        
+
         因此，你可以通过 GetPlaylistAllTracks 获取完整的歌单内容
 
     Args:
@@ -67,7 +66,7 @@ def GetPlaylistComments(playlist_id: str, offset=0, limit=20, beforeTime=0):
     Returns:
         dict
     """
-    return "/v1/resource/comments/A_PL_0_%s" % playlist_id, {
+    return f"/v1/resource/comments/A_PL_0_{playlist_id}", {
         "rid": str(playlist_id),
         "limit": str(limit),
         "offset": str(offset),

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import random
 from hashlib import md5
 
@@ -13,7 +12,7 @@ def RandomString(_l, chars=BASE62):
 
 def HexDigest(data: bytearray):
     # Digests a `bytearray` to a hex string
-    return "".join([hex(d)[2:].zfill(2) for d in data])
+    return "".join([f"{d:x}".zfill(2) for d in data])
 
 
 def HexCompose(hexstr: str):

@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 """歌曲 - Track APIs"""
-from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest
-from ..utils import RandomString
+
 import json
+
+from ..utils import RandomString
+from . import EapiCryptoRequest, EapiEncipered, WeapiCryptoRequest
 
 
 @WeapiCryptoRequest
@@ -109,7 +110,7 @@ def GetTrackDownloadURLV1(song_id: int, level="standard"):
     """
 
     return "/eapi/song/enhance/download/url/v1", {
-        "id": "%s_0" % song_id,
+        "id": f"{song_id}_0",
         "level": str(level),
     }
 
@@ -173,7 +174,7 @@ def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
     Returns:
         dict
     """
-    return "/weapi/v1/resource/comments/R_SO_4_%s" % song_id, {
+    return f"/weapi/v1/resource/comments/R_SO_4_{song_id}", {
         "rid": str(song_id),
         "offset": str(offset),
         "total": "true",

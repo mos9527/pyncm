@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """登录、CSRF 有关 APIs"""
+
+import time
 from base64 import b64encode
-from . import (
-    EapiCryptoRequest,
-    WeapiCryptoRequest,
-    GetCurrentSession,
-    logger,
-    LoginFailedException,
-)
+
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
-import time
+from . import (
+    EapiCryptoRequest,
+    GetCurrentSession,
+    LoginFailedException,
+    WeapiCryptoRequest,
+)
 
 
 def WriteLoginInfo(response, session):
@@ -305,7 +305,7 @@ def LoginViaAnonymousAccount(deviceId=None, session=None):
             "/api/register/anonimous",
             {
                 "username": b64encode(
-                    ("%s %s" % (deviceId, cloudmusic_dll_encode_id(deviceId))).encode()
+                    (f"{deviceId} {cloudmusic_dll_encode_id(deviceId)}").encode()
                 ).decode()
             },
         )

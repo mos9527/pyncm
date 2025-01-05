@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """私享云FM - Cloud FM APIs
 
 `zone`即分区，已知的分区有
