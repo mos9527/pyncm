@@ -1,6 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyncm"
+dynamic=["version"]
+description = "NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API"
+readme = "README.md"
+readme-content-type = "text/markdown"
+authors = [
+    {name = "greats3an", email = "greats3an@gmail.com"}
+]
+license = {text = "Apache Software License"}
+homepage = "https://github.com/greats3an/pyncm"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "requests>=2.27.1",
+]
+
+[project.scripts]
+pyncm = "pyncm.__main__:__main__"
+
+[project.optional-dependencies]
+cli = [
+    "coloredlogs>=15.0.1",
+    "mutagen>=1.45.1",
+    "tqdm>=4.64.1",
+]
+
+[tool.uv]
+package = true
+
+[tool.hatch.version]
+path = "pyncm/__init__.py"
+
 [tool.black]
 line-length = 88
 target-version = ['py36']
 extend-exclude = """
 security.py|crypto.py
 """
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.11.1",
+]

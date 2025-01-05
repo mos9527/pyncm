@@ -32,11 +32,8 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
 # 注意事项
     - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
 """
-__VERSION_MAJOR__ = 1
-__VERSION_MINOR__ = 7
-__VERSION_PATCH__ = 1
 
-__version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
+__version__ = "1.7.1"
 
 from threading import current_thread
 from typing import Text, Union

@@ -3,67 +3,81 @@ name: Build And Publish
 on:
   release:
     types: [created]
-  
+
   push:
     branches:
       - master
-  
-  workflow_dispatch:     
+
+  workflow_dispatch:
 
 jobs:
-  build-and-release:
+  publish-package:
     if: "contains(github.event.head_commit.message, 'Version')"
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-          python-version: '3.7'
-          architecture: 'x86'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel twine
-        python -m pip install Pyinstaller
-        python -m pip install mutagen tqdm coloredlogs
-        python -m pip install build requests setuptools wheel        
-    - name: Build package
-      run: python -m build --no-isolation
-    - name: Publish package
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN_2 }}
-      run: |
-        twine upload ./dist/*.whl --skip-existing
-        twine upload ./dist/*.tar.gz --skip-existing      
-    - name: Build Windows executables
-      run: |          
-          pyinstaller -F -i NONE pyncm/__main__.py --name pyncm
-    - name : Get Version
-      id   : get_version
-      run  : |        
-        $message = @(git log -1 --oneline --format=%s)
-        $lines = $message.Split(' ')
-        $version = $lines[1]
-        
-        Write-Output "::set-output name=version::$version"          
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.get_version.outputs.version }}
-        release_name: Version ${{ steps.get_version.outputs.version }}
-    - uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/pyncm.exe
-        asset_name: pyncm.exe
-        asset_content_type: application/application/vnd.microsoft.portable-executable
-    - uses: eregon/publish-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        release_id: ${{ steps.create_release.outputs.id }}
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install the project
+        run: uv sync --all-extras --dev
+
+  build-executables:
+    needs: publish-package
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install the project
+        run:
+          uv sync --all-extras --dev
+      - name: Build executables
+        run: |
+          uv run pyinstaller -F -i NONE pyncm/__main__.py --name pyncm
+      - name: Build archive (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Compress-Archive -Path dist\pyncm.exe -DestinationPath pyncm-${{ matrix.os }}-${{ runner.arch }}.zip
+      - name: Build archive (Unix)
+        if: matrix.os != 'windows-latest'
+        run: zip -j pyncm-${{ matrix.os }}-${{ runner.arch }}.zip dist/pyncm
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyncm-${{ matrix.os }}-${{ runner.arch }}.zip
+          path: pyncm-${{ matrix.os }}-${{ runner.arch }}.zip
+
+  publish-release:
+    needs: build-executables
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: pyncm*
+          merge-multiple: true
+      - name: Get Version
+        id: get_version
+        run: |
+          version=$(git log -1 --oneline --format=%s | cut -d' ' -f2)
+          echo "::set-output name=version::$version"
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: Version ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          files: |
+            dist/*
