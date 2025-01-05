@@ -13,7 +13,7 @@ authors = [
 ]
 license = {text = "Apache Software License"}
 homepage = "https://github.com/greats3an/pyncm"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -41,7 +41,7 @@ path = "pyncm/__init__.py"
 
 [tool.black]
 line-length = 88
-target-version = ['py36']
+target-version = ['py39']
 extend-exclude = """
 security.py|crypto.py
 """
