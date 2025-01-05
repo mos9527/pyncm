@@ -126,11 +126,6 @@ with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完�
 GetTrackComments(...)
 ```
 
-同时，你也可以在 API Call 中 指定 Session
-```python
-await GetTrackComments(..., session=session)
-```
-
 详见 [Session 说明](https://github.com/mos9527/pyncm/blob/master/pyncm/__init__.py#L52)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
