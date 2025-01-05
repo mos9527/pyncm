@@ -23,6 +23,12 @@ jobs:
           python-version: "3.12"
       - name: Install the project
         run: uv sync --all-extras --dev
+      - name: Build And Publish package
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN_2 }}
+        run: |
+          uv build
+          uv publish --token ${{ secrets.PYPI_API_TOKEN_2 }}
 
   build-executables:
     needs: publish-package
