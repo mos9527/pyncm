@@ -2,7 +2,7 @@
 """PyNCM-Async 网易云音乐 Python 异步 API / 下载工具"""
 __VERSION_MAJOR__ = 0
 __VERSION_MINOR__ = 1
-__VERSION_PATCH__ = 3
+__VERSION_PATCH__ = 4
 
 __version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
 
@@ -94,9 +94,10 @@ class Session(httpx.AsyncClient):
         }
         self.login_info = {"success": False, "tick": time(), "content": None}
         self.eapi_config = {
-            "os": "ios",
-            "appver": "9.0.0",
-            "osver": "",
+            "os": "iPhone OS",
+            "appver": "10.0.0",
+            "osver": "16.2",
+            "channel": "distribution",
             "deviceId": DEVICE_ID_DEFAULT,
         }
         self.csrf_token = ""
