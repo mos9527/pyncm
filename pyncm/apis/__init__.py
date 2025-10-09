@@ -34,11 +34,10 @@ from requests.models import Response
 from ..utils.crypto import (
     EapiDecrypt,
     EapiEncrypt,
-    LinuxApiEncrypt,
     WeapiEncrypt,
     AbroadDecrypt,
 )
-from .. import GetCurrentSession, logger
+from .. import GetCurrentSession, logger, Session
 import json, urllib.parse
 
 
@@ -133,7 +132,7 @@ def EapiEncipered(func):
 
 
 @_BaseWrapper
-def WeapiCryptoRequest(session, url, plain, method):
+def WeapiCryptoRequest(session: Session, url, plain, method):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = json.dumps({**plain, "csrf_token": session.csrf_token})
     return session.request(
@@ -147,7 +146,7 @@ def WeapiCryptoRequest(session, url, plain, method):
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
 @EapiEncipered
-def EapiCryptoRequest(session, url, plain, method):
+def EapiCryptoRequest(session: Session, url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""
     payload = {
         **plain,

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """登录、CSRF 有关 APIs"""
+
 from base64 import b64encode
 from . import (
     EapiCryptoRequest,
     WeapiCryptoRequest,
     GetCurrentSession,
-    logger,
     LoginFailedException,
 )
 from ..utils.crypto import HashHexDigest
@@ -65,7 +65,7 @@ def LoginQrcodeUnikey(dtype=1):
     Returns:
         dict
     """
-    return "/weapi/login/qrcode/unikey", {"type": str(dtype)}
+    return "/weapi/login/qrcode/unikey", {"type": str(dtype), "noCheckToken": True}
 
 
 @WeapiCryptoRequest
