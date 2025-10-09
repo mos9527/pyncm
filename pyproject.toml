@@ -1,6 +1,24 @@
+[project]
+name = "pyncm"
+dynamic = ["version"]
+authors = [{name = "mos9527"}]
+description = "第三方网易云音乐 Python API + 转储工具"
+readme = "README.md"
+requires-python = ">=3.8, <4.0"
+dependencies = [
+    "inquirer>=3.1.4",
+    "pillow>=10.4.0",
+    "qrcode>=7.4.2",
+    "requests>=2.32.4",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py36']
 extend-exclude = """
 security.py|crypto.py
 """
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
