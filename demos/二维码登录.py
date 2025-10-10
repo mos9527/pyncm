@@ -1,23 +1,8 @@
 from __init__ import assert_dep
-try:
-    assert_dep("qrcode")
-except AssertionError:
-    print("module 'qrcode' not installed")
+
+assert_dep("qrcode")
 import time
 import qrcode
-
-
-def generate_chain_id() -> str:
-    import random
-    from pyncm import GetCurrentSession
-
-    # 从全局的session中获取sDeviceId,不存在则生成
-    s_device_id = GetCurrentSession().cookies.get("sDeviceId")
-    if not s_device_id:
-        random_num = random.randrange(1000000)
-        s_device_id = f"unknown-{random_num}"
-    timestamp = int(time.time() * 1000)
-    return f"v1_{s_device_id}_web_login_{timestamp}"
 
 
 def login():
@@ -26,13 +11,14 @@ def login():
         WriteLoginInfo,
         LoginQrcodeUnikey,
         LoginQrcodeCheck,
+        GetLoginQRCodeUrl
     )
     from pyncm import GetCurrentSession, DumpSessionAsString
 
     uuid = LoginQrcodeUnikey()["unikey"]  # 获取 UUID
     print("UUID", uuid)
 
-    url = f"http://music.163.com/login?codekey={uuid}&chainId={generate_chain_id()}"  # 二维码内容即这样的 URL
+    url = GetLoginQRCodeUrl(uuid) # 使用此函数来正确生成二维码链接
     img = qrcode.make(url)
     input("按 Enter 以显示二维码,扫描完毕请关闭")
     img.show()
@@ -43,7 +29,9 @@ def login():
             if rsp["code"] == 803:
                 # 登录成功
                 print(f"{rsp['code']} -- {rsp['message']}", "...")
-                WriteLoginInfo(GetCurrentLoginStatus(),)
+                WriteLoginInfo(
+                    GetCurrentLoginStatus(),
+                )
                 print("[!] 登录态 Session:", DumpSessionAsString(GetCurrentSession()))
                 print(
                     '[-] 此后可通过 SetCurrentSession(LoadSessionFromString("PYNCMe...")) 恢复当前登录态'

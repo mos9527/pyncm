@@ -2,10 +2,12 @@
 """登录、CSRF 有关 APIs"""
 
 from base64 import b64encode
+
 from .exception import LoginFailedException
 
 from .. import WriteLoginInfo, GetCurrentSession
 from . import EapiCryptoRequest, WeapiCryptoRequest
+from ..utils import GenerateSDeviceId, GenerateChainId
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
 
@@ -207,6 +209,29 @@ def LoginViaEmail(
 
     WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
+
+
+def GetLoginQRCodeUrl(unikey: str) -> str:
+    """获取登录二维码的链接
+
+    此链接可直接用于生成二维码
+
+    Args:
+        unikey (str): 调用LoginQrcodeUnikey接口得到的令牌
+
+    Returns:
+        str: 拼接的二维码链接
+    """
+
+    # 从session中获取sDeviceId字段，若没有则生成一个新的
+    s_device_id = GetCurrentSession().cookies.get("sDeviceId")
+    if not s_device_id:
+        s_device_id = GenerateSDeviceId()
+    # 生成chainId, chainId是网易云音乐新版本新增的参数
+    # 如果不加chainId参数，将会因登录风控问题而登录失败
+    chain_id = GenerateChainId(s_device_id)
+    # 正确拼接二维码链接
+    return f"http://music.163.com/login?codekey={unikey}&chainId={chain_id}"
 
 
 @WeapiCryptoRequest
