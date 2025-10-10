@@ -135,30 +135,6 @@ await GetTrackComments(..., session=session)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
 
-## 构建，开发与测试（开发者）
-
-1. fork并clone此项目
-
-2. 安装uv
-
-`pip install uv`
-
-3. 同步依赖
-
-`uv sync`
-
-4. 本地构建安装进行测试
-
-`uv pip install -e .`
-
-5. 运行测试用例
-
-`uv run demos/example.py`
-
-6. 卸载本地测试包
-
-`uv pip uninstall pyncm`
-
 ## FAQ
 - 为什么 `GetTrackAudio` 几乎拿不到音频 URL？
 
