@@ -15,9 +15,6 @@ def get_version():
     minor_match = re.search(r"__VERSION_MINOR__\s*=\s*(\d+)", content)
     patch_match = re.search(r"__VERSION_PATCH__\s*=\s*(\d+)", content)
 
-    if not major_match or not minor_match or not patch_match:
-        raise RuntimeError("Unable to find version components in pyncm/__init__.py")
-
     major = major_match.group(1)
     minor = minor_match.group(1)
     patch = patch_match.group(1)

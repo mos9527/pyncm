@@ -50,8 +50,7 @@ def _BaseWrapper(requestFunc):
     """API加密函数通用修饰器
 
     实际使用请参考以下其他 Wrapper::
-
-        LoginRequiredApi
+        
         UserIDBasedApi
         WeapiCryptoRequest
         LapiCryptoRequest
@@ -166,16 +165,16 @@ def EapiCryptoRequest(session: "Session", url, plain, method):
     except:
         return payload
 
-
-# from . import (
-#     artist as artist,
-#     miniprograms as miniprograms,
-#     album as album,
-#     cloud as cloud,
-#     cloudsearch as cloudsearch,
-#     login as login,
-#     playlist as playlist,
-#     track as track,
-#     user as user,
-#     video as video,
-# )
+# 注：向后支持；文档允许从`apis`直接导入这些子模块
+from . import (
+    artist as artist,
+    miniprograms as miniprograms,
+    album as album,
+    cloud as cloud,
+    cloudsearch as cloudsearch,
+    login as login,
+    playlist as playlist,
+    track as track,
+    user as user,
+    video as video,
+)
