@@ -31,6 +31,8 @@
 from random import randrange
 from functools import wraps
 from requests.models import Response
+
+from .exception import LoginRequiredException
 from ..utils.crypto import (
     EapiDecrypt,
     EapiEncrypt,
@@ -39,14 +41,6 @@ from ..utils.crypto import (
 )
 from .. import GetCurrentSession, logger, Session
 import json, urllib.parse
-
-
-class LoginRequiredException(Exception):
-    pass
-
-
-class LoginFailedException(Exception):
-    pass
 
 
 LOGIN_REQUIRED = LoginRequiredException("需要登录")
@@ -132,7 +126,7 @@ def EapiEncipered(func):
 
 
 @_BaseWrapper
-def WeapiCryptoRequest(session: Session, url, plain, method):
+def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = json.dumps({**plain, "csrf_token": session.csrf_token})
     return session.request(
@@ -140,13 +134,15 @@ def WeapiCryptoRequest(session: Session, url, plain, method):
         url.replace("/api/", "/weapi/"),
         params={"csrf_token": session.csrf_token},
         data={**WeapiEncrypt(payload)},
+        headers={"User-Agent": session.UA_DEFAULT, "Referer": "https://music.163.com"},
+        cookies={**session.eapi_config},
     )
 
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
 @EapiEncipered
-def EapiCryptoRequest(session: Session, url, plain, method):
+def EapiCryptoRequest(session: "Session", url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""
     payload = {
         **plain,
@@ -171,15 +167,15 @@ def EapiCryptoRequest(session: Session, url, plain, method):
         return payload
 
 
-from . import (
-    artist,
-    miniprograms,
-    album,
-    cloud,
-    cloudsearch,
-    login,
-    playlist,
-    track,
-    user,
-    video,
-)
+# from . import (
+#     artist as artist,
+#     miniprograms as miniprograms,
+#     album as album,
+#     cloud as cloud,
+#     cloudsearch as cloudsearch,
+#     login as login,
+#     playlist as playlist,
+#     track as track,
+#     user as user,
+#     video as video,
+# )

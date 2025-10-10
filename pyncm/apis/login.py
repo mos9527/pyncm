@@ -2,32 +2,12 @@
 """登录、CSRF 有关 APIs"""
 
 from base64 import b64encode
-from . import (
-    EapiCryptoRequest,
-    WeapiCryptoRequest,
-    GetCurrentSession,
-    LoginFailedException,
-)
+from .exception import LoginFailedException
+
+from .. import WriteLoginInfo, GetCurrentSession
+from . import EapiCryptoRequest, WeapiCryptoRequest
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
-import time
-
-
-def WriteLoginInfo(response, session):
-    """写登录态入Session
-
-    Args:
-        response (dict): 解码后的登录态
-
-    Raises:
-        LoginFailedException: 登陆失败时发生
-    """
-    session.login_info = {"tick": time.time(), "content": response}
-    if not session.login_info["content"]["code"] == 200:
-        session.login_info["success"] = False
-        raise LoginFailedException(session.login_info["content"])
-    session.login_info["success"] = True
-    session.csrf_token = session.cookies.get("__csrf")
 
 
 @WeapiCryptoRequest
@@ -61,6 +41,7 @@ def LoginQrcodeUnikey(dtype=1):
 
     Args:
         type (int, optional): 未知. Defaults to 1.
+        noCheckToken (bool): 不检查token. Defaults to True
 
     Returns:
         dict
@@ -75,11 +56,16 @@ def LoginQrcodeCheck(unikey, type=1):
     Args:
         key (str): 二维码 unikey
         type (int, optional): 未知. Defaults to 1.
+        noCheckToken (bool): 不检查token. Defaults to True
 
     Returns:
         dict
     """
-    return "/weapi/login/qrcode/client/login", {"key": str(unikey), "type": type}
+    return "/weapi/login/qrcode/client/login", {
+        "type": type,
+        "noCheckToken": True,
+        "key": str(unikey),
+    }
 
 
 @WeapiCryptoRequest
@@ -114,7 +100,7 @@ def LoginViaCookie(MUSIC_U="", **kwargs):
     session = GetCurrentSession()
     session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
     resp = GetCurrentLoginStatus()
-    WriteLoginInfo(resp, session)
+    WriteLoginInfo(resp)
     return {"code": 200, "result": session.login_info}
 
 
@@ -173,7 +159,7 @@ def LoginViaCellphone(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status, session)
+    WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
 
 
@@ -219,7 +205,7 @@ def LoginViaEmail(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status, session)
+    WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
 
 
