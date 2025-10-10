@@ -1,38 +1,6 @@
-[project]
-name = "pyncm"
-dynamic = ["version"]
-authors = [
-    {name = "mos9527", email = "greats3an@gmail.com"}
-]
-description = "NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网易云音乐 API"
-readme = "README.md"
-requires-python = ">=3.7, <4.0"
-dependencies = [
-    "coloredlogs>=15.0.1",
-    "mutagen>=1.47.0",
-    "pillow>=9.5.0",
-    "qrcode>=7.4.2",
-    "requests>=2.31.0",
-    "tqdm>=4.67.1",
-]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
-license-files = ["LICENSE"]
-
-[project.urls]
-Homepage = "https://github.com/mos9527/pyncm"
-Repository = "https://github.com/mos9527/pyncm"
-Issues = "https://github.com/mos9527/pyncm/issues"
-
 [tool.black]
 line-length = 88
 target-version = ['py36']
 extend-exclude = """
 security.py|crypto.py
 """
-
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
