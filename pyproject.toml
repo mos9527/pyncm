@@ -6,10 +6,10 @@ description = "NeteaseCloudMusic APIs for Python 3.x 适用于 Python 3 的网�
 readme = "README.md"
 requires-python = ">=3.6, <4.0"
 dependencies = [
-    "inquirer>=3.1.4",
-    "pillow>=10.4.0",
-    "qrcode>=7.4.2",
-    "requests>=2.32.4",
+    "inquirer>=2.8.0",
+    "pillow>=8.4.0",
+    "qrcode>=7.3.1",
+    "requests>=2.27.1",
 ]
 
 [tool.black]
