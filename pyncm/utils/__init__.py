@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import time
 from hashlib import md5
 
 BASE62 = "PJArHa0dpwhvMNYqKnTbitWfEmosQ9527ZBx46IXUgOzD81VuSFyckLRljG3eC"
@@ -30,3 +31,20 @@ def HashDigest(text):
 def HashHexDigest(text):
     """Digests 128 bit md5 hash,then digest it as a hexstring"""
     return HexDigest(HashDigest(text))
+
+def GenerateSDeviceId() -> str:
+    """Generate sDeviceId
+    
+    This code is from web source code
+    """
+    random_num = random.randrange(1000000)
+    return f"unknown-{random_num}"
+
+def GenerateChainId(s_device_id: str) -> str:
+    """Generate chainId param for web login api
+    
+    This code is from web source code
+    """
+    timestamp = int(time.time() * 1000)
+    # the rule is "{version}_{s_device_id}_{platform}_{action}_{timestamp}"
+    return f"v1_{s_device_id}_web_login_{timestamp}"

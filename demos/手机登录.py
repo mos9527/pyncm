@@ -3,12 +3,7 @@ from pyncm.apis.login import (
     SetSendRegisterVerifcationCodeViaCellphone,
     GetRegisterVerifcationStatusViaCellphone,
 )
-from pyncm import (
-    GetCurrentSession,
-    DumpSessionAsString,
-    LoadSessionFromString,
-    SetCurrentSession,
-)
+from pyncm import GetCurrentSession, DumpSessionAsString
 from pprint import pprint
 
 

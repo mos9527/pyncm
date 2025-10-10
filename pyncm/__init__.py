@@ -2,18 +2,18 @@
 """PyNCM 网易云音乐 Python API / 下载工具
 
 PyNCM 包装的网易云音乐 API 的使用非常简单::
-    
+
     >>> from pyncm import apis
     # 登录
     >>> apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True)
-    # 获取歌曲信息    
+    # 获取歌曲信息
     >>> apis.track.GetTrackAudio(29732235)
     {'data': [{'id': 29732235, 'url': 'http://m701.music...
     # 获取歌曲详情
-    >>> apis.track.GetTrackDetail(29732235)    
+    >>> apis.track.GetTrackDetail(29732235)
     {'songs': [{'name': 'Supernova', 'id': 2...
     # 获取歌曲评论
-    >>> apis.track.GetTrackComments(29732235)    
+    >>> apis.track.GetTrackComments(29732235)
     {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 
 PyNCM 的所有 API 请求都将经过单例的 `pyncm.Session` 发出，管理此单例可以使用::
@@ -30,17 +30,19 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
         )
 
 # 注意事项
-    - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`    
+    - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`
 """
+
 __VERSION_MAJOR__ = 1
-__VERSION_MINOR__ = 7
-__VERSION_PATCH__ = 1
+__VERSION_MINOR__ = 8
+__VERSION_PATCH__ = 0
 
 __version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
 
 from threading import current_thread
 from typing import Text, Union
 from time import time
+
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json, os
 
@@ -338,3 +340,20 @@ def LoadSessionFromString(dump: str) -> Session:
 def DumpSessionAsString(session: Session) -> str:
     """从 Session / 登录态 导出 `str`"""
     return SessionManager.stringify(session)
+
+
+def WriteLoginInfo(content: dict):
+    """写登录态入Session
+
+    Args:
+        content (dict): 解码后的登录态
+
+    Raises:
+        LoginFailedException: 登陆失败时发生
+    """
+    sessionManager.session.login_info = {"tick": time(), "content": content}
+    if not sessionManager.session.login_info["content"]["code"] == 200:
+        sessionManager.session.login_info["success"] = False
+        raise Exception(sessionManager.session.login_info["content"])
+    sessionManager.session.login_info["success"] = True
+    sessionManager.session.csrf_token = sessionManager.session.cookies.get("__csrf")

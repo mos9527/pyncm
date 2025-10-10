@@ -20,3 +20,4 @@ private*
 .test
 .pyncm
 .DS_Store
+uv.lock
