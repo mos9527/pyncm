@@ -30,7 +30,9 @@
 
 from random import randrange
 from functools import wraps
-from requests.models import Response
+from typing import Callable, Coroutine, Any, Union, Dict
+from requests.models import Response as SyncResponse
+from httpx import Response as AsyncResponse
 
 from .exception import LoginRequiredException
 from ..utils.crypto import (
@@ -39,14 +41,14 @@ from ..utils.crypto import (
     WeapiEncrypt,
     AbroadDecrypt,
 )
-from .. import GetCurrentSession, logger, Session
+from .. import GetCurrentSession, logger, Session, ASYNC_MODE
 import json, urllib.parse
 
 
 LOGIN_REQUIRED = LoginRequiredException("需要登录")
 
 
-def _BaseWrapper(requestFunc):
+def _BaseWrapper(requestFunc) -> Callable[..., Union[Dict[str, Any], str, Coroutine[Any, Any, Union[Dict[str, Any], str]]]]:
     """API加密函数通用修饰器
 
     实际使用请参考以下其他 Wrapper::
@@ -59,8 +61,7 @@ def _BaseWrapper(requestFunc):
 
     @wraps(requestFunc)
     def apiWrapper(apiFunc):
-        @wraps(apiFunc)
-        def wrapper(*a, **k):
+        def _execute_request(*a, **k) -> Union[SyncResponse, Coroutine[Any, Any, AsyncResponse]]:
             # HACK: 'session=' keyword support
             session = k.get("session", GetCurrentSession())
             # HACK: For now,wrapped functions will not have access to the session object
@@ -83,9 +84,11 @@ def _BaseWrapper(requestFunc):
                     id(session),
                 )
             )
-            rsp = requestFunc(session, url, payload, method)
+            return requestFunc(session, url, payload, method)
+
+        def _parse_rsp(rsp: Union[SyncResponse, AsyncResponse]) -> Union[dict, str]:
             try:
-                payload = rsp.text if isinstance(rsp, Response) else rsp
+                payload = rsp.text if isinstance(rsp, (SyncResponse, AsyncResponse)) else rsp
                 payload = payload.decode() if not isinstance(payload, str) else payload
                 payload = json.loads(payload.strip("\x10"))
                 if "abroad" in payload and payload["abroad"]:
@@ -105,7 +108,17 @@ def _BaseWrapper(requestFunc):
                 logger.error("Response : %s", rsp)
                 return rsp
 
-        return wrapper
+        @wraps(apiFunc)
+        async def async_wrapper(*a, **k):
+            rsp = await _execute_request(*a, **k)
+            return _parse_rsp(rsp)
+
+        @wraps(apiFunc)
+        def sync_wrapper(*a, **k):
+            rsp = _execute_request(*a, **k)
+            return _parse_rsp(rsp)
+
+        return async_wrapper if ASYNC_MODE else sync_wrapper
 
     return apiWrapper
 
@@ -139,31 +152,51 @@ def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
 
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
+def _EapiCryptoRequest(func):
+    def _execute_request(session: "Session", url, plain, method) -> Callable[..., Union[Dict[str, Any], str, Coroutine[Any, Any, Union[Dict[str, Any], str]]]]:
+        payload = {
+            **plain,
+            "header": json.dumps(
+                {**session.eapi_config, "requestId": str(randrange(20000000, 30000000))}
+            ),
+        }
+        digest = EapiEncrypt(
+            urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
+        )
+        return session.request(
+            method, 
+            url, 
+            headers={"User-Agent": session.UA_EAPI, "Referer": ""}, 
+            cookies={**session.eapi_config}, 
+            data={**digest}, 
+        )
+
+    def _parse_rsp(rsp: Union[SyncResponse, AsyncResponse]):
+        payload = rsp.content
+        try:
+            return EapiDecrypt(payload).decode()
+        except:
+            return payload
+
+    # @wraps(func)
+    def sync_wrapper(session: "Session", url, plain, method):
+        rsp = _execute_request(session, url, plain, method)
+        return _parse_rsp(rsp)
+    
+    # @wraps(func)
+    async def async_wrapper(session: "Session", url, plain, method):
+        rsp = await _execute_request(session, url, plain, method)
+        return _parse_rsp(rsp)
+    
+    return async_wrapper if ASYNC_MODE else sync_wrapper
+
 @_BaseWrapper
 @EapiEncipered
+@_EapiCryptoRequest
 def EapiCryptoRequest(session: "Session", url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""
-    payload = {
-        **plain,
-        "header": json.dumps(
-            {**session.eapi_config, "requestId": str(randrange(20000000, 30000000))}
-        ),
-    }
-    digest = EapiEncrypt(
-        urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
-    )
-    request = session.request(
-        method,
-        url,
-        headers={"User-Agent": session.UA_EAPI, "Referer": ""},
-        cookies={**session.eapi_config},
-        data={**digest},
-    )
-    payload = request.content
-    try:
-        return EapiDecrypt(payload).decode()
-    except:
-        return payload
+    ...
+
 
 # 注：向后支持；文档允许从`apis`直接导入这些子模块
 from . import (
