@@ -5,7 +5,6 @@
 
 第三方网易云音乐 Python API 及个人音乐库离线转储工具
 
-**注意** : 异步使用，请移步 [`async` 分支](https://github.com/mos9527/pyncm/tree/async)
 
 # **注意：长期支持状态** 
 上游 API 变更、BUG 修复、安全更新等**有可能**得到及时响应；Feature Request 及非紧急 Issues 将被延后处理或不处理。
@@ -134,12 +133,28 @@ GetTrackComments(...)
 
 同时，你也可以在 API Call 中 指定 Session
 ```python
-await GetTrackComments(..., session=session)
+GetTrackComments(..., session=session)
 ```
 
 详见 [Session 说明](https://github.com/mos9527/pyncm/blob/master/pyncm/__init__.py#L52)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/master/pyncm) 获得支持
+
+## 异步支持
+API 函数已完成对异步的支持，在pyncm加载前设置环境变量ASYNC_MODE即可启用异步模式
+```python
+import asyncio
+import os
+os.environ["ASYNC_MODE"] = "true"
+
+from pyncm.apis.track import GetTrackComments
+
+async def main():
+    await GetTrackComments(...)
+
+asyncio.run(main())
+```
+
 
 ## FAQ
 - 为什么 `GetTrackAudio` 几乎拿不到音频 URL？
@@ -154,6 +169,7 @@ await GetTrackComments(..., session=session)
   'createTime': 1662868134354,
   'profile': {'nickname': 'Ano...
 ```
+
 # 感谢
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
