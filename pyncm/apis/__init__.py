@@ -137,7 +137,7 @@ def EapiEncipered(func):
 
 
 @_BaseWrapper
-def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
+def WeapiCryptoRequest(session: Session, url, plain, method="POST"):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = json.dumps({**plain, "csrf_token": session.csrf_token})
     return session.request(
@@ -152,7 +152,7 @@ def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 def _EapiCryptoRequest(func):
-    def _execute_request(session: "Session", url, plain, method) -> Callable[..., Union[Dict[str, Any], str, Coroutine[Any, Any, Union[Dict[str, Any], str]]]]:
+    def _execute_request(session: Session, url, plain, method) -> Callable[..., Union[Dict[str, Any], str, Coroutine[Any, Any, Union[Dict[str, Any], str]]]]:
         payload = {
             **plain,
             "header": json.dumps(
@@ -178,12 +178,12 @@ def _EapiCryptoRequest(func):
             return payload
 
     # @wraps(func)
-    def sync_wrapper(session: "Session", url, plain, method):
+    def sync_wrapper(session: Session, url, plain, method):
         rsp = _execute_request(session, url, plain, method)
         return _parse_rsp(rsp)
     
     # @wraps(func)
-    async def async_wrapper(session: "Session", url, plain, method):
+    async def async_wrapper(session: Session, url, plain, method):
         rsp = await _execute_request(session, url, plain, method)
         return _parse_rsp(rsp)
     
@@ -192,7 +192,7 @@ def _EapiCryptoRequest(func):
 @_BaseWrapper
 @EapiEncipered
 @_EapiCryptoRequest
-def EapiCryptoRequest(session: "Session", url, plain, method):
+def EapiCryptoRequest(session: Session, url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""
     ...
 
