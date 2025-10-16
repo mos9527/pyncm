@@ -52,7 +52,7 @@ from typing import Text, Union
 from time import time
 
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
-import requests, logging, json, os, httpx
+import logging, json, os
 
 logger = logging.getLogger("pyncm.api")
 if "PYNCM_DEBUG" in os.environ:
@@ -72,6 +72,7 @@ DEVICE_ID_DEFAULT = "pyncm!"
 # Don't think that would be of any issue though...
 """默认 deviceID"""
 SESSION_STACK = dict()
+
 
 
 class _BaseSession(object):
@@ -197,133 +198,130 @@ class _BaseSession(object):
         return True
 
 
-class _SyncSession(_BaseSession, requests.Session):
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
-
-    def __enter__(self):
-        SESSION_STACK.setdefault(current_thread(), list())
-        SESSION_STACK[current_thread()].append(self)
-        return super().__enter__()
-
-    def __exit__(self, *args) -> None:
-        SESSION_STACK[current_thread()].pop()
-        return super().__exit__(*args)
-
-    def request(
-        self, method: str, url: Union[str, bytes, Text], *a, **k
-    ) -> requests.Response:
-        """发起 HTTP(S) 请求
-        该函数与 `requests.Session.request` 有以下不同：
-        - 使用 SSL 与否取决于 `force_http`
-        - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
-
-        Args:
-            method (str): HTTP Verb
-            url (Union[str, bytes, Text]): Complete/Partial HTTP URL
-
-        Returns:
-            requests.Response
-        """
-        if url[:4] != "http":
-            url = "https://%s%s" % (self.HOST, url)
-        if self.force_http:
-            url = url.replace("https:", "http:")
-        return super().request(method, url, *a, **k)
-
-    # region symbols for loading/reloading authentication info
-    _session_info = {
-        "eapi_config": (
-            lambda self: getattr(self, "eapi_config"),
-            lambda self, v: setattr(self, "eapi_config", v),
-        ),
-        "login_info": (
-            lambda self: getattr(self, "login_info"),
-            lambda self, v: setattr(self, "login_info", v),
-        ),
-        "csrf_token": (
-            lambda self: getattr(self, "csrf_token"),
-            lambda self, v: setattr(self, "csrf_token", v),
-        ),
-        "cookies": (
-            lambda self: [
-                {"name": c.name, "value": c.value, "domain": c.domain, "path": c.path}
-                for c in getattr(self, "cookies")
-            ],
-            lambda self, cookies: [
-                getattr(self, "cookies").set(**cookie) for cookie in cookies
-            ],
-        ),
-    }
-
-
-class _AsyncSession(_BaseSession, httpx.AsyncClient):
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
-
-    async def __aenter__(self) -> httpx.AsyncClient:
-        SESSION_STACK.setdefault(current_thread(), list())
-        SESSION_STACK[current_thread()].append(self)
-        return await super().__aenter__()
-
-    async def __aexit__(self, *args) -> None:
-        SESSION_STACK[current_thread()].pop()
-        return await super().__aexit__(*args)
-
-    # endregion
-    async def request(
-        self, method: str, url: Union[str, bytes, Text], *args, **kwargs
-    ) -> httpx.Response:
-        """发起 HTTP(S) 请求
-        该函数与 `httpx.AsyncClient.request` 有以下不同：
-        - 使用 SSL 与否取决于 `force_http`
-        - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
-
-        Args:
-            method (str): HTTP Verb
-            url (Union[str, bytes, Text]): Complete/Partial HTTP URL
-
-        Returns:
-            requests.Response
-        """
-        if url[:4] != "http":
-            url = "https://%s%s" % (self.HOST, url)
-        if self.force_http:
-            url = url.replace("https:", "http:")
-        return await super().request(method, url, *args, **kwargs)
-    
-    # region symbols for loading/reloading authentication info
-    _session_info = {
-        "eapi_config": (
-            lambda self: getattr(self, "eapi_config"),
-            lambda self, v: setattr(self, "eapi_config", v),
-        ),
-        "login_info": (
-            lambda self: getattr(self, "login_info"),
-            lambda self, v: setattr(self, "login_info", v),
-        ),
-        "csrf_token": (
-            lambda self: getattr(self, "csrf_token"),
-            lambda self, v: setattr(self, "csrf_token", v),
-        ),
-        "cookies": (
-            lambda self: [
-                {"name": c.name, "value": c.value, "domain": c.domain, "path": c.path}
-                for c in getattr(getattr(self, "cookies"), "jar")
-            ],
-            lambda self, cookies: [
-                getattr(self, "cookies").set(**cookie) for cookie in cookies
-            ],
-        ),
-    }
-
-
 if ASYNC_MODE:
-    class Session(_AsyncSession):
-        ...
+    import httpx
+
+    class Session(_BaseSession, httpx.AsyncClient):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+
+        async def __aenter__(self) -> httpx.AsyncClient:
+            SESSION_STACK.setdefault(current_thread(), list())
+            SESSION_STACK[current_thread()].append(self)
+            return await super().__aenter__()
+
+        async def __aexit__(self, *args) -> None:
+            SESSION_STACK[current_thread()].pop()
+            return await super().__aexit__(*args)
+
+        # endregion
+        async def request(
+            self, method: str, url: Union[str, bytes, Text], *args, **kwargs
+        ) -> httpx.Response:
+            """发起 HTTP(S) 请求
+            该函数与 `httpx.AsyncClient.request` 有以下不同：
+            - 使用 SSL 与否取决于 `force_http`
+            - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
+
+            Args:
+                method (str): HTTP Verb
+                url (Union[str, bytes, Text]): Complete/Partial HTTP URL
+
+            Returns:
+                requests.Response
+            """
+            if url[:4] != "http":
+                url = "https://%s%s" % (self.HOST, url)
+            if self.force_http:
+                url = url.replace("https:", "http:")
+            return await super().request(method, url, *args, **kwargs)
+        
+        # region symbols for loading/reloading authentication info
+        _session_info = {
+            "eapi_config": (
+                lambda self: getattr(self, "eapi_config"),
+                lambda self, v: setattr(self, "eapi_config", v),
+            ),
+            "login_info": (
+                lambda self: getattr(self, "login_info"),
+                lambda self, v: setattr(self, "login_info", v),
+            ),
+            "csrf_token": (
+                lambda self: getattr(self, "csrf_token"),
+                lambda self, v: setattr(self, "csrf_token", v),
+            ),
+            "cookies": (
+                lambda self: [
+                    {"name": c.name, "value": c.value, "domain": c.domain, "path": c.path}
+                    for c in getattr(getattr(self, "cookies"), "jar")
+                ],
+                lambda self, cookies: [
+                    getattr(self, "cookies").set(**cookie) for cookie in cookies
+                ],
+            ),
+        }
+        
 else:
-    class Session(_SyncSession):
-        ...
+    import requests
+
+    class Session(_BaseSession, requests.Session):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+
+        def __enter__(self):
+            SESSION_STACK.setdefault(current_thread(), list())
+            SESSION_STACK[current_thread()].append(self)
+            return super().__enter__()
+
+        def __exit__(self, *args) -> None:
+            SESSION_STACK[current_thread()].pop()
+            return super().__exit__(*args)
+
+        def request(
+            self, method: str, url: Union[str, bytes, Text], *a, **k
+        ) -> requests.Response:
+            """发起 HTTP(S) 请求
+            该函数与 `requests.Session.request` 有以下不同：
+            - 使用 SSL 与否取决于 `force_http`
+            - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
+
+            Args:
+                method (str): HTTP Verb
+                url (Union[str, bytes, Text]): Complete/Partial HTTP URL
+
+            Returns:
+                requests.Response
+            """
+            if url[:4] != "http":
+                url = "https://%s%s" % (self.HOST, url)
+            if self.force_http:
+                url = url.replace("https:", "http:")
+            return super().request(method, url, *a, **k)
+
+        # region symbols for loading/reloading authentication info
+        _session_info = {
+            "eapi_config": (
+                lambda self: getattr(self, "eapi_config"),
+                lambda self, v: setattr(self, "eapi_config", v),
+            ),
+            "login_info": (
+                lambda self: getattr(self, "login_info"),
+                lambda self, v: setattr(self, "login_info", v),
+            ),
+            "csrf_token": (
+                lambda self: getattr(self, "csrf_token"),
+                lambda self, v: setattr(self, "csrf_token", v),
+            ),
+            "cookies": (
+                lambda self: [
+                    {"name": c.name, "value": c.value, "domain": c.domain, "path": c.path}
+                    for c in getattr(self, "cookies")
+                ],
+                lambda self, cookies: [
+                    getattr(self, "cookies").set(**cookie) for cookie in cookies
+                ],
+            ),
+        }
 
 
 class SessionManager:
