@@ -30,7 +30,7 @@
 
 from random import randrange
 from functools import wraps
-from typing import Callable, Coroutine, Any, Union, Dict
+from typing import Callable, Coroutine, Any, Union, Dict, List
 from requests.models import Response as SyncResponse
 from httpx import Response as AsyncResponse
 
@@ -42,7 +42,7 @@ from ..utils.crypto import (
     AbroadDecrypt,
 )
 from .. import GetCurrentSession, logger, Session, ASYNC_MODE
-import json, urllib.parse
+import json, urllib.parse, ast, inspect, textwrap
 
 
 LOGIN_REQUIRED = LoginRequiredException("需要登录")
@@ -58,7 +58,6 @@ def _BaseWrapper(requestFunc) -> Callable[..., Union[Dict[str, Any], str, Corout
         LapiCryptoRequest
         EapiCryptoRequest
     """
-
     @wraps(requestFunc)
     def apiWrapper(apiFunc):
         def _execute_request(*a, **k) -> Union[SyncResponse, Coroutine[Any, Any, AsyncResponse]]:
@@ -196,6 +195,65 @@ def _EapiCryptoRequest(func):
 def EapiCryptoRequest(session: "Session", url, plain, method):
     """Eapi - 适用于新版客户端绝大部分API"""
     ...
+
+
+def AsyncAdapterWrapper(target_calls: Dict[str, List[int]]):
+    def decorator(func):
+        if not ASYNC_MODE:
+            return func
+        
+        target_call_keys = target_calls.keys()
+
+        source = inspect.getsource(func)
+        source = textwrap.dedent(source)
+        tree = ast.parse(source)
+
+        class AsyncifyCall(ast.NodeTransformer):
+            def visit_FunctionDef(self, node: ast.FunctionDef):
+                """将函数定义为异步函数，并移除装饰器"""
+
+                node = self.generic_visit(node)
+
+                return ast.AsyncFunctionDef(
+                    name=node.name,
+                    args=node.args,
+                    body=node.body,
+                    decorator_list=[], # 移除装饰器，避免循环调用。
+                    returns=node.returns,
+                    type_comment=node.type_comment,
+                    # type_params=node.type_params,  # 3.12以下版本不支持此参数
+                )
+                        
+            def visit_Call(self, node):
+                """将目标方法修改为异步调用"""
+
+                def get_func_name_with_depth(node, depth=1):
+                    if isinstance(node, ast.Name):
+                        return node.id, depth
+                    elif isinstance(node, ast.Attribute):
+                        return node.attr, depth
+                    elif isinstance(node, ast.Call):
+                        return get_func_name_with_depth(node.func, depth + 1)
+                    return None, 0
+                
+                name, depth = get_func_name_with_depth(node.func)  # 获取方法名称及深度
+                # 对于深度大于1的方法，会存在方法被多次获取的情况。
+                # 每次获取的深度不同，仅影响性能，对功能无影响。
+                # 考虑到装饰器仅在函数定义时执行一次，因此无需修改。
+                node = self.generic_visit(node)  # 遍历子节点
+
+                if name in target_call_keys and depth in target_calls.get(name, []):
+                    return ast.Await(value=node)
+                return node
+
+        tree = AsyncifyCall().visit(tree)
+        ast.fix_missing_locations(tree)
+
+        namespace = {}
+        exec(compile(tree, "<AsyncAdapterWrapper>", "exec"), func.__globals__, namespace)
+        return namespace[func.__name__]
+
+    return decorator
 
 
 # 注：向后支持；文档允许从`apis`直接导入这些子模块

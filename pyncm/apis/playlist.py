@@ -2,8 +2,9 @@
 """歌单 - Playlist APIs"""
 
 import json
+from typing import Any, Coroutine, Union
 
-from . import EapiCryptoRequest, WeapiCryptoRequest
+from . import EapiCryptoRequest, WeapiCryptoRequest, AsyncAdapterWrapper
 
 
 @WeapiCryptoRequest
@@ -35,7 +36,8 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
     }
 
 
-def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
+@AsyncAdapterWrapper({"GetTrackDetail": [1]})
+def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000) -> Union[dict, str, Coroutine[Any, Any, Union[dict, str]]]:
     """网页端 - 获取歌单所有歌曲
 
     Args:

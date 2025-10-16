@@ -2,11 +2,12 @@
 """登录、CSRF 有关 APIs"""
 
 from base64 import b64encode
+from typing import Any, Coroutine, Union, Dict
 
 from .exception import LoginFailedException
 
 from .. import WriteLoginInfo, GetCurrentSession
-from . import EapiCryptoRequest, WeapiCryptoRequest
+from . import EapiCryptoRequest, WeapiCryptoRequest, AsyncAdapterWrapper
 from ..utils import GenerateSDeviceId, GenerateChainId
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
@@ -90,7 +91,8 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCookie(MUSIC_U="", **kwargs):
+@AsyncAdapterWrapper({"GetCurrentLoginStatus": [1]})
+def LoginViaCookie(MUSIC_U="", **kwargs) -> Union[dict, Coroutine[Any, Any, dict]]:
     """通过 Cookie 登陆
 
     Args:
@@ -106,6 +108,7 @@ def LoginViaCookie(MUSIC_U="", **kwargs):
     return {"code": 200, "result": session.login_info}
 
 
+@AsyncAdapterWrapper({"EapiCryptoRequest": [1]})
 def LoginViaCellphone(
     phone="",
     password="",
@@ -114,7 +117,7 @@ def LoginViaCellphone(
     ctcode=86,
     remeberLogin=True,
     session=None,
-) -> dict:
+) -> Union[dict, Coroutine[Any, Any, dict]]:
     """PC 端 - 手机号登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -165,9 +168,10 @@ def LoginViaCellphone(
     return {"code": 200, "result": session.login_info}
 
 
+@AsyncAdapterWrapper({"EapiCryptoRequest": [2]})
 def LoginViaEmail(
     email="", password="", passwordHash="", remeberLogin=True, session=None
-) -> dict:
+) -> Union[dict, Coroutine[Any, Any, dict]]:
     """网页端 - 邮箱登陆
 
     * 若同时指定 password 和 passwordHash, 优先使用 password
@@ -296,7 +300,8 @@ def SetRegisterAccountViaCellphone(
     }
 
 
-def LoginViaAnonymousAccount(deviceId=None, session=None):
+@AsyncAdapterWrapper({"WeapiCryptoRequest": [2]})
+def LoginViaAnonymousAccount(deviceId=None, session=None) -> Union[Dict[str, Any], Coroutine[Any, Any, Dict[str, Any]]]:
     """PC 端 - 游客登陆
 
     Args:

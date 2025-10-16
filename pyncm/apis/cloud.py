@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """我的音乐云盘 - Cloud APIs"""
 import json
-from . import WeapiCryptoRequest, EapiCryptoRequest, GetCurrentSession
+from typing import Any, Coroutine, Union
+from . import WeapiCryptoRequest, EapiCryptoRequest, GetCurrentSession, AsyncAdapterWrapper
 
 BUCKET = "jd-musicrep-privatecloud-audio-public"
 
@@ -72,6 +73,7 @@ def GetNosToken(
     }
 
 
+@AsyncAdapterWrapper({"post": [1]})
 def SetUploadObject(
     stream,
     md5,
@@ -82,7 +84,7 @@ def SetUploadObject(
     compete=True,
     bucket=BUCKET,
     session=None,
-):
+) -> Union[dict, Coroutine[Any, Any, dict]]:
     """移动端 - 上传内容
 
     Args:
@@ -187,7 +189,8 @@ def SetPublishCloudResource(songid):
     }
 
 
-def SetRectifySongId(oldSongId, newSongId, session=None):
+@AsyncAdapterWrapper({"get": [1]})
+def SetRectifySongId(oldSongId, newSongId, session=None) -> Union[dict, Coroutine[Any, Any, dict]]:
     """移动端 - 歌曲纠偏
 
     Args:
