@@ -37,7 +37,7 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["requests"],
+    install_requires=["requests", "httpx"],
     entry_points={"console_scripts": ["pyncm=pyncm.__main__:__main__"]},
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )
