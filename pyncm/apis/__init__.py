@@ -198,6 +198,50 @@ def EapiCryptoRequest(session: "Session", url, plain, method):
 
 
 def AsyncAdapterWrapper(target_calls: Dict[str, List[int]]):
+    """异步模式时，对函数进行异步化。包括修改函数定义为异步函数，以及将目标方法修改为异步调用。
+
+    Notes:
+        - 函数内部除目标方法之外的代码不会被修改，请确保这些代码是异步安全的；
+        - 函数的返回类型不会被自动修改，需要在原函数处手动增加标注异步返回类型；
+        - 仅支持对直接调用的目标方法进行异步化，例如 `session.post(...)`，不支持间接调用，如 `func()` 内部调用了 `session.post(...)`；
+        - 对于已被API加密函数通用装饰器装饰的函数，已在加密装饰器部分进行了异步化的处理，无需重复异步化。
+        - 函数在异步化时会删除所有装饰器，如函数确需使用装饰器，不要使用此装饰器异步化，而应在函数内部手动实现异步化。
+        
+    Args:
+        target_calls (dict[str: list[int]]):
+            - 键 (str)：需要异步化的目标方法，表示希望异步化调用的方法。例如 "post"、"get"、"EapiCryptoRequest" 等。
+            - 值 (list[int])：整数列表，表示函数调用的“深度”，仅在目标方法位于指定深度的调用上时进行异步化。
+            - 深度计数规则：直接调用为 1，如果函数嵌套调用多层，则递增深度。例如：
+            - 深度为1：
+            ```python
+            (session or GetCurrentSession()).post(...)  ->  await (session or GetCurrentSession()).post(...)
+            GetCurrentLoginStatus()                     ->  await GetCurrentLoginStatus()
+            EapiCryptoRequest(lambda: ...)(...)         ->  (await EapiCryptoRequest(lambda: ...))(...)
+            ```
+            - 深度为2：
+            ```python
+            EapiCryptoRequest(lambda: ...)(...)         ->  await EapiCryptoRequest(lambda: ...)(...)
+            ```
+
+    Example:
+        对于api请求相关的函数：
+        >>> @AsyncAdapterWrapper({"post": [1]})
+        >>> def example(...):
+        >>>     ...
+        >>>
+        对于加密函数的直接调用：
+        >>> @AsyncAdapterWrapper({"EapiCryptoRequest": [2]})
+        >>> def LoginViaEmail(...):
+        >>>     ...
+        >>>
+        对于复杂的嵌套函数，仍可以提供一定支持：
+        >>> @AsyncAdapterWrapper({"func": [2, 3]})
+        >>> def example():
+        >>>     (func(func(func()())())())()
+        >>> def func(*args, **kwargs):
+        >>>     ...
+    """
+
     def decorator(func):
         if not ASYNC_MODE:
             return func
