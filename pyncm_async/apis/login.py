@@ -1,33 +1,15 @@
 # -*- coding: utf-8 -*-
 """登录、CSRF 有关 APIs"""
+
 from base64 import b64encode
-from . import (
-    EapiCryptoRequest,
-    WeapiCryptoRequest,
-    GetCurrentSession,
-    logger,
-    LoginFailedException,
-)
+
+from .exception import LoginFailedException
+
+from .. import WriteLoginInfo, GetCurrentSession
+from . import EapiCryptoRequest, WeapiCryptoRequest
+from ..utils import GenerateSDeviceId, GenerateChainId
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
-import time
-
-
-def WriteLoginInfo(response, session):
-    """写登录态入Session
-
-    Args:
-        response (dict): 解码后的登录态
-
-    Raises:
-        LoginFailedException: 登陆失败时发生
-    """
-    session.login_info = {"tick": time.time(), "content": response}
-    if not session.login_info["content"]["code"] == 200:
-        session.login_info["success"] = False
-        raise LoginFailedException(session.login_info["content"])
-    session.login_info["success"] = True
-    session.csrf_token = session.cookies.get("__csrf")
 
 
 @WeapiCryptoRequest
@@ -61,11 +43,12 @@ def LoginQrcodeUnikey(dtype=1):
 
     Args:
         type (int, optional): 未知. Defaults to 1.
+        noCheckToken (bool): 不检查token. Defaults to True
 
     Returns:
         dict
     """
-    return "/weapi/login/qrcode/unikey", {"type": str(dtype)}
+    return "/weapi/login/qrcode/unikey", {"type": str(dtype), "noCheckToken": True}
 
 
 @WeapiCryptoRequest
@@ -75,11 +58,16 @@ def LoginQrcodeCheck(unikey, type=1):
     Args:
         key (str): 二维码 unikey
         type (int, optional): 未知. Defaults to 1.
+        noCheckToken (bool): 不检查token. Defaults to True
 
     Returns:
         dict
     """
-    return "/weapi/login/qrcode/client/login", {"key": str(unikey), "type": type}
+    return "/weapi/login/qrcode/client/login", {
+        "type": type,
+        "noCheckToken": True,
+        "key": str(unikey),
+    }
 
 
 @WeapiCryptoRequest
@@ -102,7 +90,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-async def LoginViaCookie(MUSIC_U="", **kwargs):
+def LoginViaCookie(MUSIC_U="", **kwargs):
     """通过 Cookie 登陆
 
     Args:
@@ -113,12 +101,12 @@ async def LoginViaCookie(MUSIC_U="", **kwargs):
     """
     session = GetCurrentSession()
     session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
-    resp = await GetCurrentLoginStatus()
-    WriteLoginInfo(resp, session)
+    resp = GetCurrentLoginStatus()
+    WriteLoginInfo(resp)
     return {"code": 200, "result": session.login_info}
 
 
-async def LoginViaCellphone(
+def LoginViaCellphone(
     phone="",
     password="",
     passwordHash="",
@@ -159,7 +147,7 @@ async def LoginViaCellphone(
         {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
     )
 
-    login_status = await EapiCryptoRequest(
+    login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -173,11 +161,11 @@ async def LoginViaCellphone(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status, session)
+    WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
 
 
-async def LoginViaEmail(
+def LoginViaEmail(
     email="", password="", passwordHash="", remeberLogin=True, session=None
 ) -> dict:
     """网页端 - 邮箱登陆
@@ -207,7 +195,7 @@ async def LoginViaEmail(
 
     auth_token = {"password": str(passwordHash)}
 
-    login_status = await EapiCryptoRequest(
+    login_status = EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -219,45 +207,31 @@ async def LoginViaEmail(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status, session)
+    WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
 
 
-async def LoginViaAnonymousAccount(deviceId=None, session=None):
-    """PC 端 - 游客登陆
+def GetLoginQRCodeUrl(unikey: str) -> str:
+    """获取登录二维码的链接
+
+    此链接可直接用于生成二维码
 
     Args:
-        deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
-
-    Notes:
-        Session 默认使用 `pyncm!` 作为设备 ID
+        unikey (str): 调用LoginQrcodeUnikey接口得到的令牌
 
     Returns:
-        dict
+        str: 拼接的二维码链接
     """
-    session = session or GetCurrentSession()
-    if not deviceId:
-        deviceId = session.deviceId
-    login_status = WeapiCryptoRequest(
-        lambda: (
-            "/api/register/anonimous",
-            {
-                "username": b64encode(
-                    ("%s %s" % (deviceId, cloudmusic_dll_encode_id(deviceId))).encode()
-                ).decode()
-            },
-        )
-    )(session=session)
-    assert login_status["code"] == 200, "匿名登陆失败"
-    WriteLoginInfo(
-        {
-            **login_status,
-            "profile": {"nickname": "Anonymous", **login_status},
-            "account": {"id": login_status["userId"], **login_status},
-        },
-        session,
-    )
-    return session.login_info
+
+    # 从session中获取sDeviceId字段，若没有则生成一个新的
+    s_device_id = GetCurrentSession().cookies.get("sDeviceId")
+    if not s_device_id:
+        s_device_id = GenerateSDeviceId()
+    # 生成chainId, chainId是网易云音乐新版本新增的参数
+    # 如果不加chainId参数，将会因登录风控问题而登录失败
+    chain_id = GenerateChainId(s_device_id)
+    # 正确拼接二维码链接
+    return f"http://music.163.com/login?codekey={unikey}&chainId={chain_id}"
 
 
 @WeapiCryptoRequest
@@ -320,6 +294,43 @@ def SetRegisterAccountViaCellphone(
         "password": HashHexDigest(password),
         "phone": str(cell),
     }
+
+
+def LoginViaAnonymousAccount(deviceId=None, session=None):
+    """PC 端 - 游客登陆
+
+    Args:
+        deviceId (str optional): 设备 ID. 设置非 None 将同时改变 Session 的设备 ID. Defaults to None.
+
+    Notes:
+        Session 默认使用 `pyncm!` 作为设备 ID
+
+    Returns:
+        dict
+    """
+    session = session or GetCurrentSession()
+    if not deviceId:
+        deviceId = session.deviceId
+    login_status = WeapiCryptoRequest(
+        lambda: (
+            "/api/register/anonimous",
+            {
+                "username": b64encode(
+                    ("%s %s" % (deviceId, cloudmusic_dll_encode_id(deviceId))).encode()
+                ).decode()
+            },
+        )
+    )(session=session)
+    assert login_status["code"] == 200, "匿名登陆失败"
+    WriteLoginInfo(
+        {
+            **login_status,
+            "profile": {"nickname": "", **login_status},
+            "account": {"id": login_status["userId"], **login_status},
+        },
+        session,
+    )
+    return session.login_info
 
 
 @EapiCryptoRequest
