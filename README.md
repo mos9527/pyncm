@@ -27,8 +27,9 @@ Out[4]:
 await LoginViaEmail(...) 
 # 利用全局 Session 完成该 API Call
 session = CreateNewSession() # 建立新的 Session
-async with CreateNewSession(): # 建立新的 Session，并进入该 Session, 在 `with` 内的 API 将由该 Session 完成
+async with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完成
     await LoginViaCellPhone(...)
+    result = await GetTrackAudio(...)
 # 离开 Session. 此后 API 将继续由全局 Session 管理
 await GetTrackComments(...)
 ```
