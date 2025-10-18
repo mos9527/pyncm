@@ -1,32 +1,32 @@
 # -*- coding: utf-8 -*-
-"""PyNCM-Async 网易云音乐 Python 异步 API / 下载工具
+"""PyNCM_Async 网易云音乐 Python 异步 API / 下载工具
 
-PyNCM 包装的网易云音乐 API 的使用非常简单::
+PyNCM_Async 包装的网易云音乐 API 的使用非常简单::
 
     >>> from pyncm_async import apis
     # 登录
-    >>> apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True)
+    >>> await apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True))
     # 获取歌曲信息
-    >>> apis.track.GetTrackAudio(29732235)
+    >>> await apis.track.GetTrackAudio(29732235)
     {'data': [{'id': 29732235, 'url': 'http://m701.music...
     # 获取歌曲详情
-    >>> apis.track.GetTrackDetail(29732235)
+    >>> await apis.track.GetTrackDetail(29732235)
     {'songs': [{'name': 'Supernova', 'id': 2...
     # 获取歌曲评论
-    >>> apis.track.GetTrackComments(29732235)
+    >>> await apis.track.GetTrackComments(29732235)
     {'isMusician': False, 'userId': -1, 'topComments': [], 'moreHot': True, 'hotComments': [{'user': {'locationInfo': None, 'liveIn ...
 
-PyNCM 的所有 API 请求都将经过单例的 `pyncm.Session` 发出，管理此单例可以使用::
+PyNCM_Async 的所有 API 请求都将经过单例的 `pyncm_asycn.Session` 发出，管理此单例可以使用::
 
-    >>> session = pyncm.GetCurrentSession()
-    >>> pyncm.SetCurrentSession(session)
-    >>> pyncm.SetNewSession()
+    >>> session = pyncm_asycn.GetCurrentSession()
+    >>> pyncm_asycn.SetCurrentSession(session)
+    >>> pyncm_asycn.SetNewSession()
 
-PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管理::
+PyNCM_Async 同时提供了相应的 Session 序列化函数，用于其储存及管理::
 
-    >>> save = pyncm.DumpSessionAsString()
-    >>> pyncm.SetNewSession(
-            pyncm.LoadSessionFromString(save)
+    >>> save = pyncm_asycn.DumpSessionAsString()
+    >>> pyncm_asycn.SetNewSession(
+            pyncm_asycn.LoadSessionFromString(save)
         )
 
 # 注意事项
@@ -46,9 +46,9 @@ from time import time
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import httpx, logging, json, os
 
-logger = logging.getLogger("pyncm.api")
-if "PYNCM_DEBUG" in os.environ:
-    debug_level = os.environ["PYNCM_DEBUG"].upper()
+logger = logging.getLogger("pyncm_asycn.api")
+if "PYNCM_ASYNC_DEBUG" in os.environ:
+    debug_level = os.environ["PYNCM_ASYNC_DEBUG"].upper()
     if not debug_level in {"CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "WARNING"}:
         debug_level = "DEBUG"
     logging.basicConfig(
@@ -94,7 +94,7 @@ class Session(httpx.AsyncClient):
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
     UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/mos9527/pyncm) Chrome/PyNCM.%s" % __version__
+        "Mozilla/5.0 (linux@github.com/mos9527/pyncm_asycn) Chrome/PyNCM_Async.%s" % __version__
     )
     """Weapi 使用的 UA"""
     UA_EAPI = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154"
@@ -246,7 +246,7 @@ class Session(httpx.AsyncClient):
 
 
 class SessionManager:
-    """PyNCM Session 单例储存对象"""
+    """PyNCM_Async Session 单例储存对象"""
 
     def __init__(self) -> None:
         self.session = Session()
@@ -312,17 +312,17 @@ sessionManager = SessionManager()
 
 
 def GetCurrentSession() -> Session:
-    """获取当前正在被 PyNCM 使用的 Session / 登录态"""
+    """获取当前正在被 PyNCM_Async 使用的 Session / 登录态"""
     return sessionManager.get()
 
 
 def SetCurrentSession(session: Session):
-    """设置当前正在被 PyNCM 使用的 Session / 登录态"""
+    """设置当前正在被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(session)
 
 
 def SetNewSession():
-    """设置新的被 PyNCM 使用的 Session / 登录态"""
+    """设置新的被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(Session())
 
 
