@@ -90,7 +90,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-def LoginViaCookie(MUSIC_U="", **kwargs):
+async def LoginViaCookie(MUSIC_U="", **kwargs) -> dict:
     """通过 Cookie 登陆
 
     Args:
@@ -101,12 +101,12 @@ def LoginViaCookie(MUSIC_U="", **kwargs):
     """
     session = GetCurrentSession()
     session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
-    resp = GetCurrentLoginStatus()
+    resp = await GetCurrentLoginStatus()
     WriteLoginInfo(resp)
     return {"code": 200, "result": session.login_info}
 
 
-def LoginViaCellphone(
+async def LoginViaCellphone(
     phone="",
     password="",
     passwordHash="",
@@ -147,7 +147,7 @@ def LoginViaCellphone(
         {"password": str(passwordHash)} if not captcha else {"captcha": str(captcha)}
     )
 
-    login_status = EapiCryptoRequest(
+    login_status = await EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -165,7 +165,7 @@ def LoginViaCellphone(
     return {"code": 200, "result": session.login_info}
 
 
-def LoginViaEmail(
+async def LoginViaEmail(
     email="", password="", passwordHash="", remeberLogin=True, session=None
 ) -> dict:
     """网页端 - 邮箱登陆
@@ -296,7 +296,7 @@ def SetRegisterAccountViaCellphone(
     }
 
 
-def LoginViaAnonymousAccount(deviceId=None, session=None):
+async def LoginViaAnonymousAccount(deviceId=None, session=None) -> dict:
     """PC 端 - 游客登陆
 
     Args:
@@ -311,7 +311,7 @@ def LoginViaAnonymousAccount(deviceId=None, session=None):
     session = session or GetCurrentSession()
     if not deviceId:
         deviceId = session.deviceId
-    login_status = WeapiCryptoRequest(
+    login_status = await WeapiCryptoRequest(
         lambda: (
             "/api/register/anonimous",
             {

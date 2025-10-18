@@ -35,7 +35,7 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
     }
 
 
-def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
+async def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
     """网页端 - 获取歌单所有歌曲
 
     Args:
@@ -46,12 +46,12 @@ def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
     Returns:
         dict
     """
-    data = GetPlaylistInfo(playlist_id, offset, True, limit)
+    data = await GetPlaylistInfo(playlist_id, offset, True, limit)
     trackIds = [track["id"] for track in data["playlist"]["trackIds"]]
     id = trackIds[offset : offset + limit]
     from .track import GetTrackDetail
 
-    return GetTrackDetail(id)
+    return await GetTrackDetail(id)
 
 
 @WeapiCryptoRequest

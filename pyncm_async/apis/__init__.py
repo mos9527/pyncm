@@ -30,7 +30,8 @@
 
 from random import randrange
 from functools import wraps
-from requests.models import Response
+from httpx import Response
+from typing import Coroutine, Any, Callable, Union, Dict, TypeVar
 
 from .exception import LoginRequiredException
 from ..utils.crypto import (
@@ -46,7 +47,15 @@ import json, urllib.parse
 LOGIN_REQUIRED = LoginRequiredException("需要登录")
 
 
-def _BaseWrapper(requestFunc):
+# 通过泛型类型，标注被装饰函数的返回类型
+# 部分 API 函数被 Request 装饰器包装，调用返回值为装饰器的返回类型。
+RequestFuncReturn  = TypeVar("RequestFuncReturn ")
+ApiFuncReturn = TypeVar("ApiFuncReturn")
+
+
+def _BaseWrapper(
+    requestFunc: Callable[..., Coroutine[Any, Any, RequestFuncReturn]],
+) -> Callable[[Callable[..., ApiFuncReturn]], Callable[..., Coroutine[Any, Any, RequestFuncReturn]]]:
     """API加密函数通用修饰器
 
     实际使用请参考以下其他 Wrapper::
@@ -58,16 +67,18 @@ def _BaseWrapper(requestFunc):
     """
 
     @wraps(requestFunc)
-    def apiWrapper(apiFunc):
+    def apiWrapper(
+        apiFunc: Callable[..., ApiFuncReturn]
+    ) -> Callable[..., Coroutine[Any, Any, RequestFuncReturn]]:
         @wraps(apiFunc)
-        def wrapper(*a, **k):
+        async def wrapper(*args, **kwargs):
             # HACK: 'session=' keyword support
-            session = k.get("session", GetCurrentSession())
+            session = kwargs.get("session", GetCurrentSession())
             # HACK: For now,wrapped functions will not have access to the session object
-            if "session" in k:
-                del k["session"]
+            if "session" in kwargs:
+                del kwargs["session"]
 
-            ret = apiFunc(*a, **k)
+            ret = apiFunc(*args, **kwargs)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
             logger.debug(
@@ -83,7 +94,7 @@ def _BaseWrapper(requestFunc):
                     id(session),
                 )
             )
-            rsp = requestFunc(session, url, payload, method)
+            rsp = await requestFunc(session, url, payload, method)
             try:
                 payload = rsp.text if isinstance(rsp, Response) else rsp
                 payload = payload.decode() if not isinstance(payload, str) else payload
@@ -92,7 +103,7 @@ def _BaseWrapper(requestFunc):
                     # Addresses Issue #15
                     # This however, has some unforeseen side-effects. Mainly due to its diffrences
                     # with non-abraod responses.
-                    logger.warn(
+                    logger.warning(
                         'Detected "abroad" payload. API response might differ in format!'
                     )
                     real_payload = AbroadDecrypt(payload["result"])
@@ -125,10 +136,10 @@ def EapiEncipered(func):
 
 
 @_BaseWrapper
-def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
+async def WeapiCryptoRequest(session: "Session", url, plain, method="POST") -> dict:
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = json.dumps({**plain, "csrf_token": session.csrf_token})
-    return session.request(
+    return await session.request(
         method,
         url.replace("/api/", "/weapi/"),
         params={"csrf_token": session.csrf_token},
@@ -141,7 +152,7 @@ def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
 @EapiEncipered
-def EapiCryptoRequest(session: "Session", url, plain, method):
+async def EapiCryptoRequest(session: "Session", url, plain, method) -> Union[str, bytes]:
     """Eapi - 适用于新版客户端绝大部分API"""
     payload = {
         **plain,
@@ -152,7 +163,7 @@ def EapiCryptoRequest(session: "Session", url, plain, method):
     digest = EapiEncrypt(
         urllib.parse.urlparse(url).path.replace("/eapi/", "/api/"), json.dumps(payload)
     )
-    request = session.request(
+    request = await session.request(
         method,
         url,
         headers={"User-Agent": session.UA_EAPI, "Referer": ""},

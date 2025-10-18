@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""PyNCM 网易云音乐 Python API / 下载工具
+"""PyNCM-Async 网易云音乐 Python 异步 API / 下载工具
 
 PyNCM 包装的网易云音乐 API 的使用非常简单::
 
-    >>> from pyncm import apis
+    >>> from pyncm_async import apis
     # 登录
     >>> apis.LoginViaCellphone(phone="[..]", password="[..]", ctcode=86, remeberLogin=True)
     # 获取歌曲信息
@@ -33,9 +33,9 @@ PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管�
     - (PR#11) 海外用户可能经历 460 "Cheating" 问题，可通过添加以下 Header 解决: `X-Real-IP = 118.88.88.88`
 """
 
-__VERSION_MAJOR__ = 1
-__VERSION_MINOR__ = 8
-__VERSION_PATCH__ = 0
+__VERSION_MAJOR__ = 0
+__VERSION_MINOR__ = 1
+__VERSION_PATCH__ = 4
 
 __version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
 
@@ -44,7 +44,7 @@ from typing import Text, Union
 from time import time
 
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
-import requests, logging, json, os
+import httpx, logging, json, os
 
 logger = logging.getLogger("pyncm.api")
 if "PYNCM_DEBUG" in os.environ:
@@ -63,11 +63,11 @@ DEVICE_ID_DEFAULT = "pyncm!"
 SESSION_STACK = dict()
 
 
-class Session(requests.Session):
+class Session(httpx.AsyncClient):
     """# Session
         实现网易云音乐登录态 / API 请求管理
 
-        - HTTP方面，`Session`的配置方法和 `requests.Session` 完全一致，如配置 Headers:
+        - HTTP方面，`Session`的配置方法和 `httpx.Session` 完全一致，如配置 Headers:
 
         GetCurrentSession().headers['X-Real-IP'] = '1.1.1.1'
 
@@ -80,13 +80,13 @@ class Session(requests.Session):
 
     ```python
     # 利用全局 Session 完成该 API Call
-    LoginViaEmail(...)
+    await LoginViaEmail(...)
     session = CreateNewSession() # 建立新的 Session
-    with session: # 进入该 Session, 在 `with` 内的 API 将由该 Session 完成
-        LoginViaCellPhone(...)
+    async with session: # 进入该 Session, 在 `async with` 内的 API 将由该 Session 完成
+        await LoginViaCellPhone(...)
     # 离开 Session. 此后 API 将继续由全局 Session 管理
     ```
-    注：Session 各*线程*独立，各线程利用 `with` 设置的 Session 不互相影响
+    注：Session 各*线程*独立，各线程利用 `async with` 设置的 Session 不互相影响
 
     获取其他具体信息请参考该文档注释
     """
@@ -104,14 +104,14 @@ class Session(requests.Session):
     force_http = False
     """优先使用 HTTP 作 API 请求协议"""
 
-    def __enter__(self):
+    async def __aenter__(self) -> httpx.AsyncClient:
         SESSION_STACK.setdefault(current_thread(), list())
         SESSION_STACK[current_thread()].append(self)
-        return super().__enter__()
+        return await super().__enter__()
 
-    def __exit__(self, *args) -> None:
+    async def __aexit__(self, *args) -> None:
         SESSION_STACK[current_thread()].pop()
-        return super().__exit__(*args)
+        return await super().__exit__(*args)
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
@@ -182,11 +182,11 @@ class Session(requests.Session):
         return self.logged_in and not self.nickname
 
     # endregion
-    def request(
+    async def request(
         self, method: str, url: Union[str, bytes, Text], *a, **k
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """发起 HTTP(S) 请求
-        该函数与 `requests.Session.request` 有以下不同：
+        该函数与 ` -> httpx.AsyncClient.request` 有以下不同：
         - 使用 SSL 与否取决于 `force_http`
         - 不强调协议（只用 HTTP(S)），不带协议的链接会自动补上 HTTP(S)
 
@@ -195,13 +195,13 @@ class Session(requests.Session):
             url (Union[str, bytes, Text]): Complete/Partial HTTP URL
 
         Returns:
-            requests.Response
+            httpx.Response
         """
         if url[:4] != "http":
             url = "https://%s%s" % (self.HOST, url)
         if self.force_http:
             url = url.replace("https:", "http:")
-        return super().request(method, url, *a, **k)
+        return await super().request(method, url, *a, **k)
 
     # region symbols for loading/reloading authentication info
     _session_info = {
@@ -220,7 +220,7 @@ class Session(requests.Session):
         "cookies": (
             lambda self: [
                 {"name": c.name, "value": c.value, "domain": c.domain, "path": c.path}
-                for c in getattr(self, "cookies")
+                for c in getattr(getattr(self, "cookies"), "jar")
             ],
             lambda self, cookies: [
                 getattr(self, "cookies").set(**cookie) for cookie in cookies

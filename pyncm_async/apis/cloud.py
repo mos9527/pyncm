@@ -72,7 +72,7 @@ def GetNosToken(
     }
 
 
-def SetUploadObject(
+async def SetUploadObject(
     stream,
     md5,
     fileSize,
@@ -82,7 +82,7 @@ def SetUploadObject(
     compete=True,
     bucket=BUCKET,
     session=None,
-):
+) -> dict:
     """移动端 - 上传内容
 
     Args:
@@ -96,7 +96,7 @@ def SetUploadObject(
     Returns:
         dict
     """
-    r = (session or GetCurrentSession()).post(
+    r = await (session or GetCurrentSession()).post(
         "http://45.127.129.8/%s/" % bucket + objectKey.replace("/", "%2F"),
         data=stream,
         params={"version": "1.0", "offset": offset, "complete": str(compete).lower()},
@@ -187,7 +187,7 @@ def SetPublishCloudResource(songid):
     }
 
 
-def SetRectifySongId(oldSongId, newSongId, session=None):
+async def SetRectifySongId(oldSongId, newSongId, session=None) -> dict:
     """移动端 - 歌曲纠偏
 
     Args:
@@ -198,7 +198,7 @@ def SetRectifySongId(oldSongId, newSongId, session=None):
         dict
     """
     return (
-        (session or GetCurrentSession())
+        await (session or GetCurrentSession())
         .get(
             "/api/cloud/user/song/match",
             params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
