@@ -92,7 +92,7 @@ def _BaseWrapper(requestFunc):
                     # Addresses Issue #15
                     # This however, has some unforeseen side-effects. Mainly due to its diffrences
                     # with non-abraod responses.
-                    logger.warn(
+                    logger.warning(
                         'Detected "abroad" payload. API response might differ in format!'
                     )
                     real_payload = AbroadDecrypt(payload["result"])
