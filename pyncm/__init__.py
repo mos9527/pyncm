@@ -25,7 +25,7 @@ PyNCM 的所有 API 请求都将经过单例的 `pyncm.Session` 发出，管理�
 PyNCM 同时提供了相应的 Session 序列化函数，用于其储存及管理::
 
     >>> save = pyncm.DumpSessionAsString()
-    >>> pyncm.SetNewSession(
+    >>> pyncm.SetCurrentSession(
             pyncm.LoadSessionFromString(save)
         )
 
