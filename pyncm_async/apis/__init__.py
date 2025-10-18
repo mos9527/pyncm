@@ -49,7 +49,7 @@ LOGIN_REQUIRED = LoginRequiredException("需要登录")
 
 # 通过泛型类型，标注被装饰函数的返回类型
 # 部分 API 函数被 Request 装饰器包装，调用返回值为装饰器的返回类型。
-RequestFuncReturn  = TypeVar("RequestFuncReturn ")
+RequestFuncReturn = TypeVar("RequestFuncReturn ")
 ApiFuncReturn = TypeVar("ApiFuncReturn")
 
 
