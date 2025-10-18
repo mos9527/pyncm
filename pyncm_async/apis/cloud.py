@@ -73,8 +73,16 @@ def GetNosToken(
 
 
 async def SetUploadObject(
-    stream, md5, fileSize, objectKey, token, offset=0, compete=True, bucket=BUCKET, session=None
-):
+    stream,
+    md5,
+    fileSize,
+    objectKey,
+    token,
+    offset=0,
+    compete=True,
+    bucket=BUCKET,
+    session=None,
+) -> dict:
     """移动端 - 上传内容
 
     Args:
@@ -179,7 +187,7 @@ def SetPublishCloudResource(songid):
     }
 
 
-async def SetRectifySongId(oldSongId, newSongId,session=None):
+async def SetRectifySongId(oldSongId, newSongId, session=None) -> dict:
     """移动端 - 歌曲纠偏
 
     Args:
@@ -189,8 +197,11 @@ async def SetRectifySongId(oldSongId, newSongId,session=None):
     Returns:
         dict
     """
-    resp = await (session or GetCurrentSession()).get(
+    return (
+        (await (session or GetCurrentSession())
+        .get(
             "/api/cloud/user/song/match",
             params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
+        ))
+        .json()
     )
-    return resp.json()

@@ -45,8 +45,9 @@ def GetTrackAudio(song_ids: list, bitrate=320000, encodeType="aac"):
         "br": str(bitrate),
     }
 
+
 @EapiCryptoRequest
-def GetTrackAudioV1(song_ids: list, level='standard', encodeType="flac"):
+def GetTrackAudioV1(song_ids: list, level="standard", encodeType="flac"):
     """PC 端 - 获取歌曲音频详情（文件URL、MD5...） V1
 
     Args:
@@ -67,6 +68,7 @@ def GetTrackAudioV1(song_ids: list, level='standard', encodeType="flac"):
         "encodeType": str(encodeType),
         "level": str(level),
     }
+
 
 @EapiCryptoRequest
 def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
@@ -91,8 +93,9 @@ def GetTrackDownloadURL(song_ids: list, bitrate=320000, encodeType="aac"):
         "br": str(bitrate),
     }
 
+
 @EapiCryptoRequest
-def GetTrackDownloadURLV1(song_id:int, level='standard'):
+def GetTrackDownloadURLV1(song_id: int, level="standard"):
     """PC 端 - 获取资源URL V1
 
     Args:
@@ -106,9 +109,10 @@ def GetTrackDownloadURLV1(song_id:int, level='standard'):
     """
 
     return "/eapi/song/enhance/download/url/v1", {
-        "id": '%s_0' % song_id,        
+        "id": "%s_0" % song_id,
         "level": str(level),
     }
+
 
 @WeapiCryptoRequest
 def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):
@@ -132,6 +136,7 @@ def GetTrackLyrics(song_id: str, lv=-1, tv=-1, rv=-1):
         "rv": str(rv),
     }
 
+
 @EapiCryptoRequest
 def GetTrackLyricsNew(song_id: str):
     """PC 端 - 获取歌曲歌词 (新 API)
@@ -153,6 +158,7 @@ def GetTrackLyricsNew(song_id: str):
         "ytv": 0,
         "yrv": 0,
     }
+
 
 @WeapiCryptoRequest
 def GetTrackComments(song_id, offset=0, limit=20, beforeTime=0):
@@ -196,22 +202,27 @@ def SetLikeTrack(trackId, like=True, userid=0, e_r=True):
         "e_r": str(e_r).lower(),
     }
 
+
 DEFAULT_AUDIO_MATCHER_SESSION_ID = RandomString(16)
+
+
 @WeapiCryptoRequest
-def GetMatchTrackByFP(audioFP: str, duration: float, sessionId=DEFAULT_AUDIO_MATCHER_SESSION_ID):
+def GetMatchTrackByFP(
+    audioFP: str, duration: float, sessionId=DEFAULT_AUDIO_MATCHER_SESSION_ID
+):
     """移动端（Chrome 插件） - 听歌识曲
-    
+
     Args:
         audioFP (str): Base64 编码的 AFP. 可参考 https://github.com/mos9527/ncm-afp
         duration (float): FP 时长
         sessionId (str, optional): 未知作用. Defaults to DEFAULT_AUDIO_MATCHER_SESSION_ID.
-    """    
+    """
     return "/weapi/music/audio/match", {
-        'algorithmCode': 'shazam_v2', # 貌似有三种？
-        'sessionId': sessionId,
-        'duration' : float(duration),   
-        'from': 'recognize-song',
-        'times':'1',
-        'decrypt':'1',
-        'rawdata': audioFP
+        "algorithmCode": "shazam_v2",  # 貌似有三种？
+        "sessionId": sessionId,
+        "duration": float(duration),
+        "from": "recognize-song",
+        "times": "1",
+        "decrypt": "1",
+        "rawdata": audioFP,
     }

@@ -3,12 +3,13 @@
 from . import WeapiCryptoRequest
 from json import dumps
 
+
 @WeapiCryptoRequest
-def GetUserDetail(user_id):
+def GetUserDetail(user_id=0):
     """网页端 - 获取某用户资料详情
 
     Args:
-        user_id (int): 用户 ID.
+        user_id (int): 用户 ID. defaults to 0
 
     Returns:
         dict
@@ -21,7 +22,7 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
     """网页端 - 获取某用户创建的歌单
 
     Args:
-        user_id (int): 用户 ID.
+        user_id (int): 用户 ID. defaults to 0
         offset (int, optional): 获取偏移数. Defaults to 0.
         limit (int, optional): 单次获取量. Defaults to 30.
 
@@ -80,11 +81,11 @@ def SetSignin(dtype=0):
 
 @WeapiCryptoRequest
 def SetWeblog(logs):
-    '''移动端、PC端 - 用户足迹
+    """移动端、PC端 - 用户足迹
 
     网易云跟踪用户行为 API，可记录内容繁多。这里暂不描述
 
     Args:
         logs (dict): 操作记录
-    '''
-    return "/weapi/feedback/weblog" , {"logs" : dumps(logs)}
+    """
+    return "/weapi/feedback/weblog", {"logs": dumps(logs)}

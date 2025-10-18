@@ -61,8 +61,10 @@ def SetChannelSubcribiton(id, set_subsubscribe=True):
         dict
     """
     return (
-        "/api/dj/difm/channel/subscribe"
-        if set_subsubscribe
-        else "/api/dj/difm/channel/unsubscribe",
+        (
+            "/api/dj/difm/channel/subscribe"
+            if set_subsubscribe
+            else "/api/dj/difm/channel/unsubscribe"
+        ),
         {"id": str(id)},
     )
