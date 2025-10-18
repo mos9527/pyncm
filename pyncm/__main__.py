@@ -148,7 +148,7 @@ class TaskPoolExecutorThread(Thread):
                 ]
                 song.save()
 
-        format = file.split(".")[-1].upper()
+        format = file.split(".")[-2].upper()
         for ext, method in [
             ({"M4A", "M4B", "M4P", "MP4"}, mp4),
             ({"MP3"}, mp3),
@@ -229,9 +229,10 @@ class TaskPoolExecutorThread(Thread):
                     task.extension = dAudio["type"].lower()
                     if not exists(task.audio.dest):
                         makedirs(task.audio.dest)
-                    dest_src = self.download_by_url(
+                    dest_src = task.save_as + "." + dAudio["type"].lower()
+                    dest_src_temp = self.download_by_url(
                         dAudio["url"],
-                        task.save_as + "." + dAudio["type"].lower(),
+                        dest_src + ".temp",
                         xfer=True,
                     )
                     # Downloading cover
@@ -274,9 +275,13 @@ class TaskPoolExecutorThread(Thread):
                         )
                     # Tagging the audio
                     try:
-                        self.tag_audio(task.song, dest_src, dest_cvr)
+                        self.tag_audio(task.song, dest_src_temp, dest_cvr)
                     except Exception as e:
                         logger.warning("标签失败 - %s - %s" % (task.song.Title, e))
+                    try:
+                        os.replace(dest_src_temp, dest_src)
+                    except Exception as e:
+                        logger.warning("重命名临时文件失败 - %s - %s" % (task.song.Title, e))
                     logger.info(
                         "完成下载 #%d / %d - %s"
                         % (task.index + 1, task.total, task.song.Title)
