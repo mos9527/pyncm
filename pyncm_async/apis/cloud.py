@@ -198,10 +198,10 @@ async def SetRectifySongId(oldSongId, newSongId, session=None) -> dict:
         dict
     """
     return (
-        await (session or GetCurrentSession())
+        (await (session or GetCurrentSession())
         .get(
             "/api/cloud/user/song/match",
             params={"songId": str(oldSongId), "adjustSongId": str(newSongId)},
-        )
+        ))
         .json()
     )
