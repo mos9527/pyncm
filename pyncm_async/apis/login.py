@@ -328,7 +328,6 @@ async def LoginViaAnonymousAccount(deviceId=None, session=None) -> dict:
             "profile": {"nickname": "", **login_status},
             "account": {"id": login_status["userId"], **login_status},
         },
-        session,
     )
     return session.login_info
 
