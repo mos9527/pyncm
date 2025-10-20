@@ -2,12 +2,12 @@
 """歌单 - Playlist APIs"""
 
 import json
-
-from . import EapiCryptoRequest, WeapiCryptoRequest
+from typing import Union
+from . import EapiCryptoRequest, WeapiCryptoRequest, GetCurrentSession
 
 
 @WeapiCryptoRequest
-def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
+def GetPlaylistInfo(playlist_id: Union[str, int], offset=0, total=True, limit=1000):
     """网页端 - 获取歌单内容
 
     Note:
@@ -18,10 +18,10 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
         因此，你可以通过 GetPlaylistAllTracks 获取完整的歌单内容
 
     Args:
-        playlist_id ([type]): 歌单 ID
-        offset (int, optional): **无效** 获取偏移数. Defaults to 0.
+        playlist_id (str, int): 歌单 ID
+        offset (str, int, optional): **无效** 获取偏移数. Defaults to 0.
         total (bool, optional): **无效** 是否获取全部内容. Defaults to True.
-        limit (int, optional): **无效** 单次获取量. Defaults to 30.
+        limit (str, int, optional): **无效** 单次获取量. Defaults to 30.
 
     Returns:
         dict
@@ -35,18 +35,19 @@ def GetPlaylistInfo(playlist_id, offset=0, total=True, limit=1000):
     }
 
 
-def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
+def GetPlaylistAllTracks(playlist_id: Union[str, int], offset=0, limit=1000, session=None):
     """网页端 - 获取歌单所有歌曲
 
     Args:
-        playlist_id ([type]): 歌单 ID
-        offset (int, optional): 获取偏移数. Defaults to 0.
-        limit (int, optional): 单次获取量. Defaults to 1000.
+        playlist_id (str, int): 歌单 ID
+        offset (str, int, optional): 获取偏移数. Defaults to 0.
+        limit (str, int, optional): 单次获取量. Defaults to 1000.
 
     Returns:
         dict
     """
-    data = GetPlaylistInfo(playlist_id, offset, True, limit)
+    session = session or GetCurrentSession()
+    data = GetPlaylistInfo(playlist_id, offset, True, limit, session=session)
     trackIds = [track["id"] for track in data["playlist"]["trackIds"]]
     id = trackIds[offset : offset + limit]
     from .track import GetTrackDetail
@@ -55,28 +56,33 @@ def GetPlaylistAllTracks(playlist_id, offset=0, limit=1000):
 
 
 @WeapiCryptoRequest
-def GetPlaylistComments(playlist_id: str, offset=0, limit=20, beforeTime=0):
+def GetPlaylistComments(playlist_id: Union[str, int], pageNo=1, pageSize=20, cursor=-1, offset=0, orderType=1):
     """网页端 - 获取歌单评论
 
     Args:
-        album_id (str): 歌单ID
-        offset (int, optional): 时间顺序偏移数. Defaults to 0.
-        limit (int, optional): 单次评论获取量. Defaults to 20.
-        beforeTime (int, optional): 评论将从该时间戳（秒为单位）开始. Defaults to 0.
+        playlist_id (str, int): 歌单ID
+        pageNo (str, int, optional): 页数. Defaults to 1.
+        pageSize (str, int, optional): 单次评论获取量. Defaults to 20.
+        cursor (str, int, optional): 评论将从该时间戳（毫秒为单位）开始. Defaults to -1.
+        offset (str, int, optional): 时间顺序偏移数. Defaults to 0.
+        orderType (str, int, optional): **无效** 评论排序方式,. Defaults to 1.
 
     Returns:
         dict
     """
-    return "/v1/resource/comments/A_PL_0_%s" % playlist_id, {
-        "rid": str(playlist_id),
-        "limit": str(limit),
+    return "/weapi/comment/resource/comments/get", {
+        "rid": f"A_PL_0_{playlist_id}",
+        "threadId": f"A_PL_0_{playlist_id}",
+        "pageNo": str(pageNo),
+        "pageSize": str(pageSize),
+        "cursor": str(cursor),
         "offset": str(offset),
-        "beforeTime": str(beforeTime * 1000),
+        "orderType": str(orderType),
     }
 
 
 @WeapiCryptoRequest
-def SetManipulatePlaylistTracks(trackIds, playlistId, op="add", imme=True, e_r=True):
+def SetManipulatePlaylistTracks(playlist_ids: Union[list, str, int], playlistId, op="add", imme=True, e_r=True):
     """PC 端 - 操作歌单
 
     - op 有以下几种：
@@ -84,17 +90,17 @@ def SetManipulatePlaylistTracks(trackIds, playlistId, op="add", imme=True, e_r=T
      - `del` : 从歌单删除
 
     Args:
-        trackIds (list[str]): 待操作的歌曲ID列表
-        playlistId ([int]): 要操作的歌单ID
+        playlist_ids (list, str, int): 待操作的歌曲ID列表
+        playlistId (str, int): 要操作的歌单ID
         op (str, optional): 操作 . Defaults to "add".
         imme (bool, optional): 暂存. Defaults to True.
 
     Returns:
         [type]: [description]
     """
-    trackIds = trackIds if isinstance(trackIds, list) else [trackIds]
+    playlist_ids = playlist_ids if isinstance(playlist_ids, list) else [playlist_ids]
     return "/weapi/v1/playlist/manipulate/tracks", {
-        "trackIds": json.dumps(trackIds),
+        "trackIds": json.dumps(playlist_ids, separators=(',', ':')),
         "pid": str(playlistId),
         "op": op,
         "imme": str(imme).lower(),
@@ -116,17 +122,17 @@ def SetCreatePlaylist(name: str, privacy=False):
 
 
 @EapiCryptoRequest
-def SetRemovePlaylist(ids: list, self=True):
+def SetRemovePlaylist(playlist_ids: Union[list, int, str], self=True):
     """移动端 - 删除歌单
 
     Args:
-        ids (list): 歌单 ID
+        playlist_ids (list, str, int): 歌单 ID
         self (bool): 未知. Defaults to True
     Returns:
         dict
     """
-    ids = ids if isinstance(ids, list) else [ids]
+    playlist_ids = playlist_ids if isinstance(playlist_ids, list) else [playlist_ids]
     return "/eapi/playlist/remove", {
-        "ids": str(ids),
+        "ids": str(playlist_ids),
         "self": str(self),
     }

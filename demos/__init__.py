@@ -5,7 +5,7 @@ IS_FIRSTTIME = sys.path[0] != "."
 
 
 def assert_dep(name):
-    assert importlib.util.find_spec(name), "需要安装 %s" % name
+    assert importlib.util.find_spec(name), f"需要安装 {name}"
 
 
 def login():
@@ -47,4 +47,4 @@ if IS_FIRSTTIME:
     sys.path.insert(0, ".")
     from pyncm import __version__, __file__
 
-    print("PyNCM %s" % __version__, __file__)
+    print(f"PyNCM {__version__}", __file__)

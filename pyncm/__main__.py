@@ -172,8 +172,8 @@ class TaskPoolExecutorThread(Thread):
                 f.write(chunk)  # write every 128KB read
         return dest
 
-    def __init__(self, *a, max_workers=4, **k):
-        super().__init__(*a, **k)
+    def __init__(self, *args, max_workers=4, **kwargs):
+        super().__init__(*args, **kwargs)
         self.daemon = True
         self.finished_tasks: float = 0
         self.xfered = 0

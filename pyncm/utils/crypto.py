@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Essential implementations of some of netease's security algorithms"""
 import base64
+import json
 from . import HexCompose,HexDigest,HashHexDigest,RandomString,security
 from .aes import AES
 # region secrets
@@ -53,15 +54,15 @@ def RSAEncrypt(data:str, n , e , reverse=True):
 def WeapiEncrypt(params, aes_key2=None):
     """Implements /weapi/ Asymmetric encryption"""
     aes_key2 = aes_key2 or RandomString(16)
-    params = str(params)
+    params = json.dumps(params, separators=(',', ':'))
     # 1st go,encrypt the text with aes_key and aes_iv
-    params = str(base64.encodebytes(AESEncrypt(
+    params = str(base64.b64encode(AESEncrypt(
         data=params, key=WEAPI_AES_KEY, iv=WEAPI_AES_IV,mode=AES.MODE_CBC)), encoding='utf-8')
     # 2nd go,encrypt the ENCRYPTED text again,with the 2nd key and aes_iv
-    params = str(base64.encodebytes(AESEncrypt(
+    params = str(base64.b64encode(AESEncrypt(
         data=params, key=aes_key2, iv=WEAPI_AES_IV,mode=AES.MODE_CBC)), encoding='utf-8')
     # 3rd go,generate RSA encrypted encSecKey
-    encSecKey = HexDigest(RSAEncrypt(aes_key2, *WEAPI_RSA_PUBKEY))        
+    encSecKey = HexDigest(RSAEncrypt(aes_key2, *WEAPI_RSA_PUBKEY))
     return {
         'params': params,
         'encSecKey': encSecKey

@@ -60,14 +60,14 @@ def _BaseWrapper(requestFunc):
     @wraps(requestFunc)
     def apiWrapper(apiFunc):
         @wraps(apiFunc)
-        def wrapper(*a, **k):
+        def wrapper(*args, **kwargs):
             # HACK: 'session=' keyword support
-            session = k.get("session", GetCurrentSession())
+            session = kwargs.get("session", GetCurrentSession())
             # HACK: For now,wrapped functions will not have access to the session object
-            if "session" in k:
-                del k["session"]
+            if "session" in kwargs:
+                del kwargs["session"]
 
-            ret = apiFunc(*a, **k)
+            ret = apiFunc(*args, **kwargs)
             url, payload = ret[:2]
             method = ret[-1] if ret[-1] in ["POST", "GET"] else "POST"
             logger.debug(
@@ -101,8 +101,8 @@ def _BaseWrapper(requestFunc):
                     payload["abroad"] = True
                 return payload
             except json.JSONDecodeError as e:
-                logger.error("Response is not valid JSON : %s" % e)
-                logger.error("Response : %s", rsp)
+                logger.error(f"Response is not valid JSON : {e}")
+                logger.error(f"Response : {rsp}", )
                 return rsp
 
         return wrapper
@@ -114,8 +114,8 @@ def EapiEncipered(func):
     """函数值有 Eapi 加密 - 解密并返回原文"""
 
     @wraps(func)
-    def wrapper(*a, **k):
-        payload = func(*a, **k)
+    def wrapper(*args, **kwargs):
+        payload = func(*args, **kwargs)
         try:
             return EapiDecrypt(payload).decode()
         except:

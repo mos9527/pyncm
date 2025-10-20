@@ -28,7 +28,7 @@ def GetSearchResult(keyword: str, stype=SONG, limit=30, offset=0):
 
     Args:
         keyword (str): 搜索关键字
-        type ([int, optional): 搜索类型 (cloudsearch.SONG/...). Defaults to SONG
+        type (int, optional): 搜索类型 (cloudsearch.SONG/...). Defaults to SONG
         limit (int, optional): 单次获取量. Defaults to 30.
         offset (int, optional): 获取偏移数. Defaults to 0.
 

@@ -1,30 +1,31 @@
 # -*- coding: utf-8 -*-
 """用户 - User APIs"""
 from . import WeapiCryptoRequest
-from json import dumps
+import json
+from typing import Union
 
 
 @WeapiCryptoRequest
-def GetUserDetail(user_id=0):
+def GetUserDetail(user_id: Union[str, int]=0):
     """网页端 - 获取某用户资料详情
 
     Args:
-        user_id (int): 用户 ID. defaults to 0
+        user_id (str, int): 用户 ID. defaults to 0
 
     Returns:
         dict
     """
-    return "/weapi/v1/user/detail/%s" % user_id, {}
+    return f"/weapi/v1/user/detail/{user_id}", {}
 
 
 @WeapiCryptoRequest
-def GetUserPlaylists(user_id, offset=0, limit=1001):
+def GetUserPlaylists(user_id: Union[str, int], offset=0, limit=1001):
     """网页端 - 获取某用户创建的歌单
 
     Args:
-        user_id (int): 用户 ID. defaults to 0
-        offset (int, optional): 获取偏移数. Defaults to 0.
-        limit (int, optional): 单次获取量. Defaults to 30.
+        user_id (str, int): 用户 ID. defaults to 0
+        offset (str, int, optional): 获取偏移数. Defaults to 0.
+        limit (str, int, optional): 单次获取量. Defaults to 30.
 
     Returns:
         dict
@@ -37,10 +38,10 @@ def GetUserPlaylists(user_id, offset=0, limit=1001):
 
 
 @WeapiCryptoRequest
-def GetUserAlbumSubs(limit=30):
+def GetUserAlbumSubs(limit: Union[str, int]=30):
     """网页端 - 获取收藏专辑内容
     Args:
-        limit (int, optional): 单次获取量. Defaults to 30.
+        limit (str, int, optional): 单次获取量. Defaults to 30.
 
     Returns:
         dict
@@ -49,10 +50,10 @@ def GetUserAlbumSubs(limit=30):
 
 
 @WeapiCryptoRequest
-def GetUserArtistSubs(limit=30):
+def GetUserArtistSubs(limit: Union[str, int]=30):
     """网页端 - 获取收藏歌手内容
     Args:
-        limit (int, optional): 单次获取量. Defaults to 30.
+        limit (str, int, optional): 单次获取量. Defaults to 30.
 
     Returns:
         dict
@@ -67,11 +68,11 @@ SIGNIN_TYPE_WEB = 1
 
 
 @WeapiCryptoRequest
-def SetSignin(dtype=0):
+def SetSignin(dtype: Union[str, int]=0):
     """移动端、PC端 - 每日签到
 
     Args:
-        dtype (int, optional): 签到类型，(user.SIGNIN_TYPE_MOBILE/user.SIGNIN_TYPE_WEB). Defaults to SIGNIN_TYPE_MOBILE
+        dtype (str, int, optional): 签到类型，(user.SIGNIN_TYPE_MOBILE/user.SIGNIN_TYPE_WEB). Defaults to SIGNIN_TYPE_MOBILE
 
     Returns:
         dict
@@ -80,7 +81,7 @@ def SetSignin(dtype=0):
 
 
 @WeapiCryptoRequest
-def SetWeblog(logs):
+def SetWeblog(logs: dict):
     """网页端 - 用户足迹
 
     网易云跟踪用户行为 API，可记录内容繁多。这里暂不描述
@@ -88,4 +89,4 @@ def SetWeblog(logs):
     Args:
         logs (dict): 操作记录
     """
-    return "/weapi/feedback/weblog", {"logs": dumps(logs)}
+    return "/weapi/feedback/weblog", {"logs": json.dumps(logs, separators=(',', ':'))}
