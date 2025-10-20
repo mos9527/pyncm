@@ -127,14 +127,14 @@ def EapiEncipered(func):
 @_BaseWrapper
 def WeapiCryptoRequest(session: "Session", url, plain, method="POST"):
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
-    payload = json.dumps({**plain, "csrf_token": session.csrf_token})
+    payload = {**plain, "csrf_token": session.csrf_token}
     return session.request(
         method,
         url.replace("/api/", "/weapi/"),
         params={"csrf_token": session.csrf_token},
         data={**WeapiEncrypt(payload)},
         headers={"User-Agent": session.UA_DEFAULT, "Referer": "https://music.163.com"},
-        cookies={**session.eapi_config},
+        cookies={**session.weapi_config},
     )
 
 

@@ -81,7 +81,7 @@ def SetSignin(dtype=0):
 
 @WeapiCryptoRequest
 def SetWeblog(logs):
-    """移动端、PC端 - 用户足迹
+    """网页端 - 用户足迹
 
     网易云跟踪用户行为 API，可记录内容繁多。这里暂不描述
 

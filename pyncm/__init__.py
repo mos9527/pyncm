@@ -43,6 +43,7 @@ from threading import current_thread
 from typing import Text, Union
 from time import time
 
+from .utils import GenerateSDeviceId, GenerateWNMCID
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json, os
 
@@ -128,6 +129,11 @@ class Session(requests.Session):
             "osver": "16.2",
             "channel": "distribution",
             "deviceId": DEVICE_ID_DEFAULT,
+        }
+        self.weapi_config = {
+            "WEVNSM": "1.0.0",
+            "sDeviceId": GenerateSDeviceId(),
+            "WNMCID": GenerateWNMCID(),
         }
         self.csrf_token = ""
 
