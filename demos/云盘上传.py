@@ -32,7 +32,7 @@ def upload_one(path):
     1.拿到上传令牌 - 需要文件名，MD5，文件大小"""
     token = GetNosToken(fname, md5, fsize, fext)["result"]
     if cresult["needUpload"]:
-        print("开始上传 %s ( %s B )" % (fname, fsize))
+        print(f"开始上传 {fname} ( {fsize} B )")
         """2. 若文件未曾上传完毕，则完成其上传"""
         upload_result = SetUploadObject(
             open(path, "rb"), md5, fsize, token["objectKey"], token["token"]

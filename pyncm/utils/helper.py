@@ -17,11 +17,11 @@ def Default(default=None):
     def preWrapper(func):
         @property
         @wraps(func)
-        def wrapper(*a, **k):
+        def wrapper(*args, **kwargs):
             try:
-                return func(*a, **k)
+                return func(*args, **kwargs)
             except Exception as e:
-                logger.warn("Failed to get attribute %s : %s" % (func.__name__, e))
+                logger.warning(f"Failed to get attribute {func.__name__} : {e}")
                 return default
 
         return wrapper
@@ -65,7 +65,7 @@ class AlbumHelper(IDCahceHelper):
         super().__init__(item_id, GetAlbumInfo)
 
     def refresh(self):
-        logger.debug("Caching album info %s" % self._item_id)
+        logger.debug(f"Caching album info {self._item_id}")
         return super().refresh()
 
     @Default()
@@ -119,7 +119,7 @@ class ArtistHelper(IDCahceHelper):
         super().__init__(item_id, GetArtistDetails)
 
     def refresh(self):
-        logger.debug("Caching artist info %s" % self._item_id)
+        logger.debug(f"Caching artist info {self._item_id}")
         return super().refresh()
 
     @Default()
@@ -150,7 +150,7 @@ class UserHelper(IDCahceHelper):
         super().__init__(item_id, GetUserDetail)
 
     def refresh(self):
-        logger.debug("Caching user info %s" % self._item_id)
+        logger.debug(f"Caching user info {self._item_id}")
         return super().refresh()
 
     @Default()

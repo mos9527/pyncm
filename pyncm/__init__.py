@@ -43,6 +43,7 @@ from threading import current_thread
 from typing import Text, Union
 from time import time
 
+from .utils import GenerateSDeviceId, GenerateWNMCID
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import requests, logging, json, os
 
@@ -104,7 +105,7 @@ class Session(requests.Session):
     force_http = False
     """优先使用 HTTP 作 API 请求协议"""
 
-    def __enter__(self):
+    def __enter__(self) -> requests.Response:
         SESSION_STACK.setdefault(current_thread(), list())
         SESSION_STACK[current_thread()].append(self)
         return super().__enter__()
@@ -113,8 +114,8 @@ class Session(requests.Session):
         SESSION_STACK[current_thread()].pop()
         return super().__exit__(*args)
 
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": self.UA_DEFAULT,
@@ -129,6 +130,11 @@ class Session(requests.Session):
             "channel": "distribution",
             "deviceId": DEVICE_ID_DEFAULT,
         }
+        self.weapi_config = {
+            "WEVNSM": "1.0.0",
+            "sDeviceId": GenerateSDeviceId(),
+            "WNMCID": GenerateWNMCID(),
+        }
         self.csrf_token = ""
 
     # region Shorthands
@@ -138,8 +144,16 @@ class Session(requests.Session):
         return self.eapi_config["deviceId"]
 
     @deviceId.setter
-    def deviceId(self, v):
-        self.eapi_config["deviceId"] = str(v)
+    def deviceId(self, value: str):
+        self.eapi_config["deviceId"] = value
+
+    @property
+    def sDeviceId(self):
+        return self.weapi_config["sDeviceId"]
+    
+    @sDeviceId.setter
+    def sDeviceId(self, value: str):
+        self.weapi_config["sDeviceId"] = value
 
     @property
     def uid(self):
@@ -183,7 +197,7 @@ class Session(requests.Session):
 
     # endregion
     def request(
-        self, method: str, url: Union[str, bytes, Text], *a, **k
+        self, method: str, url: Union[str, bytes, Text], *args, **kwargs
     ) -> requests.Response:
         """发起 HTTP(S) 请求
         该函数与 `requests.Session.request` 有以下不同：
@@ -201,13 +215,17 @@ class Session(requests.Session):
             url = "https://%s%s" % (self.HOST, url)
         if self.force_http:
             url = url.replace("https:", "http:")
-        return super().request(method, url, *a, **k)
+        return super().request(method, url, *args, **kwargs)
 
     # region symbols for loading/reloading authentication info
     _session_info = {
         "eapi_config": (
             lambda self: getattr(self, "eapi_config"),
             lambda self, v: setattr(self, "eapi_config", v),
+        ),
+        "weapi_config": (
+            lambda self: getattr(self, "weapi_config"),
+            lambda self, v: setattr(self, "weapi_config", v),
         ),
         "login_info": (
             lambda self: getattr(self, "login_info"),
