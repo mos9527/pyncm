@@ -39,7 +39,7 @@ __VERSION_PATCH__ = 1
 
 __version__ = f"{__VERSION_MAJOR__}.{__VERSION_MINOR__}.{__VERSION_PATCH__}"
 
-from threading import current_thread
+from asyncio import get_running_loop
 from typing import Text, Union
 from time import time
 
@@ -106,12 +106,12 @@ class Session(httpx.AsyncClient):
     """优先使用 HTTP 作 API 请求协议"""
 
     async def __aenter__(self) -> httpx.AsyncClient:
-        SESSION_STACK.setdefault(current_thread(), list())
-        SESSION_STACK[current_thread()].append(self)
+        SESSION_STACK.setdefault(get_running_loop(), list())
+        SESSION_STACK[get_running_loop()].append(self)
         return await super().__aenter__()
 
     async def __aexit__(self, *args) -> None:
-        SESSION_STACK[current_thread()].pop()
+        SESSION_STACK[get_running_loop()].pop()
         return await super().__aexit__(*args)
 
     def __init__(self, *args, **kwargs):
@@ -262,12 +262,12 @@ class SessionManager:
         self.session = Session()
 
     def get(self):
-        if SESSION_STACK.get(current_thread(), None):
-            return SESSION_STACK[current_thread()][-1]
+        if SESSION_STACK.get(get_running_loop(), None):
+            return SESSION_STACK[get_running_loop()][-1]
         return self.session
 
     def set(self, session):
-        if SESSION_STACK.get(current_thread(), None):
+        if SESSION_STACK.get(get_running_loop(), None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
             )
