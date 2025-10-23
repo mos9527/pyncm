@@ -39,9 +39,9 @@ async def GetPlaylistAllTracks(playlist_id: Union[str, int], offset=0, limit=100
     """网页端 - 获取歌单所有歌曲
 
     Args:
-        playlist_id ([type]): 歌单 ID
-        offset (int, optional): 获取偏移数. Defaults to 0.
-        limit (int, optional): 单次获取量. Defaults to 1000.
+        playlist_id (str, int): 歌单 ID
+        offset (str, int, optional): 获取偏移数. Defaults to 0.
+        limit (str, int, optional): 单次获取量. Defaults to 1000.
 
     Returns:
         dict
@@ -126,7 +126,7 @@ def SetRemovePlaylist(playlist_ids: Union[list, int, str], self=True):
     """移动端 - 删除歌单
 
     Args:
-        ids (list): 歌单 ID
+        playlist_ids (list, str, int): 歌单 ID
         self (bool): 未知. Defaults to True
     Returns:
         dict
