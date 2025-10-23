@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """我的音乐云盘 - Cloud APIs"""
 import json
+from typing import Union
 from . import WeapiCryptoRequest, EapiCryptoRequest, GetCurrentSession
 
 BUCKET = "jd-musicrep-privatecloud-audio-public"
@@ -11,8 +12,8 @@ def GetCloudDriveInfo(limit=30, offset=0):
     """PC端 - 获取个人云盘内容
 
     Args:
-        limit (int, optional): 单次获取量. Defaults to 30.
-        offset (int, optional): 获取偏移数. Defaults to 0.
+        limit (str, int, optional): 单次获取量. Defaults to 30.
+        offset (str, int, optional): 获取偏移数. Defaults to 0.
 
     Returns:
         dict
@@ -21,11 +22,11 @@ def GetCloudDriveInfo(limit=30, offset=0):
 
 
 @WeapiCryptoRequest
-def GetCloudDriveItemInfo(song_ids: list):
+def GetCloudDriveItemInfo(song_ids: Union[list, str, int]):
     """PC端 - 获取个人云盘项目详情
 
     Args:
-        song_ids (list): 云盘项目 ID
+        song_ids (list, str, int): 云盘项目 ID
 
     Returns:
         dict
@@ -97,7 +98,7 @@ async def SetUploadObject(
         dict
     """
     r = await (session or GetCurrentSession()).post(
-        "http://45.127.129.8/%s/" % bucket + objectKey.replace("/", "%2F"),
+        f"http://45.127.129.8/{bucket}/{objectKey.replace("/", "%2F")}",
         data=stream,
         params={"version": "1.0", "offset": offset, "complete": str(compete).lower()},
         headers={
@@ -191,8 +192,8 @@ async def SetRectifySongId(oldSongId, newSongId, session=None) -> dict:
     """移动端 - 歌曲纠偏
 
     Args:
-        oldSongId : 欲纠偏的源歌曲ID
-        newSongId : 欲纠偏的目标歌曲ID
+        oldSongId (str, int): 欲纠偏的源歌曲ID
+        newSongId (str, int): 欲纠偏的目标歌曲ID
 
     Returns:
         dict
