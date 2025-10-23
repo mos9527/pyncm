@@ -144,8 +144,16 @@ class Session(httpx.AsyncClient):
         return self.eapi_config["deviceId"]
 
     @deviceId.setter
-    def deviceId(self, v):
-        self.eapi_config["deviceId"] = str(v)
+    def deviceId(self, value: str):
+        self.eapi_config["deviceId"] = value
+
+    @property
+    def sDeviceId(self):
+        return self.weapi_config["sDeviceId"]
+
+    @sDeviceId.setter
+    def sDeviceId(self, value: str):
+        self.weapi_config["sDeviceId"] = value
 
     @property
     def uid(self):
