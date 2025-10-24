@@ -37,12 +37,13 @@ __VERSION_MAJOR__ = 1
 __VERSION_MINOR__ = 8
 __VERSION_PATCH__ = 1
 
-__version__ = "%s.%s.%s" % (__VERSION_MAJOR__, __VERSION_MINOR__, __VERSION_PATCH__)
+__version__ = f"{__VERSION_MAJOR__}.{__VERSION_MINOR__}.{__VERSION_PATCH__}"
 
-from threading import current_thread
+from asyncio import get_running_loop
 from typing import Text, Union
 from time import time
 
+from .utils import GenerateSDeviceId, GenerateWNMCID
 from .utils.crypto import EapiEncrypt, EapiDecrypt, HexCompose
 import httpx, logging, json, os
 
@@ -94,7 +95,7 @@ class Session(httpx.AsyncClient):
     HOST = "music.163.com"
     """网易云音乐 API 服务器域名，可直接改为代理服务器之域名"""
     UA_DEFAULT = (
-        "Mozilla/5.0 (linux@github.com/mos9527/pyncm_asycn) Chrome/PyNCM_Async.%s" % __version__
+        f"Mozilla/5.0 (linux@github.com/mos9527/pyncm_asycn) Chrome/PyNCM_Async.{__version__}"
     )
     """Weapi 使用的 UA"""
     UA_EAPI = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154"
@@ -105,16 +106,16 @@ class Session(httpx.AsyncClient):
     """优先使用 HTTP 作 API 请求协议"""
 
     async def __aenter__(self) -> httpx.AsyncClient:
-        SESSION_STACK.setdefault(current_thread(), list())
-        SESSION_STACK[current_thread()].append(self)
-        return await super().__enter__()
+        SESSION_STACK.setdefault(get_running_loop(), list())
+        SESSION_STACK[get_running_loop()].append(self)
+        return await super().__aenter__()
 
     async def __aexit__(self, *args) -> None:
-        SESSION_STACK[current_thread()].pop()
-        return await super().__exit__(*args)
+        SESSION_STACK[get_running_loop()].pop()
+        return await super().__aexit__(*args)
 
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": self.UA_DEFAULT,
@@ -129,6 +130,11 @@ class Session(httpx.AsyncClient):
             "channel": "distribution",
             "deviceId": DEVICE_ID_DEFAULT,
         }
+        self.weapi_config = {
+            "WEVNSM": "1.0.0",
+            "sDeviceId": GenerateSDeviceId(),
+            "WNMCID": GenerateWNMCID(),
+        }
         self.csrf_token = ""
 
     # region Shorthands
@@ -138,8 +144,16 @@ class Session(httpx.AsyncClient):
         return self.eapi_config["deviceId"]
 
     @deviceId.setter
-    def deviceId(self, v):
-        self.eapi_config["deviceId"] = str(v)
+    def deviceId(self, value: str):
+        self.eapi_config["deviceId"] = value
+
+    @property
+    def sDeviceId(self):
+        return self.weapi_config["sDeviceId"]
+
+    @sDeviceId.setter
+    def sDeviceId(self, value: str):
+        self.weapi_config["sDeviceId"] = value
 
     @property
     def uid(self):
@@ -183,7 +197,7 @@ class Session(httpx.AsyncClient):
 
     # endregion
     async def request(
-        self, method: str, url: Union[str, bytes, Text], *a, **k
+        self, method: str, url: Union[str, bytes, Text], *args, **kwargs
     ) -> httpx.Response:
         """发起 HTTP(S) 请求
         该函数与 ` -> httpx.AsyncClient.request` 有以下不同：
@@ -198,16 +212,20 @@ class Session(httpx.AsyncClient):
             httpx.Response
         """
         if url[:4] != "http":
-            url = "https://%s%s" % (self.HOST, url)
+            url = f"https://{self.HOST}{url}"
         if self.force_http:
             url = url.replace("https:", "http:")
-        return await super().request(method, url, *a, **k)
+        return await super().request(method, url, *args, **kwargs)
 
     # region symbols for loading/reloading authentication info
     _session_info = {
         "eapi_config": (
             lambda self: getattr(self, "eapi_config"),
             lambda self, v: setattr(self, "eapi_config", v),
+        ),
+        "weapi_config": (
+            lambda self: getattr(self, "weapi_config"),
+            lambda self, v: setattr(self, "weapi_config", v),
         ),
         "login_info": (
             lambda self: getattr(self, "login_info"),
@@ -252,12 +270,12 @@ class SessionManager:
         self.session = Session()
 
     def get(self):
-        if SESSION_STACK.get(current_thread(), None):
-            return SESSION_STACK[current_thread()][-1]
+        if SESSION_STACK.get(get_running_loop(), None):
+            return SESSION_STACK[get_running_loop()][-1]
         return self.session
 
     def set(self, session):
-        if SESSION_STACK.get(current_thread(), None):
+        if SESSION_STACK.get(get_running_loop(), None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
             )

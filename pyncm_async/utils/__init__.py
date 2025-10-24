@@ -48,3 +48,13 @@ def GenerateChainId(s_device_id: str) -> str:
     timestamp = int(time.time() * 1000)
     # the rule is "{version}_{s_device_id}_{platform}_{action}_{timestamp}"
     return f"v1_{s_device_id}_web_login_{timestamp}"
+
+def GenerateWNMCID() -> str:
+    """Generate WNMCID for cookies
+    
+    This code is from web source code
+    """
+    prefix = ''.join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(6))
+    timestamp = int(time.time() * 1000)
+    crawler_version = "01"
+    return f"{prefix}.{timestamp}.{crawler_version}.0"

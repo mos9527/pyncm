@@ -7,7 +7,7 @@ from .exception import LoginFailedException
 
 from .. import WriteLoginInfo, GetCurrentSession
 from . import EapiCryptoRequest, WeapiCryptoRequest
-from ..utils import GenerateSDeviceId, GenerateChainId
+from ..utils import GenerateChainId
 from ..utils.crypto import HashHexDigest
 from ..utils.security import cloudmusic_dll_encode_id
 
@@ -42,7 +42,7 @@ def LoginQrcodeUnikey(dtype=1):
     - 登录态将在 `LoginQrcodeCheck` 中更新，需周期性检测
 
     Args:
-        type (int, optional): 未知. Defaults to 1.
+        type (str, int, optional): 未知. Defaults to 1.
         noCheckToken (bool): 不检查token. Defaults to True
 
     Returns:
@@ -52,7 +52,7 @@ def LoginQrcodeUnikey(dtype=1):
 
 
 @WeapiCryptoRequest
-def LoginQrcodeCheck(unikey, type=1):
+def LoginQrcodeCheck(unikey, type=1, noCheckToken=True):
     """网页端 - 二维码登录状态检测
 
     Args:
@@ -65,8 +65,8 @@ def LoginQrcodeCheck(unikey, type=1):
     """
     return "/weapi/login/qrcode/client/login", {
         "type": type,
-        "noCheckToken": True,
         "key": str(unikey),
+        "noCheckToken": True,
     }
 
 
@@ -90,7 +90,7 @@ def GetCurrentLoginStatus():
     return "/weapi/w/nuser/account/get", {}
 
 
-async def LoginViaCookie(MUSIC_U="", **kwargs) -> dict:
+async def LoginViaCookie(MUSIC_U="", session=None, **kwargs) -> dict:
     """通过 Cookie 登陆
 
     Args:
@@ -99,10 +99,10 @@ async def LoginViaCookie(MUSIC_U="", **kwargs) -> dict:
     Returns:
         dict
     """
-    session = GetCurrentSession()
+    session = session or GetCurrentSession()
     session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
-    resp = await GetCurrentLoginStatus()
-    WriteLoginInfo(resp)
+    login_status = await GetCurrentLoginStatus(session=session)
+    WriteLoginInfo(login_status)
     return {"code": 200, "result": session.login_info}
 
 
@@ -211,7 +211,7 @@ async def LoginViaEmail(
     return {"code": 200, "result": session.login_info}
 
 
-def GetLoginQRCodeUrl(unikey: str) -> str:
+def GetLoginQRCodeUrl(unikey: str, session=None) -> str:
     """获取登录二维码的链接
 
     此链接可直接用于生成二维码
@@ -222,14 +222,11 @@ def GetLoginQRCodeUrl(unikey: str) -> str:
     Returns:
         str: 拼接的二维码链接
     """
-
-    # 从session中获取sDeviceId字段，若没有则生成一个新的
-    s_device_id = GetCurrentSession().cookies.get("sDeviceId")
-    if not s_device_id:
-        s_device_id = GenerateSDeviceId()
+    session = session or GetCurrentSession()
+    # 从session中获取sDeviceId字段
     # 生成chainId, chainId是网易云音乐新版本新增的参数
     # 如果不加chainId参数，将会因登录风控问题而登录失败
-    chain_id = GenerateChainId(s_device_id)
+    chain_id = GenerateChainId(session.sDeviceId)
     # 正确拼接二维码链接
     return f"http://music.163.com/login?codekey={unikey}&chainId={chain_id}"
 
@@ -316,7 +313,7 @@ async def LoginViaAnonymousAccount(deviceId=None, session=None) -> dict:
             "/api/register/anonimous",
             {
                 "username": b64encode(
-                    ("%s %s" % (deviceId, cloudmusic_dll_encode_id(deviceId))).encode()
+                    (f"{deviceId} {cloudmusic_dll_encode_id(deviceId)}").encode()
                 ).decode()
             },
         )

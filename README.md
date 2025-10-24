@@ -43,7 +43,7 @@ await GetTrackComments(...)
 await GetTrackComments(..., session=session)
 ```
 
-详见 [Session 说明](https://github.com/mos9527/pyncm/blob/async/pyncm_async/__init__.py#L36)
+详见 [Session 说明](https://github.com/mos9527/pyncm/blob/async/pyncm_async/__init__.py#L67)
 ## API 说明
 大部分 API 函数已经详细注释，可读性较高。推荐参阅 [API 源码](https://github.com/mos9527/pyncm/tree/async/pyncm_async) 获得支持
 
@@ -65,6 +65,3 @@ Out[2]:
 [Android逆向——网易云音乐排行榜api(上)](https://juejin.im/post/6844903586879520775)
 
 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
-
-### 衍生项目
-[PyNCMd](https://github.com/mos9527/pyncmd)
