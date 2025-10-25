@@ -121,20 +121,6 @@ def _BaseWrapper(
     return apiWrapper
 
 
-def EapiEncipered(func):
-    """函数值有 Eapi 加密 - 解密并返回原文"""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        payload = func(*args, **kwargs)
-        try:
-            return EapiDecrypt(payload).decode()
-        except:
-            return payload
-
-    return wrapper
-
-
 @_BaseWrapper
 async def WeapiCryptoRequest(session: "Session", url, plain, method="POST") -> dict:
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
@@ -151,7 +137,6 @@ async def WeapiCryptoRequest(session: "Session", url, plain, method="POST") -> d
 
 # 来自 https://github.com/Binaryify/NeteaseCloudMusicApi
 @_BaseWrapper
-@EapiEncipered
 async def EapiCryptoRequest(session: "Session", url, plain, method) -> Union[str, bytes]:
     """Eapi - 适用于新版客户端绝大部分API"""
     payload = {
