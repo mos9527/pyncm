@@ -120,6 +120,7 @@ class Session(httpx.AsyncClient):
         return await super().__aexit__(*args)
 
     def __init__(self, *args, **kwargs):
+        self.loop = get_running_loop()
         super().__init__(*args, **kwargs)
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -216,6 +217,10 @@ class Session(httpx.AsyncClient):
         Returns:
             httpx.Response
         """
+        if self.loop != get_running_loop():
+            raise Exception(
+                "Current Session was not created in the current event loop."
+            )
         if url[:4] != "http":
             url = f"https://{self.HOST}{url}"
         if self.force_http:
@@ -271,9 +276,6 @@ class Session(httpx.AsyncClient):
 class SessionManager:
     """PyNCM_Async Session 单例储存对象"""
 
-    def __init__(self) -> None:
-        self.__session = Session()
-
     def get(self) -> Session:
         loop = get_running_loop()
         # 上下文管理器
@@ -293,6 +295,10 @@ class SessionManager:
         if SESSION_STACK_CONTEXT.get(loop, None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
+            )
+        if session.loop != loop:
+            raise Exception(
+                "Current Session was not created in the current event loop."
             )
         SESSION_STACK_CONCURRENCY[loop] = session
 
