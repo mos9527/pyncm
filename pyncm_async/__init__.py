@@ -274,12 +274,12 @@ class SessionManager:
             return SESSION_STACK[get_running_loop()][-1]
         return self.__session
 
-    def set(self, session):
+    def set(self, session: Session) -> None:
         if SESSION_STACK.get(get_running_loop(), None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
             )
-        self.session = session
+        self.__session = session
 
     # region Session serialization
     @staticmethod

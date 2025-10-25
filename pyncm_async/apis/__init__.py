@@ -71,7 +71,7 @@ def _BaseWrapper(
         @wraps(apiFunc)
         async def wrapper(*args, **kwargs):
             # HACK: 'session=' keyword support
-            session = kwargs.get("session", GetCurrentSession())
+            session: Session = kwargs.get("session", GetCurrentSession())
             # HACK: For now,wrapped functions will not have access to the session object
             if "session" in kwargs:
                 del kwargs["session"]
