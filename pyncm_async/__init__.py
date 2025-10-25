@@ -380,6 +380,7 @@ def WriteLoginInfo(content: dict, session: Session = None):
 
     Args:
         content (dict): 解码后的登录态
+        session (Session)
 
     Raises:
         LoginFailedException: 登陆失败时发生
@@ -391,4 +392,4 @@ def WriteLoginInfo(content: dict, session: Session = None):
         session.login_info["success"] = False
         raise Exception(session.login_info["content"])
     session.login_info["success"] = True
-    session.csrf_token = sessionManager.session.cookies.get("__csrf")
+    session.csrf_token = session.cookies.get("__csrf")
