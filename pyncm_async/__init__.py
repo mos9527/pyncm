@@ -56,12 +56,17 @@ if "PYNCM_ASYNC_DEBUG" in os.environ:
         level=debug_level, format="[%(levelname).4s] %(name)s %(message)s"
     )
 
-DEVICE_ID_DEFAULT = "pyncm!"
+# 默认 deviceID
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
 # Though with this, all pyncm users would then be sharing the same device Id.
 # Don't think that would be of any issue though...
-"""默认 deviceID"""
-SESSION_STACK = dict()
+DEVICE_ID_DEFAULT = "pyncm!"
+
+# 用于上下文管理器创建的 Session 的管理
+SESSION_STACK_CONTEXT = dict()
+# 用于管理多线程或多事件循环下的并发 Session
+SESSION_STACK_CONCURRENCY = dict()
+
 
 
 class Session(httpx.AsyncClient):
@@ -106,12 +111,12 @@ class Session(httpx.AsyncClient):
     """优先使用 HTTP 作 API 请求协议"""
 
     async def __aenter__(self) -> httpx.AsyncClient:
-        SESSION_STACK.setdefault(get_running_loop(), list())
-        SESSION_STACK[get_running_loop()].append(self)
+        SESSION_STACK_CONTEXT.setdefault(get_running_loop(), list())
+        SESSION_STACK_CONTEXT[get_running_loop()].append(self)
         return await super().__aenter__()
 
     async def __aexit__(self, *args) -> None:
-        SESSION_STACK[get_running_loop()].pop()
+        SESSION_STACK_CONTEXT[get_running_loop()].pop()
         return await super().__aexit__(*args)
 
     def __init__(self, *args, **kwargs):
@@ -270,16 +275,26 @@ class SessionManager:
         self.__session = Session()
 
     def get(self) -> Session:
-        if SESSION_STACK.get(get_running_loop(), None):
-            return SESSION_STACK[get_running_loop()][-1]
-        return self.__session
+        loop = get_running_loop()
+        # 上下文管理器
+        if SESSION_STACK_CONTEXT.get(loop, None):
+            return SESSION_STACK_CONTEXT[loop][-1]
+        # 并发
+        if SESSION_STACK_CONCURRENCY.get(loop, None):
+            return SESSION_STACK_CONCURRENCY[loop]
+        # 实例化新Session
+        session = Session()
+        SESSION_STACK_CONCURRENCY[loop] = session
+        return session
 
     def set(self, session: Session) -> None:
-        if SESSION_STACK.get(get_running_loop(), None):
+        loop = get_running_loop()
+        # 上下文管理器
+        if SESSION_STACK_CONTEXT.get(loop, None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
             )
-        self.__session = session
+        SESSION_STACK_CONCURRENCY[loop] = session
 
     # region Session serialization
     @staticmethod
