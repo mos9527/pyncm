@@ -267,12 +267,12 @@ class SessionManager:
     """PyNCM_Async Session 单例储存对象"""
 
     def __init__(self) -> None:
-        self.session = Session()
+        self.__session = Session()
 
-    def get(self):
+    def get(self) -> Session:
         if SESSION_STACK.get(get_running_loop(), None):
             return SESSION_STACK[get_running_loop()][-1]
-        return self.session
+        return self.__session
 
     def set(self, session):
         if SESSION_STACK.get(get_running_loop(), None):
@@ -360,7 +360,7 @@ def DumpSessionAsString(session: Session) -> str:
     return SessionManager.stringify(session)
 
 
-def WriteLoginInfo(content: dict):
+def WriteLoginInfo(content: dict, session: Session = None):
     """写登录态入Session
 
     Args:
@@ -369,9 +369,11 @@ def WriteLoginInfo(content: dict):
     Raises:
         LoginFailedException: 登陆失败时发生
     """
-    sessionManager.session.login_info = {"tick": time(), "content": content}
-    if not sessionManager.session.login_info["content"]["code"] == 200:
-        sessionManager.session.login_info["success"] = False
-        raise Exception(sessionManager.session.login_info["content"])
-    sessionManager.session.login_info["success"] = True
-    sessionManager.session.csrf_token = sessionManager.session.cookies.get("__csrf")
+
+    session = session or GetCurrentSession()
+    session.login_info = {"tick": time(), "content": content}
+    if not session.login_info["content"]["code"] == 200:
+        session.login_info["success"] = False
+        raise Exception(session.login_info["content"])
+    session.login_info["success"] = True
+    session.csrf_token = sessionManager.session.cookies.get("__csrf")
