@@ -66,7 +66,7 @@ def _BaseWrapper(
 
     @wraps(requestFunc)
     def apiWrapper(
-        apiFunc: Callable[ApiFuncParams, Tuple[str, dict]]
+        apiFunc: Callable[ApiFuncParams, Tuple[str, dict, Union[str, None]]]
     ) -> Callable[ApiFuncParams, Coroutine[Any, Any, Union[dict, Response]]]:
         @wraps(apiFunc)
         async def wrapper(*args, **kwargs):
