@@ -102,7 +102,7 @@ async def LoginViaCookie(MUSIC_U="", session=None, **kwargs) -> dict:
     session = session or GetCurrentSession()
     session.cookies.update({"MUSIC_U": MUSIC_U, **kwargs})
     login_status = await GetCurrentLoginStatus(session=session)
-    WriteLoginInfo(login_status)
+    WriteLoginInfo(login_status, session)
     return {"code": 200, "result": session.login_info}
 
 
@@ -161,7 +161,7 @@ async def LoginViaCellphone(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status)
+    WriteLoginInfo(login_status, session)
     return {"code": 200, "result": session.login_info}
 
 
@@ -195,7 +195,7 @@ async def LoginViaEmail(
 
     auth_token = {"password": str(passwordHash)}
 
-    login_status = EapiCryptoRequest(
+    login_status = await EapiCryptoRequest(
         lambda: (
             path,
             {
@@ -207,7 +207,7 @@ async def LoginViaEmail(
         )
     )(session=session)
 
-    WriteLoginInfo(login_status)
+    WriteLoginInfo(login_status, session)
     return {"code": 200, "result": session.login_info}
 
 
@@ -325,6 +325,7 @@ async def LoginViaAnonymousAccount(deviceId=None, session=None) -> dict:
             "profile": {"nickname": "", **login_status},
             "account": {"id": login_status["userId"], **login_status},
         },
+        session
     )
     return session.login_info
 

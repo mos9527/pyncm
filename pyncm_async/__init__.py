@@ -56,12 +56,17 @@ if "PYNCM_ASYNC_DEBUG" in os.environ:
         level=debug_level, format="[%(levelname).4s] %(name)s %(message)s"
     )
 
-DEVICE_ID_DEFAULT = "pyncm!"
+# 默认 deviceID
 # This sometimes fails with some strings, for no particular reason. Though `pyncm!` seem to work everytime..?
 # Though with this, all pyncm users would then be sharing the same device Id.
 # Don't think that would be of any issue though...
-"""默认 deviceID"""
-SESSION_STACK = dict()
+DEVICE_ID_DEFAULT = "pyncm!"
+
+# 用于上下文管理器创建的 Session 的管理
+SESSION_STACK_CONTEXT = dict()
+# 用于管理多线程或多事件循环下的并发 Session
+SESSION_STACK_CONCURRENCY = dict()
+
 
 
 class Session(httpx.AsyncClient):
@@ -106,15 +111,16 @@ class Session(httpx.AsyncClient):
     """优先使用 HTTP 作 API 请求协议"""
 
     async def __aenter__(self) -> httpx.AsyncClient:
-        SESSION_STACK.setdefault(get_running_loop(), list())
-        SESSION_STACK[get_running_loop()].append(self)
+        SESSION_STACK_CONTEXT.setdefault(get_running_loop(), list())
+        SESSION_STACK_CONTEXT[get_running_loop()].append(self)
         return await super().__aenter__()
 
     async def __aexit__(self, *args) -> None:
-        SESSION_STACK[get_running_loop()].pop()
+        SESSION_STACK_CONTEXT[get_running_loop()].pop()
         return await super().__aexit__(*args)
 
     def __init__(self, *args, **kwargs):
+        self.loop = get_running_loop()
         super().__init__(*args, **kwargs)
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -211,6 +217,10 @@ class Session(httpx.AsyncClient):
         Returns:
             httpx.Response
         """
+        if self.loop != get_running_loop():
+            raise Exception(
+                "Current Session was not created in the current event loop."
+            )
         if url[:4] != "http":
             url = f"https://{self.HOST}{url}"
         if self.force_http:
@@ -266,20 +276,31 @@ class Session(httpx.AsyncClient):
 class SessionManager:
     """PyNCM_Async Session 单例储存对象"""
 
-    def __init__(self) -> None:
-        self.session = Session()
+    def get(self) -> Session:
+        loop = get_running_loop()
+        # 上下文管理器
+        if SESSION_STACK_CONTEXT.get(loop, None):
+            return SESSION_STACK_CONTEXT[loop][-1]
+        # 并发
+        if SESSION_STACK_CONCURRENCY.get(loop, None):
+            return SESSION_STACK_CONCURRENCY[loop]
+        # 实例化新Session
+        session = Session()
+        SESSION_STACK_CONCURRENCY[loop] = session
+        return session
 
-    def get(self):
-        if SESSION_STACK.get(get_running_loop(), None):
-            return SESSION_STACK[get_running_loop()][-1]
-        return self.session
-
-    def set(self, session):
-        if SESSION_STACK.get(get_running_loop(), None):
+    def set(self, session: Session) -> None:
+        loop = get_running_loop()
+        # 上下文管理器
+        if SESSION_STACK_CONTEXT.get(loop, None):
             raise Exception(
                 "Current Session is in `with` block, which cannot be reassigned."
             )
-        self.session = session
+        if session.loop != loop:
+            raise Exception(
+                "Current Session was not created in the current event loop."
+            )
+        SESSION_STACK_CONCURRENCY[loop] = session
 
     # region Session serialization
     @staticmethod
@@ -330,22 +351,22 @@ sessionManager = SessionManager()
 
 
 def GetCurrentSession() -> Session:
-    """获取当前正在被 PyNCM_Async 使用的 Session / 登录态"""
+    """获取当前事件循环正在被 PyNCM_Async 使用的 Session / 登录态"""
     return sessionManager.get()
 
 
 def SetCurrentSession(session: Session):
-    """设置当前正在被 PyNCM_Async 使用的 Session / 登录态"""
+    """设置当前事件循环正在被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(session)
 
 
 def SetNewSession():
-    """设置新的被 PyNCM_Async 使用的 Session / 登录态"""
+    """设置事件循环新的被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(Session())
 
 
 def CreateNewSession() -> Session:
-    """创建新 Session 实例"""
+    """在当前事件循环创建新 Session 实例"""
     return Session()
 
 
@@ -360,18 +381,21 @@ def DumpSessionAsString(session: Session) -> str:
     return SessionManager.stringify(session)
 
 
-def WriteLoginInfo(content: dict):
+def WriteLoginInfo(content: dict, session: Session = None):
     """写登录态入Session
 
     Args:
         content (dict): 解码后的登录态
+        session (Session)
 
     Raises:
         LoginFailedException: 登陆失败时发生
     """
-    sessionManager.session.login_info = {"tick": time(), "content": content}
-    if not sessionManager.session.login_info["content"]["code"] == 200:
-        sessionManager.session.login_info["success"] = False
-        raise Exception(sessionManager.session.login_info["content"])
-    sessionManager.session.login_info["success"] = True
-    sessionManager.session.csrf_token = sessionManager.session.cookies.get("__csrf")
+
+    session = session or GetCurrentSession()
+    session.login_info = {"tick": time(), "content": content}
+    if not session.login_info["content"]["code"] == 200:
+        session.login_info["success"] = False
+        raise Exception(session.login_info["content"])
+    session.login_info["success"] = True
+    session.csrf_token = session.cookies.get("__csrf")
