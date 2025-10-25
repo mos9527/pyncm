@@ -31,7 +31,7 @@
 from random import randrange
 from functools import wraps
 from httpx import Response
-from typing import Coroutine, Any, Callable, Union, Dict, TypeVar
+from typing import Coroutine, Any, Callable, Union, Tuple, ParamSpec
 
 from .exception import LoginRequiredException
 from ..utils.crypto import (
@@ -47,15 +47,13 @@ import json, urllib.parse
 LOGIN_REQUIRED = LoginRequiredException("需要登录")
 
 
-# 通过泛型类型，标注被装饰函数的返回类型
-# 部分 API 函数被 Request 装饰器包装，调用返回值为装饰器的返回类型。
-RequestFuncReturn = TypeVar("RequestFuncReturn ")
-ApiFuncReturn = TypeVar("ApiFuncReturn")
+# 通过泛型类型，标注被装饰函数的参数类型
+ApiFuncParams = ParamSpec("ApiFuncParams")
 
 
 def _BaseWrapper(
-    requestFunc: Callable[..., Coroutine[Any, Any, RequestFuncReturn]],
-) -> Callable[[Callable[..., ApiFuncReturn]], Callable[..., Coroutine[Any, Any, RequestFuncReturn]]]:
+    requestFunc: Callable[..., Coroutine[Any, Any, Union[dict, Response]]],
+) -> Callable[[Callable[ApiFuncParams, Any]], Callable[ApiFuncParams, Coroutine[Any, Any, Union[dict, Response]]]]:
     """API加密函数通用修饰器
 
     实际使用请参考以下其他 Wrapper::
@@ -68,8 +66,8 @@ def _BaseWrapper(
 
     @wraps(requestFunc)
     def apiWrapper(
-        apiFunc: Callable[..., ApiFuncReturn]
-    ) -> Callable[..., Coroutine[Any, Any, RequestFuncReturn]]:
+        apiFunc: Callable[ApiFuncParams, Tuple[str, dict]]
+    ) -> Callable[ApiFuncParams, Coroutine[Any, Any, Union[dict, Response]]]:
         @wraps(apiFunc)
         async def wrapper(*args, **kwargs):
             # HACK: 'session=' keyword support
@@ -122,7 +120,7 @@ def _BaseWrapper(
 
 
 @_BaseWrapper
-async def WeapiCryptoRequest(session: "Session", url, plain, method="POST") -> dict:
+async def WeapiCryptoRequest(session: "Session", url, plain, method="POST") -> Response:
     """Weapi - 适用于 网页端、小程序、手机端部分 APIs"""
     payload = {**plain, "csrf_token": session.csrf_token}
     return await session.request(
