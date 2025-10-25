@@ -345,22 +345,22 @@ sessionManager = SessionManager()
 
 
 def GetCurrentSession() -> Session:
-    """获取当前正在被 PyNCM_Async 使用的 Session / 登录态"""
+    """获取当前事件循环正在被 PyNCM_Async 使用的 Session / 登录态"""
     return sessionManager.get()
 
 
 def SetCurrentSession(session: Session):
-    """设置当前正在被 PyNCM_Async 使用的 Session / 登录态"""
+    """设置当前事件循环正在被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(session)
 
 
 def SetNewSession():
-    """设置新的被 PyNCM_Async 使用的 Session / 登录态"""
+    """设置事件循环新的被 PyNCM_Async 使用的 Session / 登录态"""
     sessionManager.set(Session())
 
 
 def CreateNewSession() -> Session:
-    """创建新 Session 实例"""
+    """在当前事件循环创建新 Session 实例"""
     return Session()
 
 
