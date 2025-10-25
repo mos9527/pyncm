@@ -195,7 +195,7 @@ async def LoginViaEmail(
 
     auth_token = {"password": str(passwordHash)}
 
-    login_status = EapiCryptoRequest(
+    login_status = await EapiCryptoRequest(
         lambda: (
             path,
             {
